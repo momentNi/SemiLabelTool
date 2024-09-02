@@ -1,8 +1,8 @@
 """This module defines the main application window"""
-from core import __appname__, __appdescription__
-from PyQt5.QtWidgets import QMainWindow, QStatusBar, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QMainWindow, QStatusBar, QWidget, QHBoxLayout
 
-from core.views.modules.label.label_wrapper import LabelingWrapper
+from core import __appname__, __appdescription__
+from core.views.modules.menu import LabelMenuBar
 
 
 class MainWindow(QMainWindow):
@@ -15,16 +15,20 @@ class MainWindow(QMainWindow):
         self.setContentsMargins(0, 0, 0, 0)
         self.setWindowTitle("SemiLabelTool")
 
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        self.labeling_widget = LabelingWrapper(
-            self,
-            config=config,
-        )
-        main_layout.addWidget(self.labeling_widget)
+        self.setMenuBar(LabelMenuBar(self).get_menu_bar())
+
+        base_layout = QHBoxLayout()
+        base_layout.setContentsMargins(10, 10, 10, 10)
+        # main_layout = QVBoxLayout()
+        # main_layout.setContentsMargins(10, 10, 10, 10)
+        # self.labeling_widget = LabelingWrapper(
+        #     self,
+        #     config=config,
+        # )
+        # main_layout.addWidget(self.labeling_widget)
         widget = QWidget()
-        widget.setLayout(main_layout)
-        self.setCentralWidget(widget)
+        widget.setLayout(base_layout)
+        # self.setCentralWidget(widget)
 
         status_bar = QStatusBar()
         status_bar.showMessage(f"{__appname__} - {__appdescription__}")
