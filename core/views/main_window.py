@@ -16,6 +16,7 @@ class MainWindow(QMainWindow):
 
         self.setContentsMargins(0, 0, 0, 0)
         self.setWindowTitle("SemiLabelTool")
+        self.setObjectName("MainWindow")
 
         self.setMenuBar(LabelMenuBar(self).get_menu_bar())
 
