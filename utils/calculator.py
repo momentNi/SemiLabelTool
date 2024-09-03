@@ -2,6 +2,7 @@
 计算类工具方法
 """
 import math
+from typing import List
 
 import numpy as np
 from PyQt5.QtCore import QPointF
@@ -41,3 +42,24 @@ def distance_to_line(point: QPointF, line: tuple[QPointF, QPointF]) -> float:
     if np.linalg.norm(p2 - p1) == 0:
         return 0
     return np.linalg.norm(np.cross(p2 - p1, p1 - p3)) / np.linalg.norm(p2 - p1)
+
+
+def rectangle_from_diagonal(diagonal_vertices: List[List[int]]) -> List[List[int]]:
+    """Generate rectangle vertices from diagonal vertices.
+
+    Args:
+        diagonal_vertices: List containing two points representing the diagonal vertices.
+
+    Returns:
+        List containing four points representing the rectangle's four corners.
+        [top-left, top-right, bottom-right, bottom-left]
+    """
+    x1, y1 = diagonal_vertices[0]
+    x2, y2 = diagonal_vertices[1]
+
+    return [
+        [x1, y1],
+        [x2, y1],
+        [x2, y2],
+        [x1, y2],
+    ]
