@@ -1,13 +1,12 @@
-from core import __appname__
-import os
-
-from views.main_window import MainWindow
-
 import argparse
+import os
 import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication
+
+from core.configs.constants import Constants
+from views.main_window import MainWindow
 
 sys.path.append('.')
 
@@ -55,7 +54,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.processEvents()
-    app.setApplicationName(__appname__)
+    app.setApplicationName(Constants.APP_NAME)
     # app.setWindowIcon(new_icon("icon"))
     win = MainWindow(app, config=args)
     win.showMaximized()
