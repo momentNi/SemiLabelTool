@@ -1,15 +1,31 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-"""
-@Project ：SemiLabelTool 
-@File ：QtUtils.py
-@Author ：Ni Shunjie
-@Date ：2024/09/01 20:19 
-"""
 import os
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QAction
+
+from core.configs.core import CORE
+from core.services.actions import file_actions
+
+
+def may_continue():
+    print("may_continue")
+    if not CORE.Variable.is_dirty:
+        return True
+    answer = QtWidgets.QMessageBox.question(
+        CORE.main_window,
+        "Save annotations?",
+        f'Save annotations to "{CORE.Variable.current_file_full_path!r}" before closing?',
+        QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel,
+        QtWidgets.QMessageBox.Save,
+    )
+    if answer == QtWidgets.QMessageBox.Save:
+        file_actions.save_file()
+        return True
+    elif answer == QtWidgets.QMessageBox.Discard:
+        return True
+    else:
+        # answer == QtWidgets.QMessageBox.Cancel
+        return False
 
 
 def new_icon(icon):

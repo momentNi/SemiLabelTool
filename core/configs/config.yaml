@@ -1,0 +1,4 @@
+keep_prev: false
+# 保持缩放比例
+keep_prev_scale: false
+keep_prev_brightness: true

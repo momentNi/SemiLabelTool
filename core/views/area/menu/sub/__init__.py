@@ -1,11 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-"""
-@Project ：SemiLabelTool 
-@File ：__init__.py.py
-@Author ：Ni Shunjie
-@Date ：2024/09/02 11:50 
-"""
 import functools
 from typing import final
 
@@ -21,7 +13,7 @@ class BaseMenu(QMenu):
         self.add_actions()
 
     def add_actions(self):
-        pass
+        raise NotImplementedError
 
     @final
     def get_menu(self):
