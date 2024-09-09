@@ -9,12 +9,16 @@ class Settings(object):
     def __init__(self, path=None):
         self.data: dict = {}
         self.path: str = os.path.join(os.path.expanduser("~") if path is None else path, '.semi.cfg')
+        self.load()
 
     def __setitem__(self, key: str, value) -> None:
-        self.data[key] = value
+        self.set(key, value)
 
     def __getitem__(self, key: str) -> object:
-        return self.data[key]
+        return self.get(key)
+
+    def set(self, key: str, value) -> None:
+        self.data[key] = value
 
     def get(self, key, default=None) -> object:
         if key in self.data:
@@ -23,7 +27,7 @@ class Settings(object):
 
     def save(self) -> bool:
         if self.path:
-            with open(self.path, 'wb') as f:
+            with open(self.path, 'w') as f:
                 yaml.safe_dump(self.data, f)
                 return True
         return False
@@ -39,8 +43,11 @@ class Settings(object):
                 with open(self.path, 'rb') as f:
                     self.data = yaml.safe_load(f)
                     return True
-        except IOError:
-            logger.error('Loading setting failed')
+            else:
+                with open(os.path.join(os.path.dirname(os.path.relpath(__file__)), "config.yaml"), "rb") as f:
+                    self.data = yaml.safe_load(f)
+        except IOError as e:
+            logger.error(f'Loading setting failed: {e}')
         return False
 
     def reset(self):
@@ -49,6 +56,3 @@ class Settings(object):
             logger.info('Remove settings file ${0}'.format(self.path))
         self.data = {}
         self.path = None
-
-
-settings = Settings()
