@@ -59,7 +59,7 @@ class FileMenu(BaseMenu):
                 ["Ctrl+S"],
                 "save",
                 "Save labels to file",
-                # enabled=False
+                enabled=False
             ),
             "save_file_as": self.menu_action(
                 "Save as",
@@ -67,7 +67,7 @@ class FileMenu(BaseMenu):
                 ["Ctrl+Shift+S"],
                 "save-as",
                 "Save labels to a different file",
-                # enabled=False
+                enabled=False
             ),
             "auto_save": self.menu_action(
                 text="Save &Automatically",
@@ -77,5 +77,13 @@ class FileMenu(BaseMenu):
                 checkable=True,
                 enabled=True,
                 checked=CORE.Variable.settings.get("auto_save", False),
+            ),
+            "save_with_image_data": self.menu_action(
+                text="Save With Image Data",
+                slot=lambda x: CORE.Variable.settings.set("store_data", x),
+                icon=None,
+                tip="Save image data in label file",
+                checkable=True,
+                checked=CORE.Variable.settings.get("store_data", False),
             ),
         }
