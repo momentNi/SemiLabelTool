@@ -1,10 +1,11 @@
 from typing import List
 
 from PyQt5.QtGui import QImage
-from PyQt5.QtWidgets import QMainWindow, QStatusBar, QLineEdit, QListWidget, QPlainTextEdit, QWidget
+from PyQt5.QtWidgets import QMainWindow, QStatusBar, QLineEdit, QListWidget, QPlainTextEdit, QWidget, QAction
 
 from core.configs.settings import Settings
 from core.dto.label_file import LabelFile
+from utils.logger import logger
 
 
 class Core(object):
@@ -18,6 +19,8 @@ class Core(object):
         is_dirty: bool = False
         # 当前正在处理的文件名
         current_file_full_path: str = None
+        #
+        last_open_dir_path: str = None
         # 当前文件夹下的图片列表
         image_list: List[str] = []
         # 输出目录
@@ -44,5 +47,23 @@ class Core(object):
         info_file_search: QLineEdit = None
         info_file_list: QListWidget = None
 
+    class Action:
+        def __init__(self):
+            self.actions = {}
+
+        def __getattr__(self, name) -> QAction | None:
+            if name not in self.actions:
+                logger.error(f"Action not exists: {name}")
+                return None
+            return self.actions.get(name)
+
+        def __setattr__(self, name, q_action):
+            if name in self.actions:
+                logger.warning(f"{name} has already defined in actions")
+                return
+            elif not isinstance(q_action, QAction):
+                logger.error(f"{name} has invalid QAction: {q_action}")
+                return
+            self.actions[name] = q_action
 
 CORE = Core()

@@ -48,7 +48,7 @@ def set_clean():
 
 def reset_state():
     print("reset state")
-    CORE.Object.info_file_list.clear()
+    # self.label_list.clear()
     CORE.Variable.current_file_full_path = None
     CORE.Variable.label_file = None
     CORE.Object.canvas.reset_state()

@@ -1,35 +1,50 @@
+from PyQt5.QtWidgets import QMessageBox
+
+import utils
 from core.configs.core import CORE
+from core.services.actions.file_actions import load_file
+from utils.logger import logger
 
 
 def file_selection_changed():
-    items = CORE.Object.file_list_widget.selectedItems()
+    items = CORE.Object.info_file_list.selectedItems()
     if not items:
         return
     item = items[0]
 
-    if not self.may_continue():
+    if not utils.qt_utils.may_continue():
         return
 
-    current_index = self.image_list.index(str(item.text()))
-    if current_index < len(self.image_list):
-        filename = self.image_list[current_index]
+    try:
+        current_index = CORE.Variable.image_list.index(str(item.text()))
+    except ValueError:
+        logger.error(f"File not found: {str(item.text())}")
+        QMessageBox.critical(
+            CORE.Object.main_window,
+            "Error",
+            f"File not found: {str(item.text())}",
+            QMessageBox.Ok
+        )
+        return
+    if current_index < len(CORE.Variable.image_list):
+        filename = CORE.Variable.image_list[current_index]
         if filename:
-            self.load_file(filename)
-            if self.attributes:
-                # Clear the history widgets from the QGridLayout
-                self.grid_layout = QGridLayout()
-                self.grid_layout_container = QWidget()
-                self.grid_layout_container.setLayout(self.grid_layout)
-                self.scroll_area.setWidget(self.grid_layout_container)
-                self.scroll_area.setWidgetResizable(True)
-                # Create a container widget for the grid layout
-                self.grid_layout_container = QWidget()
-                self.grid_layout_container.setLayout(self.grid_layout)
-                self.scroll_area.setWidget(self.grid_layout_container)
+            load_file(filename)
+            # if self.attributes:
+            #     # Clear the history widgets from the QGridLayout
+            #     self.grid_layout = QGridLayout()
+            #     self.grid_layout_container = QWidget()
+            #     self.grid_layout_container.setLayout(self.grid_layout)
+            #     self.scroll_area.setWidget(self.grid_layout_container)
+            #     self.scroll_area.setWidgetResizable(True)
+            #     # Create a container widget for the grid layout
+            #     self.grid_layout_container = QWidget()
+            #     self.grid_layout_container.setLayout(self.grid_layout)
+            #     self.scroll_area.setWidget(self.grid_layout_container)
 
 
 def file_search_changed():
-    self.import_image_folder(
+    self.load_image_folder(
         self.last_open_dir,
         pattern=self.file_search.text(),
         load=False,

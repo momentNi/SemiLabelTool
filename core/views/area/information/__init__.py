@@ -2,6 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDockWidget, QLabel, QPlainTextEdit, QListWidget, QLineEdit
 
 from core.configs.core import CORE
+from core.services.signals.file_signals import file_selection_changed
 
 
 class InformationArea(QWidget):
@@ -105,7 +106,7 @@ class InformationArea(QWidget):
 
         file_list_widget = QListWidget()
         CORE.Object.info_file_list = file_list_widget
-        # file_list_widget.itemSelectionChanged.connect(signals.file_signals.file_selection_changed)
+        file_list_widget.itemSelectionChanged.connect(file_selection_changed)
 
         file_list_layout = QVBoxLayout()
         file_list_layout.setContentsMargins(0, 0, 0, 0)

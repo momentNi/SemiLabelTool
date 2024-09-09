@@ -7,8 +7,13 @@ from core.configs.core import CORE
 from core.services.actions import file_actions
 
 
-def may_continue():
-    print("may_continue")
+def may_continue() -> bool:
+    """
+    Check whether the current operation can proceed.
+
+    Returns:
+        bool: Whether the current operation can proceed
+    """
     if not CORE.Variable.is_dirty:
         return True
     answer = QtWidgets.QMessageBox.question(
