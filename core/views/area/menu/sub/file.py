@@ -86,4 +86,33 @@ class FileMenu(BaseMenu):
                 checkable=True,
                 checked=CORE.Variable.settings.get("store_data", False),
             ),
+            "change_output_dir": self.menu_action(
+                "Change Output Directory",
+                slot=file_actions.change_output_dir,
+                icon="open",
+                tip="Change where annotations are loaded/saved",
+            ),
+            "delete_file": self.menu_action(
+                "Delete Label File",
+                file_actions.delete_label_file,
+                ["Ctrl+Delete"],
+                "delete",
+                "Delete current label file",
+                enabled=False
+            ),
+            "delete_image_file": self.menu_action(
+                "Delete Image File",
+                file_actions.delete_image_file,
+                ["Ctrl+Shift+Delete"],
+                "delete",
+                "Delete current image file",
+                enabled=True
+            ),
+            "close": self.menu_action(
+                "Close",
+                file_actions.close_file,
+                ["Ctrl+Q"],
+                "cancel",
+                "Close current file",
+            )
         }

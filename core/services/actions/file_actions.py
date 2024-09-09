@@ -120,7 +120,7 @@ def save_labels(filename):
     #             raise RuntimeError("There are duplicate files.")
     #         items[0].setCheckState(Qt.Checked)
     #     # disable allows next and previous image to proceed
-    #     # self.filename = filename
+    #     # CORE.Variable.current_file_full_path = filename
     #     return True
     # except LabelFileError as e:
     #     self.error_message(
@@ -149,14 +149,14 @@ def save_file():
 
 
 def save_file_as(self, _value=False):
-    # if not CORE.Variable.image or CORE.Variable.image.isNull():
-    #     QMessageBox.critical(
-    #         CORE.Object.main_window,
-    #         "Error",
-    #         "Cannot save empty image",
-    #         QMessageBox.Ok
-    #     )
-    #     return
+    if not CORE.Variable.image or CORE.Variable.image.isNull():
+        QMessageBox.critical(
+            CORE.Object.main_window,
+            "Error",
+            "Cannot save empty image",
+            QMessageBox.Ok
+        )
+        return
     save_label_file(SaveFileDialog().get_save_file_name())
 
 
@@ -176,7 +176,6 @@ def load_file(filename: str = None):
         return False
 
     system.reset_state()
-    add_recent_file(filename)
     CORE.Object.canvas.setEnabled(False)
     if not QtCore.QFile.exists(filename):
         QMessageBox.critical(
@@ -265,14 +264,14 @@ def load_file(filename: str = None):
     # set brightness contrast values
     dialog = BrightnessContrastDialog(img_data_to_pil(CORE.Variable.label_file.image_data))
     brightness, contrast = CORE.Variable.brightness_contrast_map.get(CORE.Variable.current_file_full_path, (None, None))
-    # if CORE.Variable.settings["keep_prev_brightness"] and self.recent_files:
-    #     brightness, _ = self.brightness_contrast_values.get(
-    #         self.recent_files[0], (None, None)
-    #     )
-    # if self._config["keep_prev_contrast"] and self.recent_files:
-    #     _, contrast = self.brightness_contrast_values.get(
-    #         self.recent_files[0], (None, None)
-    #     )
+    if CORE.Variable.settings["keep_prev_brightness"] and CORE.Variable.recent_files:
+        brightness, _ = CORE.Variable.brightness_contrast_map.get(
+            CORE.Variable.recent_files[0], (None, None)
+        )
+    if CORE.Variable.settings["keep_prev_contrast"] and CORE.Variable.recent_files:
+        _, contrast = CORE.Variable.brightness_contrast_map.get(
+            CORE.Variable.recent_files[0], (None, None)
+        )
     if brightness is not None:
         dialog.slider_brightness.setValue(brightness)
     if contrast is not None:
@@ -281,7 +280,7 @@ def load_file(filename: str = None):
     if brightness is not None or contrast is not None:
         dialog.on_new_value()
     CORE.Object.canvas.paint_canvas()
-    # self.add_recent_file(CORE.Variable.current_file_full_path)
+    add_recent_file(CORE.Variable.current_file_full_path)
     # self.toggle_actions(True)
     CORE.Object.canvas.setFocus()
     basename = os.path.basename(str(filename))
@@ -461,3 +460,34 @@ def update_file_menu():
         action.triggered.connect(
             functools.partial(lambda x: load_file(x) if utils.qt_utils.may_continue() else None, f))
         menu.addAction(action)
+
+
+def change_output_dir():
+    default_output_dir = CORE.Variable.output_dir
+    if default_output_dir is None and CORE.Variable.current_file_full_path:
+        default_output_dir = os.path.dirname(CORE.Variable.current_file_full_path)
+    if default_output_dir is None:
+        default_output_dir = os.path.dirname(
+            str(CORE.Variable.current_file_full_path)) if CORE.Variable.current_file_full_path else "."
+
+    output_dir = QFileDialog.getExistingDirectory(
+        CORE.Object.main_window,
+        f"{Constants.APP_NAME} - Save/Load Annotations in Directory",
+        str(default_output_dir),
+        QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks,
+    )
+    output_dir = str(output_dir)
+    if not output_dir:
+        return
+
+    CORE.Variable.output_dir = output_dir
+
+    CORE.Object.status_bar.showMessage(
+        f"Change Annotations Dir. Annotations will be saved/loaded in {CORE.Variable.output_dir}"
+    )
+
+    load_image_folder(CORE.Variable.last_open_dir_path, need_load=False)
+
+    if CORE.Variable.current_file_full_path in CORE.Variable.image_list:
+        CORE.Object.info_file_list.setCurrentRow(CORE.Variable.image_list.index(CORE.Variable.current_file_full_path))
+        CORE.Object.info_file_list.repaint()
