@@ -1,8 +1,9 @@
+import functools
 import os
 
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMessageBox
+from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMessageBox, QAction
 
 import utils
 from core.configs.constants import Constants
@@ -44,7 +45,7 @@ def save_file():
 
 
 def load_file(filename: str = None):
-    # CORE.Variable.settings.save()
+    CORE.Variable.settings.save()
 
     # For auto labeling, clear the previous marks
     # and inform the next files to be annotated
@@ -59,6 +60,7 @@ def load_file(filename: str = None):
         return False
 
     system.reset_state()
+    add_recent_file(filename)
     CORE.Object.canvas.setEnabled(False)
     if not QtCore.QFile.exists(filename):
         CORE.Object.main_window.error_message(
@@ -288,7 +290,6 @@ def load_image_folder(dir_path, pattern=None, need_load=True):
         else:
             item.setCheckState(Qt.Unchecked)
         CORE.Object.info_file_list.addItem(item)
-        CORE.Variable.image_list.append(filename)
     open_next_image(need_load=need_load)
 
 
@@ -318,3 +319,23 @@ def open_video():
     if os.path.exists(source_video_path):
         target_dir_path = extract_frames_from_video(source_video_path)
         load_image_folder(target_dir_path)
+
+
+def add_recent_file(filename):
+    if filename in CORE.Variable.recent_files:
+        CORE.Variable.recent_files.remove(filename)
+    elif len(CORE.Variable.recent_files) > 10:
+        CORE.Variable.recent_files.pop()
+    CORE.Variable.recent_files.insert(0, filename)
+
+
+def update_file_menu():
+    menu = CORE.Action.open_recent
+    menu.clear()
+    files = [f for f in CORE.Variable.recent_files if f != CORE.Variable.current_file_full_path and os.path.exists(f)]
+    for i, f in enumerate(files):
+        icon = utils.qt_utils.new_icon("labels")
+        action = QAction(icon, "&%d %s" % (i + 1, QtCore.QFileInfo(f).fileName()), CORE.Action.open_recent)
+        action.triggered.connect(
+            functools.partial(lambda x: load_file(x) if utils.qt_utils.may_continue() else None, f))
+        menu.addAction(action)

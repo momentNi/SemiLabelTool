@@ -21,8 +21,6 @@ class Core(object):
         current_file_full_path: str = None
         #
         last_open_dir_path: str = None
-        # 当前文件夹下的图片列表
-        image_list: List[str] = []
         # 输出目录
         output_dir: str = None
         # 当前正在标注的文件对象 LabelFile
@@ -31,8 +29,16 @@ class Core(object):
         image: QImage = None
         # 每个图片的亮度对比度记录
         brightness_contrast_map: dict[str, tuple[float, float]] = {}
-        # flag
-        flag = None
+        recent_files: List[str] = settings.get("recent_files", [])
+
+        @classmethod
+        @property
+        def image_list(self):
+            lst = []
+            for i in range(CORE.Object.info_file_list.count()):
+                item = CORE.Object.info_file_list.item(i)
+                lst.append(item.text())
+            return lst
 
     class Object:
         # 主窗口对象

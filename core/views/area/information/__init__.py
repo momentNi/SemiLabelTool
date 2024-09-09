@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDockWidget, QLabel, QPlainTextEdit, QListWidget, QLineEdit
 
 from core.configs.core import CORE
-from core.services.signals.file_signals import file_selection_changed
+from core.services.signals.file_signals import file_selection_changed, file_search_changed
 
 
 class InformationArea(QWidget):
@@ -102,7 +102,7 @@ class InformationArea(QWidget):
         file_search = QLineEdit()
         file_search.setPlaceholderText(self.tr("Search Filename"))
         CORE.Object.info_file_search = file_search
-        # file_search.textChanged.connect(signals.file_signals.file_search_changed)
+        file_search.textChanged.connect(file_search_changed)
 
         file_list_widget = QListWidget()
         CORE.Object.info_file_list = file_list_widget

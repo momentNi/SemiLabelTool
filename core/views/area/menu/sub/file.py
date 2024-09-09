@@ -1,4 +1,7 @@
+from PyQt5.QtWidgets import QMenu
+
 from core.services.actions import file_actions
+from core.services.actions.file_actions import update_file_menu
 from core.views.area.menu.sub import BaseMenu
 
 
@@ -7,6 +10,7 @@ class FileMenu(BaseMenu):
     def __init__(self, name, parent):
         super().__init__(name, parent)
         self.parent = parent
+        self.aboutToShow.connect(update_file_menu)
 
     def add_action_list_item(self):
         self.action_dict = {
@@ -47,4 +51,5 @@ class FileMenu(BaseMenu):
                 "video",
                 "Open video file"
             ),
+            "open_recent": QMenu("Open Recent"),
         }

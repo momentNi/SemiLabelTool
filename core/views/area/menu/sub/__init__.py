@@ -1,7 +1,7 @@
 import functools
 from typing import final
 
-from PyQt5.QtWidgets import QMenu, QMenuBar
+from PyQt5.QtWidgets import QMenu, QMenuBar, QAction
 
 from core.configs.core import CORE
 from utils.logger import logger
@@ -24,9 +24,12 @@ class BaseMenu(QMenu):
     def __add_actions(self):
         if len(self.action_dict) == 0:
             logger.warning(f"{self.objectName()} Menu has no actions.")
-        for name, q_action in self.action_dict.items():
-            setattr(CORE.Action, name, q_action)
-            self.addAction(q_action)
+        for name, widget in self.action_dict.items():
+            setattr(CORE.Action, name, widget)
+            if isinstance(widget, QAction):
+                self.addAction(widget)
+            elif isinstance(widget, QMenu):
+                self.addMenu(widget)
 
     @final
     def get_menu(self):

@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 import utils
 from core.configs.core import CORE
-from core.services.actions.file_actions import load_file
+from core.services.actions.file_actions import load_file, load_image_folder
 from utils.logger import logger
 
 
@@ -44,8 +44,8 @@ def file_selection_changed():
 
 
 def file_search_changed():
-    self.load_image_folder(
-        self.last_open_dir,
-        pattern=self.file_search.text(),
-        load=False,
+    load_image_folder(
+        dir_path=CORE.Variable.last_open_dir_path,
+        pattern=CORE.Object.info_file_search.text(),
+        need_load=False
     )

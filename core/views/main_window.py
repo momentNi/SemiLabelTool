@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QStatusBar, QWidget, QHBoxLayout, QVBoxLayout
 
+import utils
 from core.configs.constants import Constants
 from core.configs.core import CORE
 from core.views.area.information import InformationArea
@@ -49,3 +50,14 @@ class MainWindow(QMainWindow):
         CORE.Object.status_bar = status_bar
         status_bar.showMessage(f"{Constants.APP_NAME} - {Constants.APP_DESCRIPTION}")
         self.setStatusBar(status_bar)
+
+    def closeEvent(self, event):
+        if not utils.qt_utils.may_continue():
+            event.ignore()
+        # CORE.Variable.settings["filename"] = self.filename if self.filename else ""
+        # CORE.Variable.settings.setValue("window/size", self.size())
+        # CORE.Variable.settings.setValue("window/position", self.pos())
+        # CORE.Variable.settings.setValue("window/state", self.parent.parent.saveState())
+        CORE.Variable.settings["recent_files"] = CORE.Variable.recent_files
+
+        CORE.Variable.settings.save()
