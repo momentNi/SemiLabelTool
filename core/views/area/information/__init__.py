@@ -1,5 +1,8 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDockWidget
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDockWidget, QLabel, QPlainTextEdit, QListWidget, QLineEdit
+
+from core.configs.core import CORE
+from core.services.signals.file_signals import file_selection_changed, file_search_changed
 
 
 class InformationArea(QWidget):
@@ -9,6 +12,7 @@ class InformationArea(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+        self.generate_description_dock()
         self.generate_flag_dock()
         self.generate_label_dock()
         self.generate_item_dock()
@@ -16,10 +20,16 @@ class InformationArea(QWidget):
 
         self.setLayout(self.layout)
 
+    def generate_description_dock(self):
+        self.layout.addWidget(QLabel("Object Text"))
+        item_description = QPlainTextEdit()
+        CORE.Object.item_description = item_description
+        self.layout.addWidget(item_description, 0, Qt.AlignCenter)
+
     def generate_flag_dock(self):
-        flag_dock = QtWidgets.QDockWidget(self.tr("Flags"), self)
+        flag_dock = QDockWidget(self.tr("Flags"), self)
         flag_dock.setObjectName("FlagDock")
-        flag_widget = QtWidgets.QListWidget()
+        flag_widget = QListWidget()
         # if config["flags"]:
         #     self.image_flags = config["flags"]
         #     self.load_flags({k: False for k in self.image_flags})
@@ -55,7 +65,7 @@ class InformationArea(QWidget):
         #             item, label, rgb, LABEL_OPACITY
         #         )
 
-        label_dock = QtWidgets.QDockWidget(self.tr("Labels"), self)
+        label_dock = QDockWidget(self.tr("Labels"), self)
         label_dock.setObjectName("LabelDock")
         # label_dock.setWidget(self.unique_label_list)
         label_dock.setStyleSheet(
@@ -75,7 +85,7 @@ class InformationArea(QWidget):
         # self.label_list.item_double_clicked.connect(self.edit_label)
         # self.label_list.item_changed.connect(self.label_item_changed)
         # self.label_list.item_dropped.connect(self.label_order_changed)
-        shape_dock = QtWidgets.QDockWidget(self.tr("Objects"), self)
+        shape_dock = QDockWidget(self.tr("Objects"), self)
         # shape_dock.setWidget(self.label_list)
         shape_dock.setStyleSheet(
             "QDockWidget::title {"
@@ -84,19 +94,19 @@ class InformationArea(QWidget):
             "background-color: #f0f0f0;"
             "}"
         )
-        shape_dock.setTitleBarWidget(QtWidgets.QWidget())
+        shape_dock.setTitleBarWidget(QWidget())
 
         self.layout.addWidget(shape_dock)
 
     def generate_file_dock(self):
-        file_search = QtWidgets.QLineEdit()
+        file_search = QLineEdit()
         file_search.setPlaceholderText(self.tr("Search Filename"))
-        # file_search.textChanged.connect(self.file_search_changed)
+        CORE.Object.info_file_search = file_search
+        file_search.textChanged.connect(file_search_changed)
 
-        file_list_widget = QtWidgets.QListWidget()
-        # file_list_widget.itemSelectionChanged.connect(
-        #     self.file_selection_changed
-        # )
+        file_list_widget = QListWidget()
+        CORE.Object.info_file_list = file_list_widget
+        file_list_widget.itemSelectionChanged.connect(file_selection_changed)
 
         file_list_layout = QVBoxLayout()
         file_list_layout.setContentsMargins(0, 0, 0, 0)
@@ -104,10 +114,9 @@ class InformationArea(QWidget):
         file_list_layout.addWidget(file_search)
         file_list_layout.addWidget(file_list_widget)
 
-        # TODO QGroupBox?
-        file_dock = QtWidgets.QDockWidget(self.tr("Files"), self)
+        file_dock = QDockWidget("Files", self)
         file_dock.setObjectName("FileDock")
-        file_list_widget = QtWidgets.QWidget()
+        file_list_widget = QWidget()
         file_list_widget.setLayout(file_list_layout)
         file_dock.setWidget(file_list_widget)
         file_dock.setStyleSheet(
