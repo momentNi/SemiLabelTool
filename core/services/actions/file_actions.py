@@ -2,7 +2,7 @@ import os
 
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem
+from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMessageBox
 
 import utils
 from core.configs.constants import Constants
@@ -12,8 +12,9 @@ from core.services import system
 from core.services.actions import canvas
 from core.views.dialogs.brightness_contrast_dialog import BrightnessContrastDialog
 from core.views.dialogs.file_dialog_preview import FileDialogPreview
-from utils.function import walkthrough_images_in_dir
+from utils.function import walkthrough_files_in_dir, has_chinese
 from utils.image import img_data_to_pil
+from utils.video import extract_frames_from_video
 
 
 def open_file():
@@ -274,7 +275,7 @@ def load_image_folder(dir_path, pattern=None, need_load=True):
     CORE.Variable.last_open_dir_path = dir_path
     CORE.Variable.current_file_full_path = None
     CORE.Object.info_file_list.clear()
-    for filename in walkthrough_images_in_dir(dir_path):
+    for filename in walkthrough_files_in_dir(dir_path):
         if pattern and pattern not in filename:
             continue
         label_file = os.path.splitext(filename)[0] + ".json"
@@ -289,3 +290,31 @@ def load_image_folder(dir_path, pattern=None, need_load=True):
         CORE.Object.info_file_list.addItem(item)
         CORE.Variable.image_list.append(filename)
     open_next_image(need_load=need_load)
+
+
+def open_video():
+    if not utils.qt_utils.may_continue():
+        return
+    default_open_video_path = (
+        os.path.dirname(CORE.Variable.current_file_full_path) if CORE.Variable.current_file_full_path else "."
+    )
+    source_video_path, _ = QFileDialog.getOpenFileName(
+        CORE.Object.main_window,
+        f"{Constants.APP_NAME} - Open Video file",
+        default_open_video_path,
+        "*.asf *.avi *.m4v *.mkv *.mov *.mp4 *.mpeg *.mpg *.ts *.wmv",
+    )
+
+    # Check if the path contains Chinese characters
+    if has_chinese(source_video_path):
+        QMessageBox.warning(
+            CORE.Object.main_window,
+            "Warning",
+            "File path cannot contains Chinese characters",
+            QMessageBox.Ok,
+        )
+        return
+
+    if os.path.exists(source_video_path):
+        target_dir_path = extract_frames_from_video(source_video_path)
+        load_image_folder(target_dir_path)

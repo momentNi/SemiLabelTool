@@ -39,5 +39,12 @@ class FileMenu(BaseMenu):
                 ["Ctrl+D"],
                 "open",
                 "Open Directory"
-            )
+            ),
+            "open_video": self.menu_action(
+                "Open Video",
+                file_actions.open_video,
+                ["Ctrl+Shift+V"],
+                "video",
+                "Open video file"
+            ),
         }

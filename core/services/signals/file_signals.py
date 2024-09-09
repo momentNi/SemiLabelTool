@@ -49,32 +49,3 @@ def file_search_changed():
         pattern=self.file_search.text(),
         load=False,
     )
-
-
-def import_image_folder(self, dirpath, pattern=None, load=True):
-    self.actions.open_next_image.setEnabled(True)
-    self.actions.open_prev_image.setEnabled(True)
-
-    if not self.may_continue() or not dirpath:
-        return
-
-    self.last_open_dir = dirpath
-    self.filename = None
-    self.file_list_widget.clear()
-    for filename in self.scan_all_images(dirpath):
-        if pattern and pattern not in filename:
-            continue
-        label_file = osp.splitext(filename)[0] + ".json"
-        if self.output_dir:
-            label_file_without_path = osp.basename(label_file)
-            label_file = self.output_dir + "/" + label_file_without_path
-        item = QtWidgets.QListWidgetItem(filename)
-        item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-        if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-                label_file
-        ):
-            item.setCheckState(Qt.Checked)
-        else:
-            item.setCheckState(Qt.Unchecked)
-        self.file_list_widget.addItem(item)
-    self.open_next_image(load=load)
