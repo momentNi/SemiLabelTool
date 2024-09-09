@@ -12,10 +12,13 @@ class Settings(object):
         self.load()
 
     def __setitem__(self, key: str, value) -> None:
-        self.data[key] = value
+        self.set(key, value)
 
     def __getitem__(self, key: str) -> object:
         return self.get(key)
+
+    def set(self, key: str, value) -> None:
+        self.data[key] = value
 
     def get(self, key, default=None) -> object:
         if key in self.data:

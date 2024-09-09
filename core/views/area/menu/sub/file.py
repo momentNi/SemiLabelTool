@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QMenu
 
+from core.configs.core import CORE
 from core.services.actions import file_actions
 from core.services.actions.file_actions import update_file_menu
 from core.views.area.menu.sub import BaseMenu
@@ -52,4 +53,29 @@ class FileMenu(BaseMenu):
                 "Open video file"
             ),
             "open_recent": QMenu("Open Recent"),
+            "save_file": self.menu_action(
+                "Save",
+                file_actions.save_file,
+                ["Ctrl+S"],
+                "save",
+                "Save labels to file",
+                # enabled=False
+            ),
+            "save_file_as": self.menu_action(
+                "Save as",
+                file_actions.save_file_as,
+                ["Ctrl+Shift+S"],
+                "save-as",
+                "Save labels to a different file",
+                # enabled=False
+            ),
+            "auto_save": self.menu_action(
+                text="Save &Automatically",
+                slot=lambda x: CORE.Variable.settings.set("auto_save", x),
+                icon=None,
+                tip="Save automatically",
+                checkable=True,
+                enabled=True,
+                checked=CORE.Variable.settings.get("auto_save", False),
+            ),
         }

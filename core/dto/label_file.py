@@ -69,11 +69,11 @@ class LabelFile:
                     image_path = os.path.join(self.image_dir, data["imagePath"])
                 else:
                     image_path = os.path.join(os.path.dirname(filename), data["imagePath"])
-                image_data = self.load_image_file(image_path)
+                self.load_image_file(image_path)
             flags = data.get("flags") or {}
             image_path = data["imagePath"]
             self._check_image_height_and_width(
-                base64.b64encode(image_data).decode("utf-8"),
+                base64.b64encode(self.image_data).decode("utf-8"),
                 data.get("imageHeight"),
                 data.get("imageWidth"),
             )
@@ -113,6 +113,5 @@ class LabelFile:
         self.flags = flags
         self.shapes = shapes
         self.image_path = image_path
-        self.image_data = image_data
         self.filename = filename
         self.other_data = other_data

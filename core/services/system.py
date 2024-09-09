@@ -1,3 +1,4 @@
+from core.configs.constants import Constants
 from core.configs.core import CORE
 
 from core.dto.enums import ZoomMode
@@ -15,18 +16,18 @@ def set_dirty():
     #         label_file = self.output_dir + "/" + label_file_without_path
     #     self.save_labels(label_file)
     #     return
-    # self.dirty = True
-    # self.actions.save.setEnabled(True)
-    # title = __appname__
-    # if self.filename is not None:
-    #     title = f"{title} - {self.filename}*"
-    # self.setWindowTitle(title)
+    CORE.Variable.is_dirty = True
+    CORE.Action.save_file.setEnabled(True)
+    title = Constants.APP_NAME
+    if CORE.Variable.current_file_full_path is not None:
+        title = f"{title} - {CORE.Variable.current_file_full_path}*"
+    CORE.Object.main_window.setWindowTitle(title)
 
 
 def set_clean():
     print("set_clean")
-    # self.dirty = False
-    # self.actions.save.setEnabled(False)
+    CORE.Variable.is_dirty = False
+    CORE.Action.save_file.setEnabled(False)
     # self.actions.union_selection.setEnabled(False)
     # self.actions.create_mode.setEnabled(True)
     # self.actions.create_rectangle_mode.setEnabled(True)
@@ -35,11 +36,10 @@ def set_clean():
     # self.actions.create_line_mode.setEnabled(True)
     # self.actions.create_point_mode.setEnabled(True)
     # self.actions.create_line_strip_mode.setEnabled(True)
-    # title = __appname__
-    # if self.filename is not None:
-    #     title = f"{title} - {self.filename}"
-    # self.setWindowTitle(title)
-    #
+    title = Constants.APP_NAME
+    if CORE.Variable.current_file_full_path is not None:
+        title = f"{title} - {CORE.Variable.current_file_full_path}"
+    CORE.Object.main_window.setWindowTitle(title)
     # if self.has_label_file():
     #     self.actions.delete_file.setEnabled(True)
     # else:

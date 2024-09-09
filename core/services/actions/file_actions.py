@@ -11,8 +11,10 @@ from core.configs.core import CORE
 from core.dto.label_file import LabelFile, LabelFileError
 from core.services import system
 from core.services.actions import canvas
+from core.services.system import set_clean
 from core.views.dialogs.brightness_contrast_dialog import BrightnessContrastDialog
 from core.views.dialogs.file_dialog_preview import FileDialogPreview
+from core.views.dialogs.save_file_dialog import SaveFileDialog
 from utils.function import walkthrough_files_in_dir, has_chinese
 from utils.image import img_data_to_pil
 from utils.video import extract_frames_from_video
@@ -40,8 +42,122 @@ def open_file():
             load_file(filename)
 
 
+def save_label_file(filename):
+    print("Save label file")
+    if filename and save_labels(filename):
+        add_recent_file(filename)
+        set_clean()
+
+
+def save_labels(filename):
+    print("saving labels")
+    label_file = LabelFile()
+
+    def format_shape(s):
+        data = s.other_data.copy()
+        info = {
+            "label": s.label,
+            "score": s.score,
+            "points": [(p.x(), p.y()) for p in s.points],
+            "group_id": s.group_id,
+            "description": s.description,
+            "difficult": s.difficult,
+            "shape_type": s.shape_type,
+            "flags": s.flags,
+            "attributes": s.attributes,
+            "kie_linking": s.kie_linking,
+        }
+        if s.shape_type == "rotation":
+            info["direction"] = s.direction
+        data.update(info)
+
+        return data
+
+    return True
+
+    # TODO wait for labeling done.
+    # # Get current shapes
+    # # Excluding auto labeling special shapes
+    # shapes = [
+    #     format_shape(item.shape())
+    #     for item in CORE.Variable.label_list
+    #     if item.shape().label
+    #        not in [
+    #            AutoLabelingMode.OBJECT,
+    #            AutoLabelingMode.ADD,
+    #            AutoLabelingMode.REMOVE,
+    #        ]
+    # ]
+    # flags = {}
+    # for i in range(self.flag_widget.count()):
+    #     item = self.flag_widget.item(i)
+    #     key = item.text()
+    #     flag = item.checkState() == Qt.Checked
+    #     flags[key] = flag
+    # try:
+    #     image_path = osp.relpath(self.image_path, osp.dirname(filename))
+    #     image_data = (
+    #         self.image_data if self._config["store_data"] else None
+    #     )
+    #     if osp.dirname(filename) and not osp.exists(osp.dirname(filename)):
+    #         os.makedirs(osp.dirname(filename))
+    #     label_file.save(
+    #         filename=filename,
+    #         shapes=shapes,
+    #         image_path=image_path,
+    #         image_data=image_data,
+    #         image_height=self.image.height(),
+    #         image_width=self.image.width(),
+    #         other_data=self.other_data,
+    #         flags=flags,
+    #     )
+    #     self.label_file = label_file
+    #     items = self.file_list_widget.findItems(
+    #         self.image_path, Qt.MatchExactly
+    #     )
+    #     if len(items) > 0:
+    #         if len(items) != 1:
+    #             raise RuntimeError("There are duplicate files.")
+    #         items[0].setCheckState(Qt.Checked)
+    #     # disable allows next and previous image to proceed
+    #     # self.filename = filename
+    #     return True
+    # except LabelFileError as e:
+    #     self.error_message(
+    #         self.tr("Error saving label data"), self.tr("<b>%s</b>") % e
+    #     )
+    #     return False
+
+
 def save_file():
-    print("save file")
+    if not CORE.Variable.image or CORE.Variable.image.isNull():
+        QMessageBox.critical(
+            CORE.Object.main_window,
+            "Error",
+            "Cannot save empty image",
+            QMessageBox.Ok
+        )
+        return
+    if not CORE.Variable.label_file.image_data.isNull():
+        # DL20180323 - overwrite when in directory
+        save_label_file(CORE.Variable.label_file.filename)
+    # elif self.output_file:
+    #     self._save_file(self.output_file)
+    #     self.close()
+    else:
+        save_label_file(SaveFileDialog().get_save_file_name())
+
+
+def save_file_as(self, _value=False):
+    # if not CORE.Variable.image or CORE.Variable.image.isNull():
+    #     QMessageBox.critical(
+    #         CORE.Object.main_window,
+    #         "Error",
+    #         "Cannot save empty image",
+    #         QMessageBox.Ok
+    #     )
+    #     return
+    save_label_file(SaveFileDialog().get_save_file_name())
 
 
 def load_file(filename: str = None):
@@ -63,9 +179,11 @@ def load_file(filename: str = None):
     add_recent_file(filename)
     CORE.Object.canvas.setEnabled(False)
     if not QtCore.QFile.exists(filename):
-        CORE.Object.main_window.error_message(
+        QMessageBox.critical(
+            CORE.Object.main_window,
             "Error opening file",
-            f"No such file: <b>{filename}</b>"
+            f"No such file: <b>{filename}</b>",
+            QMessageBox.Ok
         )
         return False
 
@@ -80,9 +198,11 @@ def load_file(filename: str = None):
         try:
             CORE.Variable.label_file = LabelFile(label_file, image_dir)
         except LabelFileError as e:
-            CORE.Object.main_window.error_message(
+            QMessageBox.critical(
+                CORE.Object.main_window,
                 "Error opening file",
-                "<p><b>%s</b></p><p>Make sure <i>%s</i> is a valid label file." % (e, label_file)
+                f"<p><b>{e}</b></p><p>Make sure <i>{label_file}</i> is a valid label file.",
+                QMessageBox.Ok
             )
             CORE.Object.status_bar.showMessage(f"Error reading {label_file}")
             return False
@@ -101,9 +221,11 @@ def load_file(filename: str = None):
             f"*.{fmt.data().decode()}"
             for fmt in QtGui.QImageReader.supportedImageFormats()
         ]
-        CORE.Object.main_window.error_message(
+        QMessageBox.critical(
+            CORE.Object.main_window,
             "Error opening file",
-            f"<p>Make sure <i>{filename}</i> is a valid image file.<br/>Supported image formats: {','.join(formats)}</p>"
+            f"<p>Make sure <i>{filename}</i> is a valid image file.<br/>Supported image formats: {','.join(formats)}</p>",
+            QMessageBox.Ok
         )
         CORE.Object.status_bar.showMessage(f"Error reading {filename}")
         return False
