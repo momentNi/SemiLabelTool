@@ -11,12 +11,13 @@ from core.configs.core import CORE
 from core.dto.label_file import LabelFile, LabelFileError
 from core.services import system
 from core.services.actions import canvas
-from core.services.system import set_clean
+from core.services.system import set_clean, reset_state
 from core.views.dialogs.brightness_contrast_dialog import BrightnessContrastDialog
 from core.views.dialogs.file_dialog_preview import FileDialogPreview
 from core.views.dialogs.save_file_dialog import SaveFileDialog
 from utils.function import walkthrough_files_in_dir, has_chinese
 from utils.image import img_data_to_pil
+from utils.logger import logger
 from utils.video import extract_frames_from_video
 
 
@@ -148,7 +149,7 @@ def save_file():
         save_label_file(SaveFileDialog().get_save_file_name())
 
 
-def save_file_as(self, _value=False):
+def save_file_as():
     if not CORE.Variable.image or CORE.Variable.image.isNull():
         QMessageBox.critical(
             CORE.Object.main_window,
@@ -491,3 +492,107 @@ def change_output_dir():
     if CORE.Variable.current_file_full_path in CORE.Variable.image_list:
         CORE.Object.info_file_list.setCurrentRow(CORE.Variable.image_list.index(CORE.Variable.current_file_full_path))
         CORE.Object.info_file_list.repaint()
+
+
+def get_label_file():
+    if CORE.Variable.current_file_full_path.lower().endswith(".json"):
+        label_file = CORE.Variable.current_file_full_path
+    else:
+        label_file = os.path.splitext(CORE.Variable.current_file_full_path)[0] + ".json"
+    return label_file
+
+
+def get_image_file():
+    if not CORE.Variable.current_file_full_path.lower().endswith(".json"):
+        image_file = CORE.Variable.current_file_full_path
+    else:
+        image_file = CORE.Variable.label_file.image_path
+    return image_file
+
+
+def delete_label_file():
+    answer = QMessageBox.warning(
+        CORE.Object.main_window,
+        "Attention",
+        "Confirm to permanently delete this label file?",
+        QMessageBox.Yes | QMessageBox.No,
+        QMessageBox.No
+    )
+    if answer != QMessageBox.Yes:
+        return
+
+    label_file = get_label_file()
+    if os.path.exists(label_file):
+        os.remove(label_file)
+        logger.info("Label file is removed: %s", label_file)
+
+        item = CORE.Object.info_file_list.currentItem()
+        item.setCheckState(Qt.Unchecked)
+
+        filename = CORE.Variable.current_file_full_path
+        reset_state()
+        CORE.Variable.current_file_full_path = filename
+        if CORE.Variable.current_file_full_path:
+            load_file(CORE.Variable.current_file_full_path)
+
+
+def delete_image_file():
+    if len(CORE.Variable.image_list) <= 0:
+        return
+
+    answer = QMessageBox.warning(
+        CORE.Object.main_window,
+        "Attention",
+        "Confirm to permanently delete this image file?",
+        QMessageBox.Yes | QMessageBox.No,
+        QMessageBox.No
+    )
+    if answer != QMessageBox.Yes:
+        return
+
+    image_file = get_image_file()
+    if os.path.exists(image_file):
+        image_path, image_name = os.path.split(image_file)
+        os.remove(image_file)
+        # save_path = os.path.join(image_path, "..", "_delete_")
+        # os.makedirs(save_path, exist_ok=True)
+        # saved_file = os.path.join(save_path, image_name)
+        # shutil.move(image_file, saved_file)
+        # logger.info("Image file is moved to: %s", os.path.realpath(saved_file))
+
+        label_dir_path = os.path.dirname(CORE.Variable.current_file_full_path)
+        if CORE.Variable.output_dir:
+            label_dir_path = CORE.Variable.output_dir
+        label_name = os.path.splitext(image_name)[0] + ".json"
+        label_file = os.path.join(label_dir_path, label_name)
+        if os.path.exists(label_file):
+            os.remove(label_file)
+            logger.info("Label file is removed: %s", image_file)
+
+        if CORE.Variable.current_file_full_path is None:
+            filename = CORE.Variable.image_list[0]
+        else:
+            current_index = CORE.Variable.image_list.index(CORE.Variable.current_file_full_path)
+            if current_index + 1 < len(CORE.Variable.image_list):
+                filename = CORE.Variable.image_list[current_index + 1]
+            else:
+                filename = CORE.Variable.image_list[0]
+
+        reset_state()
+        if os.path.isfile(image_path):
+            image_path = os.path.dirname(image_path)
+        load_image_folder(image_path)
+
+        CORE.Variable.current_file_full_path = filename
+        if CORE.Variable.current_file_full_path:
+            load_file(CORE.Variable.current_file_full_path)
+
+
+def close_file():
+    if not utils.qt_utils.may_continue():
+        return
+    reset_state()
+    set_clean()
+    # self.toggle_actions(False)
+    CORE.Object.canvas.setEnabled(False)
+    CORE.Action.save_file_as.setEnabled(False)

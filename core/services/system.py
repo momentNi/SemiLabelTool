@@ -25,7 +25,6 @@ def set_dirty():
 
 
 def set_clean():
-    print("set_clean")
     CORE.Variable.is_dirty = False
     CORE.Action.save_file.setEnabled(False)
     # self.actions.union_selection.setEnabled(False)
@@ -47,7 +46,6 @@ def set_clean():
 
 
 def reset_state():
-    print("reset state")
     # self.label_list.clear()
     CORE.Variable.current_file_full_path = None
     CORE.Variable.label_file = None
