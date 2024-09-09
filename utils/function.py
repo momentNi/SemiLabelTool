@@ -13,7 +13,6 @@ def walkthrough_images_in_dir(folder_path):
     images = []
     for root, _, files in os.walk(folder_path):
         for file in files:
-            print(file)
             if file.lower().endswith(tuple(extensions)):
                 relative_path = os.path.join(root, file)
                 images.append(relative_path)

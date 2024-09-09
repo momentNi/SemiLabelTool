@@ -72,9 +72,9 @@ def set_zoom(value):
     print("set_zoom")
     # self.actions.fit_width.setChecked(False)
     # self.actions.fit_window.setChecked(False)
-    CORE.Variable.zoom_mode = ZoomMode.MANUAL_ZOOM
+    CORE.Object.canvas.zoom_mode = ZoomMode.MANUAL_ZOOM
     # self.zoom_widget.setValue(value)
-    CORE.Variable.zoom_values[CORE.Variable.current_file_full_path] = (CORE.Variable.zoom_mode, value)
+    CORE.Object.canvas.zoom_values[CORE.Variable.current_file_full_path] = (CORE.Object.canvas.zoom_mode, value)
 
 
 def adjust_scale(initial=False):

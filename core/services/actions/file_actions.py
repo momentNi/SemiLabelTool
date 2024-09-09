@@ -190,13 +190,11 @@ def open_labeled_image(end_index, step, need_load=True) -> None:
             break
 
 
-def open_next_image(need_load: bool) -> None:
+def open_next_image(**kwargs) -> None:
     """
     Open next image to be labeled
-
-    Args:
-        need_load: load image in canvas when open it in info_file_list
     """
+    need_load = kwargs.get('need_load', True)
     if QApplication.keyboardModifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
         open_labeled_image(CORE.Object.info_file_list.count(), 1, need_load)
         return
@@ -290,4 +288,4 @@ def load_image_folder(dir_path, pattern=None, need_load=True):
             item.setCheckState(Qt.Unchecked)
         CORE.Object.info_file_list.addItem(item)
         CORE.Variable.image_list.append(filename)
-    open_next_image(need_load)
+    open_next_image(need_load=need_load)

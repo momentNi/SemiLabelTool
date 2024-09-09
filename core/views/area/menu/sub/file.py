@@ -22,14 +22,16 @@ class FileMenu(BaseMenu):
                 file_actions.open_next_image,
                 ["D", "Ctrl+Shift+D"],
                 "next",
-                "Open next (hold Ctrl+Shift to move to the next labeled image)"
+                "Open next (hold Ctrl+Shift to move to the next labeled image)",
+                enabled=False
             ),
             "open_prev_image": self.menu_action(
                 "Previous Image",
                 file_actions.open_prev_image,
                 ["A", "Ctrl+Shift+A"],
                 "prev",
-                "Open prev (hold Ctrl+Shift to move to the prev labeled image)"
+                "Open prev (hold Ctrl+Shift to move to the prev labeled image)",
+                enabled=False
             ),
             "open_dir": self.menu_action(
                 "Open Directory",
