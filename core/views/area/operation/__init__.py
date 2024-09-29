@@ -1,11 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-"""
-@Project ：SemiLabelTool 
-@File ：__init__.py.py
-@Author ：Ni Shunjie
-@Date ：2024/09/02 16:10 
-"""
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
@@ -25,7 +17,7 @@ class OperationArea(QWidget):
         toolbar = ToolBar("ToolBar")
         toolbar.setObjectName("ToolBar")
         toolbar.setOrientation(Qt.Vertical)
-        toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        # toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         toolbar.setIconSize(QtCore.QSize(24, 24))
         toolbar.setMaximumWidth(40)
         self.layout.addWidget(toolbar)

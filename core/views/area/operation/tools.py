@@ -1,23 +1,18 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-"""
-@Project ：SemiLabelTool 
-@File ：tools.py
-@Author ：Ni Shunjie
-@Date ：2024/09/02 16:33 
-"""
+import functools
+
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QToolBar
+
+from core.configs.core import CORE
+from core.views.modules.zoom_widget import ZoomWidget
+from utils.qt_utils import create_new_action
 
 
 class ToolBar(QToolBar):
     def __init__(self, title):
         super().__init__(title)
-        layout = self.layout()
-        margin = (0, 0, 0, 0)
-        layout.setSpacing(0)
-        layout.setContentsMargins(*margin)
-        self.setContentsMargins(*margin)
+        self.menu_action = functools.partial(create_new_action, self)
+        self.setContentsMargins(0, 0, 0, 0)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
         self.setStyleSheet(
             """
@@ -30,8 +25,27 @@ class ToolBar(QToolBar):
             }
             """
         )
+        layout = self.layout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.__init_zoom_widget()
+
+        self.add_action(CORE.Action.open_dir)
+        self.add_action(CORE.Action.open_next_image)
+        self.add_action(CORE.Action.open_prev_image)
+        self.add_action(CORE.Action.save_file)
+        self.add_action(CORE.Action.delete_file)
+        self.add_action(None)
+        self.add_action(CORE.Action.delete_file)
+        self.add_action(None)
+        self.add_action(CORE.Object.zoom_widget)
+        # TODO
+        # fit_width, toggle_auto_labeling_widget, run_all_images,
 
     def add_action(self, action):
+        if action is None:
+            return super().addSeparator()
         if isinstance(action, QtWidgets.QWidgetAction):
             return super().addAction(action)
         btn = QtWidgets.QToolButton()
@@ -44,3 +58,18 @@ class ToolBar(QToolBar):
                 self.layout().itemAt(i).setAlignment(QtCore.Qt.AlignCenter)
 
         return True
+
+    def __init_zoom_widget(self):
+
+        self.zoom_widget = ZoomWidget()
+        self.zoom_widget.setWhatsThis(
+            "Zoom in or out of the image. Also accessible with Ctrl++, Ctrl+- and Ctrl+Wheel from the canvas.")
+        self.zoom_widget.setEnabled(False)
+        # TODO
+        self.zoom_widget.valueChanged.connect(self.paint_canvas)
+
+        CORE.Object.zoom_widget = QtWidgets.QWidgetAction(self)
+        CORE.Object.zoom_widget.setDefaultWidget(self.zoom_widget)
+
+    def paint_canvas(self):
+        print(self.zoom_widget.value())
