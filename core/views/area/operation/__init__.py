@@ -10,6 +10,7 @@ class OperationArea(QWidget):
         super().__init__()
         self.parent = parent
         self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.generate_content()
         self.setLayout(self.layout)
 
