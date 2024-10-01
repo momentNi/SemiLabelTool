@@ -21,10 +21,10 @@ class MainWindow(QMainWindow):
         self.setObjectName("MainWindow")
         CORE.Object.main_window = self
 
+        self.setMenuBar(LabelMenuBar(self).get_menu_bar())
+
         base_layout = QHBoxLayout()
         base_layout.setContentsMargins(10, 10, 10, 10)
-
-        self.left_widget = OperationArea(self)
 
         self.main_widget = LabelArea(self)
         main_layout = QVBoxLayout()
@@ -36,6 +36,7 @@ class MainWindow(QMainWindow):
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.addWidget(self.right_widget)
 
+        self.left_widget = OperationArea(self)
         base_layout.addWidget(self.left_widget)
         base_layout.addItem(main_layout)
         base_layout.setStretch(1, 1)
@@ -43,8 +44,6 @@ class MainWindow(QMainWindow):
         widget = QWidget()
         widget.setLayout(base_layout)
         self.setCentralWidget(widget)
-
-        self.setMenuBar(LabelMenuBar(self).get_menu_bar())
 
         status_bar = QStatusBar()
         CORE.Object.status_bar = status_bar

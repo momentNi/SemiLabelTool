@@ -52,6 +52,8 @@ class Core(object):
         # Information区域文件列表
         info_file_search: QLineEdit = None
         info_file_list: QListWidget = None
+        # ToolBar 缩放组件
+        zoom_widget = None
 
     class Action:
         def __init__(self):
