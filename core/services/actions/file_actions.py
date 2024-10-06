@@ -249,10 +249,10 @@ def load_file(filename: str = None):
     CORE.Object.canvas.setEnabled(True)
 
     # set zoom values
-    is_initial_load = not CORE.Object.canvas.zoom_values
-    if CORE.Variable.current_file_full_path in CORE.Object.canvas.zoom_values:
-        CORE.Object.canvas.zoom_mode = CORE.Object.canvas.zoom_values[CORE.Variable.current_file_full_path][0]
-        system.set_zoom(CORE.Object.canvas.zoom_values[CORE.Variable.current_file_full_path][1])
+    is_initial_load = not CORE.Object.canvas.zoom_history
+    if CORE.Variable.current_file_full_path in CORE.Object.canvas.zoom_history:
+        CORE.Object.canvas.zoom_mode = CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path][0]
+        system.set_zoom(CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path][1])
     elif is_initial_load or not CORE.Variable.settings["keep_prev_scale"]:
         system.adjust_scale(initial=True)
 

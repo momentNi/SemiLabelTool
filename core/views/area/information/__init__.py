@@ -44,6 +44,7 @@ class InformationArea(QWidget):
             "background-color: #f0f0f0;"
             "}"
         )
+        CORE.Object.flag_dock = flag_dock
         self.layout.addWidget(flag_dock)
 
     def generate_label_dock(self):
@@ -75,6 +76,7 @@ class InformationArea(QWidget):
             "background-color: #f0f0f0;"
             "}"
         )
+        CORE.Object.label_dock = label_dock
         self.layout.addWidget(label_dock)
 
     def generate_item_dock(self):
@@ -95,7 +97,7 @@ class InformationArea(QWidget):
             "}"
         )
         shape_dock.setTitleBarWidget(QWidget())
-
+        CORE.Object.shape_dock = shape_dock
         self.layout.addWidget(shape_dock)
 
     def generate_file_dock(self):
@@ -128,4 +130,5 @@ class InformationArea(QWidget):
         )
         file_dock.setFeatures(QDockWidget.DockWidgetFloatable)
 
+        CORE.Object.file_dock = file_dock
         self.layout.addWidget(file_dock)

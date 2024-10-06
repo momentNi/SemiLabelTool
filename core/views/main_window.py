@@ -21,8 +21,6 @@ class MainWindow(QMainWindow):
         self.setObjectName("MainWindow")
         CORE.Object.main_window = self
 
-        self.setMenuBar(LabelMenuBar(self).get_menu_bar())
-
         base_layout = QHBoxLayout()
         base_layout.setContentsMargins(10, 10, 10, 10)
 
@@ -35,6 +33,8 @@ class MainWindow(QMainWindow):
         right_layout = QVBoxLayout()
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.addWidget(self.right_widget)
+
+        self.setMenuBar(LabelMenuBar(self).get_menu_bar())
 
         self.left_widget = OperationArea(self)
         base_layout.addWidget(self.left_widget)

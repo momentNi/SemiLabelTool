@@ -1,10 +1,12 @@
 from typing import List
 
 from PyQt5.QtGui import QImage
-from PyQt5.QtWidgets import QMainWindow, QStatusBar, QLineEdit, QListWidget, QPlainTextEdit, QWidget, QAction
+from PyQt5.QtWidgets import QMainWindow, QStatusBar, QLineEdit, QListWidget, QPlainTextEdit, QWidget, QAction, \
+    QDockWidget, QScrollArea
 
 from core.configs.settings import Settings
 from core.dto.label_file import LabelFile
+from core.views.modules.zoom_widget import ZoomWidget
 from utils.logger import logger
 
 
@@ -19,7 +21,7 @@ class Core(object):
         is_dirty: bool = False
         # 当前正在处理的文件名
         current_file_full_path: str = None
-        #
+        # 上一个打开的文件名
         last_open_dir_path: str = None
         # 输出目录
         output_dir: str = None
@@ -29,8 +31,10 @@ class Core(object):
         image: QImage = None
         # 每个图片的亮度对比度记录
         brightness_contrast_map: dict[str, tuple[float, float]] = {}
+        # 近期打开的文件
         recent_files: List[str] = settings.get("recent_files", [])
 
+        # 当前文件夹下的图片列表
         @classmethod
         @property
         def image_list(self):
@@ -45,15 +49,23 @@ class Core(object):
         main_window: QMainWindow = None
         # 状态栏
         status_bar: QStatusBar = None
+        # 中心滚动区域
+        scroll_area: QScrollArea = None
         # 画布对象
         canvas: QWidget = None
         # 对象描述信息
         item_description: QPlainTextEdit = None
-        # Information区域文件列表
+        # Information区域
+        flag_dock: QDockWidget = None
+        label_dock: QDockWidget = None
+        shape_dock: QDockWidget = None
+        file_dock: QDockWidget = None
+        # 文件列表
         info_file_search: QLineEdit = None
         info_file_list: QListWidget = None
+
         # ToolBar 缩放组件
-        zoom_widget = None
+        zoom_widget: ZoomWidget = None
 
     class Action:
         def __init__(self):

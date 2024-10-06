@@ -1,11 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-"""
-@Project ：SemiLabelTool 
-@File ：__init__.py.py
-@Author ：Ni Shunjie
-@Date ：2024/09/02 16:23 
-"""
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea
 
 from core.configs.core import CORE
@@ -50,7 +42,8 @@ class LabelArea(QWidget):
 
     def generate_canvas_part(self):
         scroll_area = QScrollArea()
-        CORE.Object.canvas = Canvas(scroll_area)
+        CORE.Object.scroll_area = scroll_area
+        CORE.Object.canvas = Canvas()
 
         scroll_area.setWidget(CORE.Object.canvas)
         scroll_area.setWidgetResizable(True)
