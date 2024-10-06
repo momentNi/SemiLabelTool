@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea
 
 from core.configs.core import CORE
-from core.services.actions.canvas import get_mode
 from core.views.modules.canvas import Canvas
 
 
@@ -11,26 +10,30 @@ class LabelArea(QWidget):
         self.parent = parent
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
+        self.mode = None
 
-        self.generate_instruction_part()
-        self.generate_auto_part()
-        self.generate_canvas_part()
+        self.canvas_part = self.generate_canvas_part()
+        self.instruction_part = self.generate_instruction_part()
+        self.auto_part = self.generate_auto_part()
 
+        self.layout.addWidget(self.instruction_part)
+        self.layout.addWidget(self.auto_part)
+        self.layout.addWidget(self.canvas_part)
         self.setLayout(self.layout)
 
     def generate_instruction_part(self):
         content = (
-            f"<b>{self.tr("Mode:")}</b> {get_mode()} | "
-            f"<b>{self.tr("Shortcuts:")}</b>"
-            f" {self.tr("Previous")}(<b>A</b>),"
-            f" {self.tr("Next")}(<b>D</b>),"
-            f" {self.tr("Rectangle")}(<b>R</b>),"
-            f" {self.tr("Polygon")}(<b>P</b>),"
-            f" {self.tr("Rotation")}(<b>O</b>)"
+            f"<b>Mode:</b> {self.mode} | "
+            f"<b>Shortcuts:</b>"
+            f" Previous(<b>A</b>),"
+            f" Next(<b>D</b>),"
+            f" Rectangle(<b>R</b>),"
+            f" Polygon(<b>P</b>),"
+            f" Rotation(<b>O</b>)"
         )
         instruction_part = QLabel(content)
         instruction_part.setContentsMargins(0, 0, 0, 0)
-        self.layout.addWidget(instruction_part)
+        return instruction_part
 
     def generate_auto_part(self):
         auto_part = QWidget()
@@ -39,13 +42,15 @@ class LabelArea(QWidget):
         # Default tobe hide
         auto_part.hide()
         self.layout.addWidget(auto_part)
+        return auto_part
 
     def generate_canvas_part(self):
         scroll_area = QScrollArea()
         CORE.Object.scroll_area = scroll_area
         CORE.Object.canvas = Canvas()
+        self.mode = CORE.Object.canvas.get_canvas_mode()
 
         scroll_area.setWidget(CORE.Object.canvas)
         scroll_area.setWidgetResizable(True)
 
-        self.layout.addWidget(scroll_area)
+        return scroll_area
