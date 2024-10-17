@@ -1,3 +1,5 @@
+import logging
+
 import imgviz
 from PyQt5 import QtGui
 
@@ -20,3 +22,12 @@ class Constants:
     SHAPE_POINT_SIZE = 4
     SHAPE_SCALE = 1.5
     SHAPE_LINE_WIDTH = 2.0
+
+    FORMAT = "$asctime - $levelname - $filename[line:$lineno]: $message"
+    COLORS = {
+        logging.DEBUG: "\x1b[;11m",  # GREY
+        logging.INFO: "\x1b[32;11m",  # GREEN
+        logging.WARNING: "\x1b[33;11m",  # YELLOW
+        logging.ERROR: "\x1b[31;11m",  # RED
+        logging.CRITICAL: "\x1b[41;1m"  # BOLD RED
+    }

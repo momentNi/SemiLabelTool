@@ -1,56 +1,26 @@
-import datetime
 import logging
+import string
 
-import termcolor
-
-COLORS = {
-    "WARNING": "yellow",
-    "INFO": "white",
-    "DEBUG": "blue",
-    "CRITICAL": "red",
-    "ERROR": "red",
-}
+from core.configs.constants import Constants
 
 
-class ColoredFormatter(logging.Formatter):
-    def __init__(self, fmt, use_color=True):
-        logging.Formatter.__init__(self, fmt)
-        self.use_color = use_color
-
-    def format(self, record):
-        level_name = record.levelname
-        if self.use_color and level_name in COLORS:
-            def colored(text):
-                return termcolor.colored(
-                    text,
-                    color=COLORS[level_name],
-                    attrs={"bold": True},
-                )
-
-            record.levelname2 = colored(f"{record.levelname:<7}")
-            record.message2 = colored(record.msg)
-
-            asctime2 = datetime.datetime.fromtimestamp(record.created)
-            record.asctime2 = termcolor.colored(asctime2, color="green")
-
-            record.module2 = termcolor.colored(record.module, color="cyan")
-            record.funcName2 = termcolor.colored(record.funcName, color="cyan")
-            record.lineno2 = termcolor.colored(record.lineno, color="cyan")
-        return logging.Formatter.format(self, record)
+class ColorFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord):
+        fmt_template = string.Template(f"{Constants.COLORS[record.levelno]}{Constants.FORMAT}\x1b[0m")
+        return fmt_template.substitute(record.__dict__)
 
 
-class ColoredLogger(logging.Logger):
-    FORMAT = (
-        "[%(levelname2)s] %(module2)s:%(funcName2)s:%(lineno2)s - %(message2)s"
-    )
-
+class SemiLogger(logging.Logger):
     def __init__(self, name):
-        logging.Logger.__init__(self, name, logging.INFO)
-        color_formatter = ColoredFormatter(self.FORMAT)
-        console = logging.StreamHandler()
-        console.setFormatter(color_formatter)
-        self.addHandler(console)
+        super().__init__(name, logging.DEBUG)
+
+        file_handler = logging.FileHandler("../logs/app.log", mode='w')
+        file_handler.setFormatter(logging.Formatter(Constants.FORMAT, datefmt='%Y-%m-%d %H:%M:%S', style="$"))
+        self.addHandler(file_handler)
+
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(ColorFormatter())
+        self.addHandler(console_handler)
 
 
-logger = logging.getLogger("SemiLabelTool")
-logger.__class__ = ColoredLogger
+logger = SemiLogger("SemiLabelTool")
