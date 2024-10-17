@@ -1,3 +1,4 @@
+import imgviz
 from PyQt5 import QtGui
 
 
@@ -8,6 +9,7 @@ class Constants:
 
     DEVICE = "GPU"  # GPU or CPU
 
+    LABEL_COLOR_MAP = imgviz.label_colormap()
     DEFAULT_LINE_COLOR = QtGui.QColor(0, 255, 0, 128)
     DEFAULT_FILL_COLOR = QtGui.QColor(100, 100, 100, 100)
     DEFAULT_SELECT_LINE_COLOR = QtGui.QColor(255, 255, 255)

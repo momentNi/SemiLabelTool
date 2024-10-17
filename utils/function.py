@@ -23,3 +23,8 @@ def walkthrough_files_in_dir(folder_path):
                 file_list.append(relative_path)
     file_list = natsort.os_sorted(file_list)
     return file_list
+
+
+def hex_to_rgb(hex_color):
+    hex_color = hex_color.lstrip('#')
+    return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))

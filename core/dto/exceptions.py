@@ -1,0 +1,2 @@
+class CanvasError(Exception):
+    pass

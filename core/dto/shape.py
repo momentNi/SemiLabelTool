@@ -21,7 +21,7 @@ class Shape:
         self.score: float = score
         self.line_color: QtGui.QColor = line_color if line_color is not None else Constants.DEFAULT_LINE_COLOR
         self.shape_type: ShapeType = shape_type if shape_type is not None else ShapeType.POLYGON
-        self.flags = flags
+        self.flags: dict = flags
         self.group_id: int = group_id
         self.description: str = description
         self.is_difficult: bool = is_difficult

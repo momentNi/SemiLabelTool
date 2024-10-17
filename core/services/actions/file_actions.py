@@ -11,6 +11,7 @@ from core.configs.core import CORE
 from core.dto.label_file import LabelFile, LabelFileError
 from core.services import system
 from core.services.actions import canvas
+from core.services.actions.canvas import paint_canvas
 from core.services.system import set_clean, reset_state
 from core.views.dialogs.brightness_contrast_dialog import BrightnessContrastDialog
 from core.views.dialogs.file_dialog_preview import FileDialogPreview
@@ -280,7 +281,7 @@ def load_file(filename: str = None):
     CORE.Variable.brightness_contrast_map[CORE.Variable.current_file_full_path] = (brightness, contrast)
     if brightness is not None or contrast is not None:
         dialog.on_new_value()
-    CORE.Object.canvas.paint_canvas()
+    paint_canvas()
     add_recent_file(CORE.Variable.current_file_full_path)
     # self.toggle_actions(True)
     CORE.Object.canvas.setFocus()
