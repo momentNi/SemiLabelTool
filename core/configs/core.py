@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import QMainWindow, QStatusBar, QLineEdit, QListWidget, QPl
 
 from core.configs.settings import Settings
 from core.dto.label_file import LabelFile
+from core.views.modules.label_list_widget import LabelListWidget
+from core.views.modules.unique_label_list_widget import UniqueLabelListWidget
 from core.views.modules.zoom_widget import ZoomWidget
 from utils.logger import logger
 
@@ -19,6 +21,7 @@ class Core(object):
         settings = Settings()
         # 是否有修改待保存
         is_dirty: bool = False
+        has_selection_slot = True
         # 当前正在处理的文件名
         current_file_full_path: str = None
         # 上一个打开的文件名
@@ -29,6 +32,7 @@ class Core(object):
         label_file: LabelFile = LabelFile()
         # 当前正在处理的QImage对象
         image: QImage = None
+        image_flags: dict = {}
         # 每个图片的亮度对比度记录
         brightness_contrast_map: dict[str, tuple[float, float]] = {}
         # 近期打开的文件
@@ -39,8 +43,8 @@ class Core(object):
         @property
         def image_list(self):
             lst = []
-            for i in range(CORE.Object.info_file_list.count()):
-                item = CORE.Object.info_file_list.item(i)
+            for i in range(CORE.Object.info_file_list_widget.count()):
+                item = CORE.Object.info_file_list_widget.item(i)
                 lst.append(item.text())
             return lst
 
@@ -60,9 +64,14 @@ class Core(object):
         label_dock: QDockWidget = None
         shape_dock: QDockWidget = None
         file_dock: QDockWidget = None
+
+        flag_widget: QListWidget = None
         # 文件列表
-        info_file_search: QLineEdit = None
-        info_file_list: QListWidget = None
+        info_file_search_widget: QLineEdit = None
+        info_file_list_widget: QListWidget = None
+
+        label_list_widget: LabelListWidget = None
+        unique_label_list_widget: UniqueLabelListWidget = None
 
         # ToolBar 缩放组件
         zoom_widget: ZoomWidget = None

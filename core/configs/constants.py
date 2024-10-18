@@ -11,6 +11,7 @@ class Constants:
 
     DEVICE = "GPU"  # GPU or CPU
 
+    LABEL_OPACITY = 128
     LABEL_COLOR_MAP = imgviz.label_colormap()
     DEFAULT_LINE_COLOR = QtGui.QColor(0, 255, 0, 128)
     DEFAULT_FILL_COLOR = QtGui.QColor(100, 100, 100, 100)

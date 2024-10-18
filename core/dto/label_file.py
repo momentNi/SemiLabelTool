@@ -6,10 +6,6 @@ import utils
 from utils.logger import logger
 
 
-class LabelFileError(Exception):
-    pass
-
-
 class LabelFile:
     suffix = ".json"
 
@@ -32,12 +28,10 @@ class LabelFile:
     def _check_image_height_and_width(image_data, image_height, image_width):
         img_arr = utils.image.img_b64_to_arr(image_data)
         if image_height is not None and img_arr.shape[0] != image_height:
-            logger.error(
-                "image_height does not match with image_data or image_path, so getting image_height from actual image.")
+            logger.error("image_height does not match with image_data or image_path, so getting image_height from actual image.")
             image_height = img_arr.shape[0]
         if image_width is not None and img_arr.shape[1] != image_width:
-            logger.error(
-                "image_width does not match with image_data or image_path, so getting image_width from actual image.")
+            logger.error("image_width does not match with image_data or image_path, so getting image_width from actual image.")
             image_width = img_arr.shape[1]
         return image_height, image_width
 
@@ -51,8 +45,7 @@ class LabelFile:
 
     def load(self, filename):
         keys = ["version", "imageData", "imagePath", "shapes", "flags", "imageHeight", "imageWidth"]
-        shape_keys = ["label", "score", "points", "group_id", "difficult", "shape_type", "flags", "description",
-                      "attributes", "kie_linking"]
+        shape_keys = ["label", "score", "points", "group_id", "difficult", "shape_type", "flags", "description", "attributes", "kie_linking"]
         try:
             with open(filename, "r", encoding='utf-8') as f:
                 data = json.load(f)
@@ -62,9 +55,8 @@ class LabelFile:
 
             data["imagePath"] = os.path.basename(data["imagePath"])
             if data["imageData"] is not None:
-                image_data = base64.b64decode(data["imageData"])
+                self.image_data = base64.b64decode(data["imageData"])
             else:
-                # relative path from label file to relative path from cwd
                 if self.image_dir:
                     image_path = os.path.join(self.image_dir, data["imagePath"])
                 else:
@@ -73,27 +65,27 @@ class LabelFile:
             flags = data.get("flags") or {}
             image_path = data["imagePath"]
             self._check_image_height_and_width(
-                base64.b64encode(self.image_data).decode("utf-8"),
-                data.get("imageHeight"),
-                data.get("imageWidth"),
+                image_data=base64.b64encode(self.image_data).decode("utf-8"),
+                image_height=data.get("imageHeight"),
+                image_width=data.get("imageWidth"),
             )
             shapes = [
                 {
-                    "label": s["label"],
-                    "score": s.get("score", None),
-                    "points": s["points"],
-                    "shape_type": s.get("shape_type", "polygon"),
-                    "flags": s.get("flags", {}),
-                    "group_id": s.get("group_id"),
-                    "description": s.get("description"),
-                    "difficult": s.get("difficult", False),
-                    "attributes": s.get("attributes", {}),
-                    "kie_linking": s.get("kie_linking", []),
+                    "label": shape["label"],
+                    "score": shape.get("score", None),
+                    "points": shape["points"],
+                    "shape_type": shape.get("shape_type", "polygon"),
+                    "flags": shape.get("flags", {}),
+                    "group_id": shape.get("group_id"),
+                    "description": shape.get("description"),
+                    "difficult": shape.get("difficult", False),
+                    "attributes": shape.get("attributes", {}),
+                    "kie_linking": shape.get("kie_linking", []),
                     "other_data": {
-                        k: v for k, v in s.items() if k not in shape_keys
+                        k: v for k, v in shape.items() if k not in shape_keys
                     },
                 }
-                for s in data["shapes"]
+                for shape in data["shapes"]
             ]
             for i, s in enumerate(data["shapes"]):
                 if s.get("shape_type", "polygon") == "rotation":
@@ -115,3 +107,45 @@ class LabelFile:
         self.image_path = image_path
         self.filename = filename
         self.other_data = other_data
+
+    def save(self, filename=None, shapes=None, image_path=None, image_height=None, image_width=None, image_data=None, other_data=None, flags=None):
+        if image_data is not None:
+            image_data = base64.b64encode(image_data).decode("utf-8")
+            image_height, image_width = self._check_image_height_and_width(image_data, image_height, image_width)
+
+        if other_data is None:
+            other_data = {}
+        if flags is None:
+            flags = {}
+        for i, shape in enumerate(shapes):
+            if shape["shape_type"] == "rectangle":
+                sorted_box = LabelConverter.calculate_bounding_box(
+                    shape["points"]
+                )
+                xmin, ymin, xmax, ymax = sorted_box
+                shape["points"] = [
+                    [xmin, ymin],
+                    [xmax, ymin],
+                    [xmax, ymax],
+                    [xmin, ymax],
+                ]
+                shapes[i] = shape
+        data = {
+            "version": __version__,
+            "flags": flags,
+            "shapes": shapes,
+            "imagePath": image_path,
+            "imageData": image_data,
+            "imageHeight": image_height,
+            "imageWidth": image_width,
+        }
+
+        for key, value in other_data.items():
+            assert key not in data
+            data[key] = value
+        try:
+            with io_open(filename, "w") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            self.filename = filename
+        except Exception as e:  # noqa
+            raise LabelFileError(e) from e

@@ -1,5 +1,8 @@
 import os
 
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import Qt
+
 from core.configs.constants import Constants
 from core.configs.core import CORE
 from core.dto.enums import ZoomMode
@@ -122,3 +125,12 @@ def scale_fit_width():
     # The epsilon does not seem to work too well here.
     w = CORE.Object.scroll_area.width() - 2.0
     return w / CORE.Object.canvas.pixmap.width()
+
+
+def load_flags(flags: dict):
+    CORE.Object.flag_widget.clear()
+    for key, flag in flags.items():
+        item = QtWidgets.QListWidgetItem(key)
+        item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+        item.setCheckState(Qt.Checked if flag else Qt.Unchecked)
+        CORE.Object.flag_widget.addItem(item)

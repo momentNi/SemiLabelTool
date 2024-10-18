@@ -1,5 +1,8 @@
+import hashlib
 import os
 import re
+import struct
+from typing import Tuple
 
 from PyQt5 import QtGui
 from natsort import natsort
@@ -28,3 +31,17 @@ def walkthrough_files_in_dir(folder_path):
 def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def get_rgb_by_label(label: str) -> Tuple[int, int, int]:
+    m = hashlib.blake2s()
+    m.update(label.encode('utf-8'))
+    hash_result = m.hexdigest()
+    # take first 3 bytes
+    hash_bytes = hash_result[:6]
+    # convert to int(4 bytes) and take first 3 bytes as R, G, B
+    num = int(hash_bytes, 16)
+
+    r, g, b, _ = struct.unpack('BBBB', struct.pack('I', num))
+
+    return r, g, b

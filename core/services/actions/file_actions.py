@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMessage
 import utils
 from core.configs.constants import Constants
 from core.configs.core import CORE
-from core.dto.label_file import LabelFile, LabelFileError
+from core.dto.label_file import LabelFile
 from core.services import system
 from core.services.actions import canvas
 from core.services.actions.canvas import paint_canvas
@@ -40,69 +40,44 @@ def open_file():
     if file_dialog.exec_():
         filename = file_dialog.selectedFiles()[0]
         if filename:
-            CORE.Object.info_file_list.clear()
+            CORE.Object.info_file_list_widget.clear()
             load_file(filename)
 
 
-def save_label_file(filename):
-    print("Save label file")
+def save_label_file(filename: str):
+    logger.info("Save label file")
     if filename and save_labels(filename):
         add_recent_file(filename)
         set_clean()
 
 
-def save_labels(filename):
-    print("saving labels")
+def save_labels(filename: str) -> bool:
+    logger.info("saving labels")
     label_file = LabelFile()
-
-    def format_shape(s):
-        data = s.other_data.copy()
-        info = {
-            "label": s.label,
-            "score": s.score,
-            "points": [(p.x(), p.y()) for p in s.points],
-            "group_id": s.group_id,
-            "description": s.description,
-            "difficult": s.difficult,
-            "shape_type": s.shape_type,
-            "flags": s.flags,
-            "attributes": s.attributes,
-            "kie_linking": s.kie_linking,
-        }
-        if s.shape_type == "rotation":
-            info["direction"] = s.direction
-        data.update(info)
-
-        return data
-
     return True
 
-    # TODO wait for labeling done.
     # # Get current shapes
     # # Excluding auto labeling special shapes
     # shapes = [
     #     format_shape(item.shape())
     #     for item in CORE.Variable.label_list
-    #     if item.shape().label
-    #        not in [
-    #            AutoLabelingMode.OBJECT,
-    #            AutoLabelingMode.ADD,
-    #            AutoLabelingMode.REMOVE,
-    #        ]
+    #     if item.shape().label not in [
+    #         AutoLabelEditMode.OBJECT,
+    #         AutoLabelEditMode.ADD,
+    #         AutoLabelEditMode.REMOVE,
+    #     ]
     # ]
     # flags = {}
-    # for i in range(self.flag_widget.count()):
-    #     item = self.flag_widget.item(i)
+    # for i in range(CORE.Object.flag_dock.flag_widget.count()):
+    #     item = CORE.Object.flag_dock.flag_widget.item(i)
     #     key = item.text()
     #     flag = item.checkState() == Qt.Checked
     #     flags[key] = flag
     # try:
-    #     image_path = osp.relpath(self.image_path, osp.dirname(filename))
-    #     image_data = (
-    #         self.image_data if self._config["store_data"] else None
-    #     )
-    #     if osp.dirname(filename) and not osp.exists(osp.dirname(filename)):
-    #         os.makedirs(osp.dirname(filename))
+    #     image_path = os.path.relpath(CORE.Variable.current_file_full_path, os.path.dirname(filename))
+    #     image_data = CORE.Variable.label_file.image_data
+    #     if os.path.dirname(filename) and not os.path.exists(os.path.dirname(filename)):
+    #         os.makedirs(os.path.dirname(filename))
     #     label_file.save(
     #         filename=filename,
     #         shapes=shapes,
@@ -113,10 +88,8 @@ def save_labels(filename):
     #         other_data=self.other_data,
     #         flags=flags,
     #     )
-    #     self.label_file = label_file
-    #     items = self.file_list_widget.findItems(
-    #         self.image_path, Qt.MatchExactly
-    #     )
+    #     CORE.Variable.label_file = label_file
+    #     items = self.file_list_widget.findItems(CORE.Variable.current_file_full_path, Qt.MatchExactly)
     #     if len(items) > 0:
     #         if len(items) != 1:
     #             raise RuntimeError("There are duplicate files.")
@@ -125,8 +98,11 @@ def save_labels(filename):
     #     # CORE.Variable.current_file_full_path = filename
     #     return True
     # except LabelFileError as e:
-    #     self.error_message(
-    #         self.tr("Error saving label data"), self.tr("<b>%s</b>") % e
+    #     QMessageBox.critical(
+    #         CORE.Object.main_window,
+    #         "Error saving label data",
+    #         f"<b>{e}</b>",
+    #         QMessageBox.Ok
     #     )
     #     return False
 
@@ -171,10 +147,10 @@ def load_file(filename: str = None):
     # self.inform_next_files(filename)
 
     # Changing file_list_widget loads file
-    if filename in CORE.Variable.image_list and CORE.Object.info_file_list.currentRow() != CORE.Variable.image_list.index(
+    if filename in CORE.Variable.image_list and CORE.Object.info_file_list_widget.currentRow() != CORE.Variable.image_list.index(
             filename):
-        CORE.Object.info_file_list.setCurrentRow(CORE.Variable.image_list.index(filename))
-        CORE.Object.info_file_list.repaint()
+        CORE.Object.info_file_list_widget.setCurrentRow(CORE.Variable.image_list.index(filename))
+        CORE.Object.info_file_list_widget.repaint()
         return False
 
     system.reset_state()
@@ -309,7 +285,7 @@ def open_labeled_image(end_index, step, need_load=True) -> None:
         return
     current_index = CORE.Variable.image_list.index(CORE.Variable.current_file_full_path)
     for i in range(current_index + step, end_index, step):
-        if CORE.Object.info_file_list.item(i).checkState() == Qt.Checked:
+        if CORE.Object.info_file_list_widget.item(i).checkState() == Qt.Checked:
             CORE.Variable.current_file_full_path = CORE.Variable.image_list[i]
             if CORE.Variable.current_file_full_path and need_load:
                 load_file(CORE.Variable.current_file_full_path)
@@ -322,7 +298,7 @@ def open_next_image(**kwargs) -> None:
     """
     need_load = kwargs.get('need_load', True)
     if QApplication.keyboardModifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
-        open_labeled_image(CORE.Object.info_file_list.count(), 1, need_load)
+        open_labeled_image(CORE.Object.info_file_list_widget.count(), 1, need_load)
         return
 
     if not utils.qt_utils.may_continue():
@@ -399,7 +375,7 @@ def load_image_folder(dir_path, pattern=None, need_load=True):
 
     CORE.Variable.last_open_dir_path = dir_path
     CORE.Variable.current_file_full_path = None
-    CORE.Object.info_file_list.clear()
+    CORE.Object.info_file_list_widget.clear()
     for filename in walkthrough_files_in_dir(dir_path):
         if pattern and pattern not in filename:
             continue
@@ -412,7 +388,7 @@ def load_image_folder(dir_path, pattern=None, need_load=True):
             item.setCheckState(Qt.Checked)
         else:
             item.setCheckState(Qt.Unchecked)
-        CORE.Object.info_file_list.addItem(item)
+        CORE.Object.info_file_list_widget.addItem(item)
     open_next_image(need_load=need_load)
 
 
@@ -491,8 +467,8 @@ def change_output_dir():
     load_image_folder(CORE.Variable.last_open_dir_path, need_load=False)
 
     if CORE.Variable.current_file_full_path in CORE.Variable.image_list:
-        CORE.Object.info_file_list.setCurrentRow(CORE.Variable.image_list.index(CORE.Variable.current_file_full_path))
-        CORE.Object.info_file_list.repaint()
+        CORE.Object.info_file_list_widget.setCurrentRow(CORE.Variable.image_list.index(CORE.Variable.current_file_full_path))
+        CORE.Object.info_file_list_widget.repaint()
 
 
 def get_label_file():
@@ -527,7 +503,7 @@ def delete_label_file():
         os.remove(label_file)
         logger.info("Label file is removed: %s", label_file)
 
-        item = CORE.Object.info_file_list.currentItem()
+        item = CORE.Object.info_file_list_widget.currentItem()
         item.setCheckState(Qt.Unchecked)
 
         filename = CORE.Variable.current_file_full_path

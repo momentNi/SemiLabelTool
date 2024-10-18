@@ -39,11 +39,13 @@ class Settings(object):
             bool: 是否加载成功
         """
         try:
-            if os.path.exists(self.path):
+            # TODO `not` is only for TEST
+            if not os.path.exists(self.path):
                 with open(self.path, 'rb') as f:
                     self.data = yaml.safe_load(f)
                     return True
             else:
+                logger.info("User config not exist, reading default config.")
                 with open(os.path.join(os.path.dirname(os.path.relpath(__file__)), "config.yaml"), "rb") as f:
                     self.data = yaml.safe_load(f)
         except IOError as e:
