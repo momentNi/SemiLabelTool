@@ -1,8 +1,7 @@
 from PyQt5.QtWidgets import QMenu
 
 from core.configs.core import CORE
-from core.services.actions import file_actions
-from core.services.actions.file_actions import update_file_menu
+from core.services.actions import files as files_action
 from core.views.area.menu.sub import BaseMenu
 
 
@@ -11,20 +10,20 @@ class FileMenu(BaseMenu):
     def __init__(self, name, parent):
         super().__init__(name, parent)
         self.parent = parent
-        self.aboutToShow.connect(update_file_menu)
+        self.aboutToShow.connect(files_action.update_file_menu)
 
     def add_action_list_item(self):
         self.action_dict = {
             "open_image": self.menu_action(
                 "Open Image...",
-                file_actions.open_file,
+                files_action.open_file,
                 "Ctrl+I",
                 "file",
                 "Open image or label file"
             ),
             "open_next_image": self.menu_action(
                 "Next Image",
-                file_actions.open_next_image,
+                files_action.open_next_image,
                 ["D", "Ctrl+Shift+D"],
                 "next",
                 "Open next (hold Ctrl+Shift to move to the next labeled image)",
@@ -32,7 +31,7 @@ class FileMenu(BaseMenu):
             ),
             "open_prev_image": self.menu_action(
                 "Previous Image",
-                file_actions.open_prev_image,
+                files_action.open_prev_image,
                 ["A", "Ctrl+Shift+A"],
                 "prev",
                 "Open prev (hold Ctrl+Shift to move to the prev labeled image)",
@@ -40,14 +39,14 @@ class FileMenu(BaseMenu):
             ),
             "open_dir": self.menu_action(
                 "Open Directory",
-                file_actions.open_directory,
+                files_action.open_directory,
                 ["Ctrl+D"],
                 "open",
                 "Open Directory"
             ),
             "open_video": self.menu_action(
                 "Open Video",
-                file_actions.open_video,
+                files_action.open_video,
                 ["Ctrl+Shift+V"],
                 "video",
                 "Open video file"
@@ -55,7 +54,7 @@ class FileMenu(BaseMenu):
             "open_recent": QMenu("Open Recent"),
             "save_file": self.menu_action(
                 "Save",
-                file_actions.save_file,
+                files_action.save_file,
                 ["Ctrl+S"],
                 "save",
                 "Save labels to file",
@@ -63,7 +62,7 @@ class FileMenu(BaseMenu):
             ),
             "save_file_as": self.menu_action(
                 "Save as",
-                file_actions.save_file_as,
+                files_action.save_file_as,
                 ["Ctrl+Shift+S"],
                 "save-as",
                 "Save labels to a different file",
@@ -88,13 +87,13 @@ class FileMenu(BaseMenu):
             ),
             "change_output_dir": self.menu_action(
                 "Change Output Directory",
-                slot=file_actions.change_output_dir,
+                slot=files_action.change_output_dir,
                 icon="open",
                 tip="Change where annotations are loaded/saved",
             ),
             "delete_file": self.menu_action(
                 "Delete Label File",
-                file_actions.delete_label_file,
+                files_action.delete_label_file,
                 ["Ctrl+Delete"],
                 "delete",
                 "Delete current label file",
@@ -102,7 +101,7 @@ class FileMenu(BaseMenu):
             ),
             "delete_image_file": self.menu_action(
                 "Delete Image File",
-                file_actions.delete_image_file,
+                files_action.delete_image_file,
                 ["Ctrl+Shift+Delete"],
                 "delete",
                 "Delete current image file",
@@ -110,7 +109,7 @@ class FileMenu(BaseMenu):
             ),
             "close": self.menu_action(
                 "Close",
-                file_actions.close_file,
+                files_action.close_file,
                 ["Ctrl+Q"],
                 "cancel",
                 "Close current file",

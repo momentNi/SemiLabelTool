@@ -5,7 +5,8 @@ from PyQt5.QtCore import Qt
 
 from core.configs.constants import Constants
 from core.configs.core import CORE
-from core.dto.enums import ZoomMode
+from core.dto.enums import ZoomMode, CanvasMode
+from utils.logger import logger
 
 
 def set_dirty():
@@ -48,11 +49,11 @@ def set_clean():
 
 
 def reset_state():
-    # self.label_list.clear()
+    CORE.Object.label_list_widget.clear()
     CORE.Variable.current_file_full_path = None
     CORE.Variable.label_file = None
     CORE.Object.canvas.reset_canvas()
-    # CORE.Object.info_file_search.label_filter_combobox.combo_box.clear()
+    CORE.Object.label_filter_combo_box.combo_box.clear()
 
 
 def has_label_file():
@@ -80,16 +81,15 @@ def toggle_drawing_sensitive(drawing=True):
 
 
 def on_item_description_change():
-    print("on_item_description_change")
     description = CORE.Object.item_description.toPlainText()
-    print(f"description: {description}")
-    # if self.canvas.current is not None:
-    #     self.canvas.current.description = description
-    # elif self.canvas.editing() and len(self.canvas.selected_shapes) == 1:
-    #     self.canvas.selected_shapes[0].description = description
-    # else:
-    #     self.other_data["image_description"] = description
-    # set_dirty()
+    logger.info(f"description: {description}")
+    if CORE.Object.canvas.current is not None:
+        CORE.Object.canvas.current.description = description
+    elif CORE.Object.canvas.canvas_mode == CanvasMode.EDIT and len(CORE.Object.canvas.selected_shapes) == 1:
+        CORE.Object.canvas.selected_shapes[0].description = description
+    else:
+        CORE.Variable.label_file.other_data["image_description"] = description
+    set_dirty()
 
 
 def set_zoom(value):
@@ -134,3 +134,17 @@ def load_flags(flags: dict):
         item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
         item.setCheckState(Qt.Checked if flag else Qt.Unchecked)
         CORE.Object.flag_widget.addItem(item)
+
+
+def update_combo_box():
+    # Get the unique labels and add them to the Combobox.
+    labels_list = []
+    for item in CORE.Object.label_list_widget:
+        label = item.shape().label
+        labels_list.append(str(label))
+    unique_labels_list = list(set(labels_list))
+
+    # Add a null row for showing all the labels
+    unique_labels_list.append("")
+    unique_labels_list.sort()
+    CORE.Object.label_filter_combo_box.update_items(unique_labels_list)

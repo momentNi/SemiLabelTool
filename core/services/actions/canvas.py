@@ -9,7 +9,7 @@ def paint_canvas():
     if CORE.Variable.image.isNull():
         logger.error("cannot paint null image")
         return
-    # CORE.Object.canvas.scale = 0.01 * self.zoom_widget.value()
+    CORE.Object.canvas.scale = 0.01 * CORE.Object.zoom_widget.value()
     CORE.Object.canvas.adjustSize()
     CORE.Object.canvas.update()
 

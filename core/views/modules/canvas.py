@@ -1,4 +1,5 @@
 import copy
+import re
 from typing import List, Tuple, Dict, Set
 
 from PyQt5 import QtGui, QtCore
@@ -12,7 +13,7 @@ from core.dto.exceptions import CanvasError
 from core.dto.shape import Shape
 from core.services.actions.canvas import *
 from core.services.signals.canvas import *
-from core.services.system import set_dirty, toggle_drawing_sensitive, scale_fit_window, scale_fit_width
+from core.services.system import set_dirty, toggle_drawing_sensitive, scale_fit_window, scale_fit_width, update_combo_box
 from utils.calculator import get_adjacent_points, rotate_point, intersection_point_with_box, distance
 from utils.function import hex_to_rgb
 from utils.logger import logger
@@ -894,6 +895,57 @@ class Canvas(QWidget):
         self.highlight_edge = None
         self.update()
 
+    def load_labels(self, shapes: List):
+        s = []
+        for shape in shapes:
+            label = shape["label"]
+            score = shape.get("score", None)
+            points = shape["points"]
+            shape_type = shape["shape_type"]
+            flags = shape["flags"]
+            group_id = shape["group_id"]
+            description = shape.get("description", "")
+            is_difficult = shape.get("difficult", False)
+            attributes = shape.get("attributes", {})
+            direction = shape.get("direction", 0)
+            kie_linking = shape.get("kie_linking", [])
+            other_data = shape["other_data"]
+
+            if label in CORE.Variable.hidden_class_list or not points:
+                # skip point-empty shape
+                continue
+
+            shape = Shape(
+                label=label,
+                score=score,
+                shape_type=shape_type,
+                group_id=group_id,
+                description=description,
+                is_difficult=is_difficult,
+                direction=direction,
+                attributes=attributes,
+                kie_linking=kie_linking,
+            )
+            for x, y in points:
+                shape.add_point(QtCore.QPointF(x, y))
+            shape.close_shape()
+
+            default_flags = {}
+            if CORE.Variable.settings.get("label_flags"):
+                label_flags = CORE.Variable.settings.get("label_flags")
+                for pattern, keys in label_flags.items():
+                    if re.match(pattern, label):
+                        for key in keys:
+                            default_flags[key] = False
+            shape.flags = default_flags
+            if flags:
+                shape.flags.update(flags)
+            shape.other_data = other_data
+
+            s.append(shape)
+        update_combo_box()
+        self.load_shapes(s)
+
     # ==================================================
     # ================= Group Methods ==================
     # ==================================================
@@ -1643,7 +1695,7 @@ class Canvas(QWidget):
                     continue
                 if shape.label in [AutoLabelEditMode.OBJECT.value, AutoLabelEditMode.ADD.value, AutoLabelEditMode.REMOVE.value]:
                     continue
-                label_text = f"id: {shape.group_id if shape.group_id is not None else ''} {shape.label} {float(shape.score) if shape.score is not None and self.need_show_scores else '':.2f}"
+                label_text = f"id: {shape.group_id if shape.group_id is not None else ''} {shape.label} {round(float(shape.score), 2) if shape.score is not None and self.need_show_scores else ''}"
                 if not label_text:
                     continue
                 fm = QtGui.QFontMetrics(p.font())

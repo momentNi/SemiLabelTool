@@ -1,5 +1,5 @@
 from core.configs.core import CORE
-from core.services.actions import file_actions
+from core.services.actions import files as files_action
 from core.views.area.menu.sub import BaseMenu
 
 
@@ -18,7 +18,7 @@ class ViewMenu(BaseMenu):
             "s1": None,
             "fill_drawing_polygon": self.menu_action(
                 "Open Image...",
-                file_actions.open_file,
+                files_action.open_file,
                 "Ctrl+I",
                 "file",
                 "Open image or label file"

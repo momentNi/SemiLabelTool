@@ -2,7 +2,8 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDockWidget, QPlainTextEdit, QListWidget, QLineEdit
 
 from core.configs.constants import Constants
-from core.services.signals.file_signals import file_selection_changed
+from core.services import system
+from core.services.signals import files as files_signal
 from core.services.signals.views.area.information import *
 from core.services.system import load_flags, set_dirty
 from core.views.modules.label_filter_combo_box import LabelFilterComboBox
@@ -38,6 +39,7 @@ class InformationArea(QWidget):
         )
         item_description = QPlainTextEdit()
         item_description.setPlaceholderText("Customize description about selected Object.")
+        item_description.textChanged.connect(system.on_item_description_change)
         description_dock.setWidget(item_description)
         CORE.Object.item_description = item_description
         self.layout.addWidget(description_dock)
@@ -74,7 +76,8 @@ class InformationArea(QWidget):
         """)
         CORE.Object.label_dock = label_dock
 
-        label_filter_combobox = LabelFilterComboBox(self)
+        label_filter_combo_box = LabelFilterComboBox(self)
+        CORE.Object.label_filter_combo_box = label_filter_combo_box
 
         unique_label_list = UniqueLabelListWidget()
         unique_label_list.setObjectName("UniqueLabelListWidget")
@@ -91,7 +94,7 @@ class InformationArea(QWidget):
         label_dock_layout = QVBoxLayout()
         label_dock_layout.setContentsMargins(0, 0, 0, 0)
         label_dock_layout.setSpacing(0)
-        label_dock_layout.addWidget(label_filter_combobox)
+        label_dock_layout.addWidget(label_filter_combo_box)
         label_dock_layout.addWidget(unique_label_list)
         label_dock_widget = QWidget()
         label_dock_widget.setLayout(label_dock_layout)
@@ -111,13 +114,14 @@ class InformationArea(QWidget):
         """)
         CORE.Object.shape_dock = shape_dock
 
-        label_list = LabelListWidget()
-        label_list.item_selection_changed_signal.connect(label_selection_changed)
+        label_list_widget = LabelListWidget()
+        CORE.Object.label_list_widget = label_list_widget
+        label_list_widget.item_selection_changed_signal.connect(label_selection_changed)
         # TODO label_list.item_double_clicked_signal.connect(self.edit_label)
-        label_list.item_changed.connect(label_item_changed)
-        label_list.item_dropped.connect(label_order_changed)
+        label_list_widget.item_changed.connect(label_item_changed)
+        label_list_widget.item_dropped.connect(label_order_changed)
 
-        shape_dock.setWidget(label_list)
+        shape_dock.setWidget(label_list_widget)
 
         self.layout.addWidget(shape_dock)
 
@@ -130,7 +134,7 @@ class InformationArea(QWidget):
 
         file_list_widget = QListWidget()
         file_list_widget.setObjectName("FileList")
-        file_list_widget.itemSelectionChanged.connect(file_selection_changed)
+        file_list_widget.itemSelectionChanged.connect(files_signal.file_selection_changed)
         CORE.Object.info_file_list_widget = file_list_widget
 
         file_list_layout = QVBoxLayout()

@@ -37,6 +37,7 @@ class Core(object):
         brightness_contrast_map: dict[str, tuple[float, float]] = {}
         # 近期打开的文件
         recent_files: List[str] = settings.get("recent_files", [])
+        hidden_class_list = []
 
         # 当前文件夹下的图片列表
         @classmethod
@@ -71,6 +72,7 @@ class Core(object):
         info_file_list_widget: QListWidget = None
 
         label_list_widget: LabelListWidget = None
+        label_filter_combo_box: QWidget = None
         unique_label_list_widget: UniqueLabelListWidget = None
 
         # ToolBar 缩放组件

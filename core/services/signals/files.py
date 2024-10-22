@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 import utils
 from core.configs.core import CORE
-from core.services.actions.file_actions import load_file
+from core.services.actions import files as files_action
 from utils.logger import logger
 
 
@@ -29,7 +29,7 @@ def file_selection_changed():
     if current_index < len(CORE.Variable.image_list):
         filename = CORE.Variable.image_list[current_index]
         if filename:
-            load_file(filename)
+            files_action.load_file(filename)
             # if self.attributes:
             #     # Clear the history widgets from the QGridLayout
             #     self.grid_layout = QGridLayout()

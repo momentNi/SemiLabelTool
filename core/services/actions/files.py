@@ -8,11 +8,11 @@ from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMessage
 import utils
 from core.configs.constants import Constants
 from core.configs.core import CORE
+from core.dto.exceptions import LabelFileError
 from core.dto.label_file import LabelFile
 from core.services import system
-from core.services.actions import canvas
 from core.services.actions.canvas import paint_canvas
-from core.services.system import set_clean, reset_state
+from core.services.system import set_clean, reset_state, load_flags
 from core.views.dialogs.brightness_contrast_dialog import BrightnessContrastDialog
 from core.views.dialogs.file_dialog_preview import FileDialogPreview
 from core.views.dialogs.save_file_dialog import SaveFileDialog
@@ -141,20 +141,21 @@ def save_file_as():
 def load_file(filename: str = None):
     CORE.Variable.settings.save()
 
-    # For auto labeling, clear the previous marks
-    # and inform the next files to be annotated
-    # self.clear_auto_labeling_marks()
-    # self.inform_next_files(filename)
+    # For auto labeling
+    # TODO self.clear_auto_labeling_marks()
+    # TODO self.inform_next_files(filename)
 
     # Changing file_list_widget loads file
-    if filename in CORE.Variable.image_list and CORE.Object.info_file_list_widget.currentRow() != CORE.Variable.image_list.index(
-            filename):
+    if filename in CORE.Variable.image_list and CORE.Object.info_file_list_widget.currentRow() != CORE.Variable.image_list.index(filename):
         CORE.Object.info_file_list_widget.setCurrentRow(CORE.Variable.image_list.index(filename))
         CORE.Object.info_file_list_widget.repaint()
         return False
 
     system.reset_state()
     CORE.Object.canvas.setEnabled(False)
+    if filename is None:
+        filename = CORE.Variable.settings.get("filename", "")
+    filename = str(filename)
     if not QtCore.QFile.exists(filename):
         QMessageBox.critical(
             CORE.Object.main_window,
@@ -162,6 +163,7 @@ def load_file(filename: str = None):
             f"No such file: <b>{filename}</b>",
             QMessageBox.Ok
         )
+        logger.error(f"Error opening file: No such file: {filename}")
         return False
 
     # assumes same name, but json extension
@@ -181,10 +183,11 @@ def load_file(filename: str = None):
                 f"<p><b>{e}</b></p><p>Make sure <i>{label_file}</i> is a valid label file.",
                 QMessageBox.Ok
             )
+            logger.error(f"Error reading {label_file}")
             CORE.Object.status_bar.showMessage(f"Error reading {label_file}")
             return False
         CORE.Object.item_description.textChanged.disconnect()
-        CORE.Object.item_description.setPlainText(CORE.Object.label_file.other_data.get("image_description", ""))
+        CORE.Object.item_description.setPlainText(CORE.Variable.label_file.other_data.get("image_description", ""))
         CORE.Object.item_description.textChanged.connect(system.on_item_description_change)
     else:
         CORE.Variable.label_file = LabelFile()
@@ -194,34 +197,34 @@ def load_file(filename: str = None):
     handling_image = QtGui.QImage.fromData(CORE.Variable.label_file.image_data)
 
     if handling_image.isNull():
-        formats = [
-            f"*.{fmt.data().decode()}"
-            for fmt in QtGui.QImageReader.supportedImageFormats()
-        ]
+        formats = [f"*.{fmt.data().decode()}" for fmt in QtGui.QImageReader.supportedImageFormats()]
         QMessageBox.critical(
             CORE.Object.main_window,
             "Error opening file",
             f"<p>Make sure <i>{filename}</i> is a valid image file.<br/>Supported image formats: {','.join(formats)}</p>",
             QMessageBox.Ok
         )
+        logger.error(f"Error reading {filename}")
         CORE.Object.status_bar.showMessage(f"Error reading {filename}")
         return False
     CORE.Variable.image = handling_image
     CORE.Variable.current_file_full_path = filename
-    if CORE.Variable.settings["keep_prev"]:
+    prev_shapes = []
+    if CORE.Variable.settings.get("keep_prev", False):
         prev_shapes = CORE.Object.canvas.shapes
-        if CORE.Object.canvas.is_no_shape():
-            CORE.Object.canvas.load_shapes(prev_shapes, replace=False)
-            system.set_dirty()
+    CORE.Object.canvas.load_pixmap(QtGui.QPixmap.fromImage(handling_image))
+    flags = {k: False for k in CORE.Variable.image_flags or []}
+    if CORE.Variable.label_file:
+        CORE.Object.canvas.load_labels(CORE.Variable.label_file.shapes)
+        if CORE.Variable.label_file.flags is not None:
+            flags.update(CORE.Variable.label_file.flags)
+    load_flags(flags)
+
+    if CORE.Variable.settings.get("keep_prev", False) and CORE.Object.canvas.is_no_shape():
+        CORE.Object.canvas.load_shapes(prev_shapes, replace=False)
+        system.set_dirty()
     else:
         system.set_clean()
-    CORE.Object.canvas.load_pixmap(QtGui.QPixmap.fromImage(handling_image))
-    # flags = {k: False for k in self.image_flags or []}
-    if CORE.Variable.label_file.shapes:
-        canvas.load_labels(CORE.Variable.label_file.shapes)
-        # if CORE.Variable.label_file.flags is not None:
-        #     flags.update(self.label_file.flags)
-    # self.load_flags(flags)
 
     CORE.Object.canvas.setEnabled(True)
 
@@ -230,26 +233,21 @@ def load_file(filename: str = None):
     if CORE.Variable.current_file_full_path in CORE.Object.canvas.zoom_history:
         CORE.Object.canvas.zoom_mode = CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path][0]
         system.set_zoom(CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path][1])
-    elif is_initial_load or not CORE.Variable.settings["keep_prev_scale"]:
+    elif is_initial_load or not CORE.Variable.settings.get("keep_prev_scale", False):
         system.adjust_scale(initial=True)
 
     # set scroll values
     for orientation in CORE.Object.canvas.scroll_values:
         if CORE.Variable.current_file_full_path in CORE.Object.canvas.scroll_values[orientation]:
-            CORE.Object.canvas.set_scroll(orientation, CORE.Object.canvas.scroll_values[orientation][
-                CORE.Variable.current_file_full_path])
+            CORE.Object.canvas.set_scroll(orientation, CORE.Object.canvas.scroll_values[orientation][CORE.Variable.current_file_full_path])
 
     # set brightness contrast values
     dialog = BrightnessContrastDialog(img_data_to_pil(CORE.Variable.label_file.image_data))
     brightness, contrast = CORE.Variable.brightness_contrast_map.get(CORE.Variable.current_file_full_path, (None, None))
-    if CORE.Variable.settings["keep_prev_brightness"] and CORE.Variable.recent_files:
-        brightness, _ = CORE.Variable.brightness_contrast_map.get(
-            CORE.Variable.recent_files[0], (None, None)
-        )
-    if CORE.Variable.settings["keep_prev_contrast"] and CORE.Variable.recent_files:
-        _, contrast = CORE.Variable.brightness_contrast_map.get(
-            CORE.Variable.recent_files[0], (None, None)
-        )
+    if CORE.Variable.settings("keep_prev_brightness", False) and CORE.Variable.recent_files:
+        brightness, _ = CORE.Variable.brightness_contrast_map.get(CORE.Variable.recent_files[0], (None, None))
+    if CORE.Variable.settings("keep_prev_contrast", False) and CORE.Variable.recent_files:
+        _, contrast = CORE.Variable.brightness_contrast_map.get(CORE.Variable.recent_files[0], (None, None))
     if brightness is not None:
         dialog.slider_brightness.setValue(brightness)
     if contrast is not None:
@@ -259,7 +257,7 @@ def load_file(filename: str = None):
         dialog.on_new_value()
     paint_canvas()
     add_recent_file(CORE.Variable.current_file_full_path)
-    # self.toggle_actions(True)
+    # TODO self.toggle_actions(True)
     CORE.Object.canvas.setFocus()
     basename = os.path.basename(str(filename))
     if CORE.Variable.image_list and filename in CORE.Variable.image_list:
@@ -292,11 +290,10 @@ def open_labeled_image(end_index, step, need_load=True) -> None:
             break
 
 
-def open_next_image(**kwargs) -> None:
+def open_next_image(need_load=True) -> None:
     """
     Open next image to be labeled
     """
-    need_load = kwargs.get('need_load', True)
     if QApplication.keyboardModifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
         open_labeled_image(CORE.Object.info_file_list_widget.count(), 1, need_load)
         return
@@ -352,8 +349,7 @@ def open_directory():
     if CORE.Variable.last_open_dir_path and os.path.exists(CORE.Variable.last_open_dir_path):
         default_open_dir_path = CORE.Variable.last_open_dir_path
     else:
-        default_open_dir_path = os.path.dirname(
-            CORE.Variable.current_file_full_path) if CORE.Variable.current_file_full_path else "."
+        default_open_dir_path = os.path.dirname(CORE.Variable.current_file_full_path) if CORE.Variable.current_file_full_path else "."
 
     target_dir_path = str(
         QFileDialog.getExistingDirectory(
@@ -395,9 +391,8 @@ def load_image_folder(dir_path, pattern=None, need_load=True):
 def open_video():
     if not utils.qt_utils.may_continue():
         return
-    default_open_video_path = (
-        os.path.dirname(CORE.Variable.current_file_full_path) if CORE.Variable.current_file_full_path else "."
-    )
+
+    default_open_video_path = os.path.dirname(CORE.Variable.current_file_full_path) if CORE.Variable.current_file_full_path else "."
     source_video_path, _ = QFileDialog.getOpenFileName(
         CORE.Object.main_window,
         f"{Constants.APP_NAME} - Open Video file",
@@ -420,7 +415,7 @@ def open_video():
         load_image_folder(target_dir_path)
 
 
-def add_recent_file(filename):
+def add_recent_file(filename: str):
     if filename in CORE.Variable.recent_files:
         CORE.Variable.recent_files.remove(filename)
     elif len(CORE.Variable.recent_files) > 10:
@@ -435,8 +430,7 @@ def update_file_menu():
     for i, f in enumerate(files):
         icon = utils.qt_utils.new_icon("labels")
         action = QAction(icon, "&%d %s" % (i + 1, QtCore.QFileInfo(f).fileName()), CORE.Action.open_recent)
-        action.triggered.connect(
-            functools.partial(lambda x: load_file(x) if utils.qt_utils.may_continue() else None, f))
+        action.triggered.connect(functools.partial(lambda x: load_file(x) if utils.qt_utils.may_continue() else None, f))
         menu.addAction(action)
 
 

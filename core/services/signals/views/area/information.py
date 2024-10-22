@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from core.configs.core import CORE
 from core.dto.enums import CanvasMode
 from core.dto.label_list_widget_item import LabelListWidgetItem
-from core.services.actions.file_actions import load_image_folder
+from core.services.actions import files as files_action
 from core.services.system import set_dirty
 
 
@@ -31,7 +31,7 @@ def label_order_changed():
 
 
 def file_search_changed():
-    load_image_folder(
+    files_action.load_image_folder(
         dir_path=CORE.Variable.last_open_dir_path,
         pattern=CORE.Object.info_file_search_widget.text(),
         need_load=False
