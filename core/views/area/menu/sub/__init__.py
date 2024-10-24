@@ -25,11 +25,17 @@ class BaseMenu(QMenu):
         if len(self.action_dict) == 0:
             logger.warning(f"{self.objectName()} Menu has no actions.")
         for name, widget in self.action_dict.items():
-            setattr(CORE.Action, name, widget)
-            if isinstance(widget, QAction):
-                self.addAction(widget)
-            elif isinstance(widget, QMenu):
-                self.addMenu(widget)
+            if widget is None:
+                self.addSeparator()
+            elif getattr(CORE.Action, name, None) is not None:
+                logger.warning(f"{self.objectName()} already exists in CORE.Action and will be skipped.")
+                continue
+            else:
+                setattr(CORE.Action, name, widget)
+                if isinstance(widget, QAction):
+                    self.addAction(widget)
+                elif isinstance(widget, QMenu):
+                    self.addMenu(widget)
 
     @final
     def get_menu(self):

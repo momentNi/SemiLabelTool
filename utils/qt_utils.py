@@ -4,7 +4,7 @@ from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QAction
 
 from core.configs.core import CORE
-from core.services.actions import file_actions
+from core.services.actions import files as files_action
 
 
 def may_continue() -> bool:
@@ -24,7 +24,7 @@ def may_continue() -> bool:
         QtWidgets.QMessageBox.Save,
     )
     if answer == QtWidgets.QMessageBox.Save:
-        file_actions.save_file()
+        files_action.save_file()
         return True
     elif answer == QtWidgets.QMessageBox.Discard:
         return True

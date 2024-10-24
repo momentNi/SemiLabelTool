@@ -39,7 +39,7 @@ class ToolBar(QToolBar):
         self.add_action(None)
         self.add_action(CORE.Action.delete_file)
         self.add_action(None)
-        self.add_action(CORE.Object.zoom_widget)
+        self.add_action(CORE.Object.zoom_widget_action)
         # TODO
         # fit_width, toggle_auto_labeling_widget, run_all_images,
 
@@ -68,8 +68,9 @@ class ToolBar(QToolBar):
         # TODO
         self.zoom_widget.valueChanged.connect(self.paint_canvas)
 
-        CORE.Object.zoom_widget = QtWidgets.QWidgetAction(self)
-        CORE.Object.zoom_widget.setDefaultWidget(self.zoom_widget)
+        CORE.Object.zoom_widget_action = QtWidgets.QWidgetAction(self)
+        CORE.Object.zoom_widget_action.setDefaultWidget(self.zoom_widget)
+        CORE.Object.zoom_widget = self.zoom_widget
 
     def paint_canvas(self):
         print(self.zoom_widget.value())
