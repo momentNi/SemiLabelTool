@@ -1233,7 +1233,7 @@ class Canvas(QWidget):
             vertex_index = shape.get_nearest_vertex(pos, self.epsilon / self.scale)
             edge_index = shape.get_nearest_edge(pos, self.epsilon / self.scale)
             if vertex_index is not None:
-                if self.highlight_vertex is not None:
+                if self.highlight_vertex:
                     self.highlight_shape.highlight_clear()
                 self.prev_highlight_vertex = self.highlight_vertex = vertex_index
                 self.prev_highlight_shape = self.highlight_shape = shape

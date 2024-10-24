@@ -23,7 +23,7 @@ class FileMenu(BaseMenu):
             ),
             "open_next_image": self.menu_action(
                 "Next Image",
-                files_action.open_next_image,
+                lambda: files_action.open_next_image(need_load=True),
                 ["D", "Ctrl+Shift+D"],
                 "next",
                 "Open next (hold Ctrl+Shift to move to the next labeled image)",
@@ -75,7 +75,7 @@ class FileMenu(BaseMenu):
                 tip="Save automatically",
                 checkable=True,
                 enabled=True,
-                checked=CORE.Variable.settings.get("auto_save", False),
+                checked=CORE.Variable.settings.get("auto_save", True),
             ),
             "save_with_image_data": self.menu_action(
                 text="Save With Image Data",
