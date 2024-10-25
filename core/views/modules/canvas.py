@@ -131,7 +131,7 @@ class Canvas(QWidget):
         # Painter for Canvas
         self._painter = QtGui.QPainter()
         # Cross line in Canvas
-        self._cross_line = CrossLine()
+        self.cross_line = CrossLine()
         # Canvas Pixmap
         self.pixmap = QPixmap()
         # Operating Line, It means:
@@ -276,7 +276,7 @@ class Canvas(QWidget):
             opacity: The opacity of cross line
         """
         self.need_show_cross_line = need_show
-        self._cross_line.set_style(width, color, opacity)
+        self.cross_line.set_style(width, color, opacity)
         self.update()
 
     def set_point_offsets(self, point: QtCore.QPointF) -> None:
@@ -1132,7 +1132,7 @@ class Canvas(QWidget):
 
         # Polygon drawing
         if self.canvas_mode == CanvasMode.CREATE:
-            self.line.line_color = QtGui.QColor(*hex_to_rgb(self._cross_line.color))
+            self.line.line_color = QtGui.QColor(*hex_to_rgb(self.cross_line.color))
             self.line.shape_type = self.create_mode
 
             self.override_cursor(QtCore.Qt.CrossCursor)
@@ -1738,9 +1738,9 @@ class Canvas(QWidget):
 
         # Draw mouse coordinates
         if self.need_show_cross_line:
-            pen = QtGui.QPen(QtGui.QColor(self._cross_line.color), max(1, int(round(self._cross_line.width / Constants.SHAPE_SCALE))), Qt.DashLine)
+            pen = QtGui.QPen(QtGui.QColor(self.cross_line.color), max(1, int(round(self.cross_line.width / Constants.SHAPE_SCALE))), Qt.DashLine)
             p.setPen(pen)
-            p.setOpacity(self._cross_line.opacity)
+            p.setOpacity(self.cross_line.opacity)
             p.drawLine(QtCore.QPointF(self.prev_move_point.x(), 0), QtCore.QPointF(self.prev_move_point.x(), self.pixmap.height()))
             p.drawLine(QtCore.QPointF(0, self.prev_move_point.y()), QtCore.QPointF(self.pixmap.width(), self.prev_move_point.y()))
 
