@@ -41,6 +41,7 @@ class Core(object):
         hidden_class_list = []
         attributes: dict = {}
         copied_shapes: List[Shape] = []
+        selected_polygon_stack: List[int] = []
 
         # 当前文件夹下的图片列表
         @classmethod
