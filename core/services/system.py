@@ -5,7 +5,8 @@ from PyQt5.QtCore import Qt
 
 from core.configs.constants import Constants
 from core.configs.core import CORE
-from core.dto.enums import ZoomMode, CanvasMode
+from core.dto.enums import ZoomMode, CanvasMode, ShapeType
+from utils.function import find_most_similar_label
 from utils.logger import logger
 
 
@@ -148,3 +149,138 @@ def update_combo_box():
     unique_labels_list.append("")
     unique_labels_list.sort()
     CORE.Object.label_filter_combo_box.update_items(unique_labels_list)
+
+
+def set_item_description(enable: bool):
+    CORE.Object.item_description.textChanged.disconnect()
+    if enable:
+        CORE.Object.item_description.setDisabled(False)
+        if len(CORE.Object.canvas.selected_shapes) == 1:
+            new_text = CORE.Object.canvas.selected_shapes[0].description
+        else:
+            new_text = CORE.Variable.label_file.other_data.get("image_description", "")
+
+    else:
+        CORE.Object.item_description.setDisabled(True)
+        new_text = ""
+    CORE.Object.item_description.setPlainText(new_text)
+    CORE.Object.item_description.textChanged.connect(on_item_description_change)
+
+
+def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, disable_auto_labeling: bool = True):
+    # TODO Disable auto labeling if needed
+    # if disable_auto_labeling and self.auto_labeling_widget.auto_labeling_mode != AutoLabelingMode.NONE:
+    #     self.clear_auto_labeling_marks()
+    #     self.auto_labeling_widget.set_auto_labeling_mode(None)
+
+    set_item_description(enable=False)
+
+    CORE.Object.canvas.set_editing(edit)
+    CORE.Object.canvas.create_mode = create_mode
+    if edit:
+        CORE.Action.create_mode.setEnabled(True)
+        CORE.Action.create_rectangle_mode.setEnabled(True)
+        CORE.Action.create_rotation_mode.setEnabled(True)
+        CORE.Action.create_circle_mode.setEnabled(True)
+        CORE.Action.create_line_mode.setEnabled(True)
+        CORE.Action.create_point_mode.setEnabled(True)
+        CORE.Action.create_line_strip_mode.setEnabled(True)
+    else:
+        CORE.Action.union_selection.setEnabled(False)
+        if create_mode == ShapeType.POLYGON:
+            CORE.Action.create_mode.setEnabled(False)
+            CORE.Action.create_rectangle_mode.setEnabled(True)
+            CORE.Action.create_rotation_mode.setEnabled(True)
+            CORE.Action.create_circle_mode.setEnabled(True)
+            CORE.Action.create_line_mode.setEnabled(True)
+            CORE.Action.create_point_mode.setEnabled(True)
+            CORE.Action.create_line_strip_mode.setEnabled(True)
+        elif create_mode == ShapeType.RECTANGLE:
+            CORE.Action.create_mode.setEnabled(True)
+            CORE.Action.create_rectangle_mode.setEnabled(False)
+            CORE.Action.create_rotation_mode.setEnabled(True)
+            CORE.Action.create_circle_mode.setEnabled(True)
+            CORE.Action.create_line_mode.setEnabled(True)
+            CORE.Action.create_point_mode.setEnabled(True)
+            CORE.Action.create_line_strip_mode.setEnabled(True)
+        elif create_mode == ShapeType.LINE:
+            CORE.Action.create_mode.setEnabled(True)
+            CORE.Action.create_rectangle_mode.setEnabled(True)
+            CORE.Action.create_rotation_mode.setEnabled(True)
+            CORE.Action.create_circle_mode.setEnabled(True)
+            CORE.Action.create_line_mode.setEnabled(False)
+            CORE.Action.create_point_mode.setEnabled(True)
+            CORE.Action.create_line_strip_mode.setEnabled(True)
+        elif create_mode == ShapeType.POINT:
+            CORE.Action.create_mode.setEnabled(True)
+            CORE.Action.create_rectangle_mode.setEnabled(True)
+            CORE.Action.create_rotation_mode.setEnabled(True)
+            CORE.Action.create_circle_mode.setEnabled(True)
+            CORE.Action.create_line_mode.setEnabled(True)
+            CORE.Action.create_point_mode.setEnabled(False)
+            CORE.Action.create_line_strip_mode.setEnabled(True)
+        elif create_mode == ShapeType.CIRCLE:
+            CORE.Action.create_mode.setEnabled(True)
+            CORE.Action.create_rectangle_mode.setEnabled(True)
+            CORE.Action.create_rotation_mode.setEnabled(True)
+            CORE.Action.create_circle_mode.setEnabled(False)
+            CORE.Action.create_line_mode.setEnabled(True)
+            CORE.Action.create_point_mode.setEnabled(True)
+            CORE.Action.create_line_strip_mode.setEnabled(True)
+        elif create_mode == ShapeType.LINE_STRIP:
+            CORE.Action.create_mode.setEnabled(True)
+            CORE.Action.create_rectangle_mode.setEnabled(True)
+            CORE.Action.create_rotation_mode.setEnabled(True)
+            CORE.Action.create_circle_mode.setEnabled(True)
+            CORE.Action.create_line_mode.setEnabled(True)
+            CORE.Action.create_point_mode.setEnabled(True)
+            CORE.Action.create_line_strip_mode.setEnabled(False)
+        elif create_mode == ShapeType.ROTATION:
+            CORE.Action.create_mode.setEnabled(True)
+            CORE.Action.create_rectangle_mode.setEnabled(True)
+            CORE.Action.create_rotation_mode.setEnabled(False)
+            CORE.Action.create_circle_mode.setEnabled(True)
+            CORE.Action.create_line_mode.setEnabled(True)
+            CORE.Action.create_point_mode.setEnabled(True)
+            CORE.Action.create_line_strip_mode.setEnabled(True)
+        else:
+            logger.error(f"Unsupported create_mode: {create_mode}")
+            raise ValueError(f"Unsupported create_mode: {create_mode}")
+    CORE.Action.edit_object.setEnabled(not edit)
+    update_label_instruction()
+
+
+def set_edit_mode():
+    # TODO Disable auto labeling
+    # self.clear_auto_labeling_marks()
+    # self.auto_labeling_widget.set_auto_labeling_mode(None)
+
+    toggle_draw_mode(True)
+    set_item_description(True)
+    update_label_instruction()
+
+
+def update_label_instruction():
+    logger.info(f"Current mode: {CORE.Object.canvas.canvas_mode}")
+    # TODO 更新instruction部分的文字状态，可能需要信号介入，待实现
+
+
+def validate_label(label):
+    for i in range(CORE.Object.unique_label_list_widget.count()):
+        label_i = CORE.Object.unique_label_list_widget.item(i).data(Qt.UserRole)
+        if label_i == label:
+            return True
+    return False
+
+
+def reset_attribute(text):
+    valid_labels = list(CORE.Variable.attributes.keys())
+    if text not in valid_labels:
+        most_similar_label = find_most_similar_label(text, valid_labels)
+        QtWidgets.QMessageBox.critical(
+            CORE.Object.main_window,
+            "Invalid label",
+            f"<p><b>Invalid label '{text}' with validation type: {valid_labels}!\nReset the label as {most_similar_label}.</b></p>"
+        )
+        text = most_similar_label
+    return text

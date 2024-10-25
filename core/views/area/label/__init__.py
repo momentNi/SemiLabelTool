@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea
 
 from core.configs.core import CORE
+from core.views.dialogs.label_dialog import LabelDialog
 from core.views.modules.canvas import Canvas
 
 
@@ -20,6 +21,11 @@ class LabelArea(QWidget):
         self.layout.addWidget(self.auto_part)
         self.layout.addWidget(self.canvas_part)
         self.setLayout(self.layout)
+
+        CORE.Object.label_dialog = LabelDialog(
+            labels=CORE.Variable.settings.get("labels", None),
+            flags=CORE.Variable.settings.get("label_flags", None)
+        )
 
     def generate_instruction_part(self):
         content = (
