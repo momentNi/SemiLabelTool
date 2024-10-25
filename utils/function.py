@@ -2,6 +2,7 @@ import hashlib
 import os
 import re
 import struct
+from difflib import SequenceMatcher
 from typing import Tuple
 
 from PyQt5 import QtGui
@@ -45,3 +46,14 @@ def get_rgb_by_label(label: str) -> Tuple[int, int, int]:
     r, g, b, _ = struct.unpack('BBBB', struct.pack('I', num))
 
     return r, g, b
+
+
+def find_most_similar_label(text, valid_labels):
+    max_similarity = 0
+    most_similar_label = valid_labels[0]
+    for label in valid_labels:
+        similarity = SequenceMatcher(None, text, label).ratio()
+        if similarity > max_similarity:
+            max_similarity = similarity
+            most_similar_label = label
+    return most_similar_label

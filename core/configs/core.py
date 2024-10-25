@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QMainWindow, QStatusBar, QLineEdit, QListWidget, QPl
 
 from core.configs.settings import Settings
 from core.dto.label_file import LabelFile
+from core.dto.shape import Shape
 from core.views.modules.label_list_widget import LabelListWidget
 from core.views.modules.unique_label_list_widget import UniqueLabelListWidget
 from core.views.modules.zoom_widget import ZoomWidget
@@ -38,6 +39,8 @@ class Core(object):
         # 近期打开的文件
         recent_files: List[str] = settings.get("recent_files", [])
         hidden_class_list = []
+        attributes: dict = {}
+        copied_shapes: List[Shape] = []
 
         # 当前文件夹下的图片列表
         @classmethod
@@ -75,6 +78,8 @@ class Core(object):
         label_filter_combo_box: QWidget = None
         unique_label_list_widget: UniqueLabelListWidget = None
 
+        label_dialog = None
+
         # ToolBar 缩放组件
         zoom_widget: ZoomWidget = None
 
@@ -96,5 +101,6 @@ class Core(object):
                 logger.error(f"{name} has invalid QAction: {q_action}")
                 return
             self.actions[name] = q_action
+
 
 CORE = Core()

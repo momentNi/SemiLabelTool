@@ -7,6 +7,7 @@ from PyQt5.QtCore import QPointF, QRectF
 from core.configs.constants import Constants
 from core.dto.enums import ShapeType, PointType, ShapeHighlightMode
 from utils.calculator import get_rect_from_line, get_circle_rect_from_line, distance, distance_to_line
+from utils.function import get_rgb_by_label
 
 
 class WrongShapeError(Exception):
@@ -53,6 +54,16 @@ class Shape:
     def __setitem__(self, key: int, value: QPointF) -> QPointF:
         self.points[key] = value
         return value
+
+    @staticmethod
+    def update_shape_color(shape):
+        r, g, b = get_rgb_by_label(shape.label)
+        shape.line_color = QtGui.QColor(r, g, b)
+        shape.vertex_fill_color = QtGui.QColor(r, g, b)
+        shape.highlight_vertex_fill_color = QtGui.QColor(255, 255, 255)
+        shape.fill_color = QtGui.QColor(r, g, b, 128)
+        shape.select_line_color = QtGui.QColor(255, 255, 255)
+        shape.select_fill_color = QtGui.QColor(r, g, b, 155)
 
     def copy(self) -> Self:
         return copy.deepcopy(self)
