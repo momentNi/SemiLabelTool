@@ -1,9 +1,8 @@
 import copy
 import re
-from typing import List, Tuple, Dict, Set
+from typing import List, Tuple, Dict, Set, Optional
 
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QWidget, QApplication, QMenu
 
 from core.configs.constants import Constants
@@ -83,7 +82,7 @@ class Canvas(QWidget):
         self.is_highlight_shape_hovered: bool = False
 
         # Whether some attributes are needed to show
-        self.need_show_cross_line = True
+        self.need_show_cross_line: bool = True
         self.need_show_groups: bool = False
         self.need_show_texts: bool = True
         self.need_show_labels: bool = True
@@ -92,32 +91,32 @@ class Canvas(QWidget):
         self.need_show_linking: bool = True
 
         # Status Variables for point, edge and shape
-        self.highlight_shape: Shape | None = None
-        self.prev_highlight_shape: Shape | None = None
-        self.highlight_vertex: int | None = None
-        self.prev_highlight_vertex: int | None = None
-        self.highlight_edge: int | None = None
-        self.prev_highlight_edge: int | None = None
-        self.prev_point: QPointF | None = None
-        self.prev_move_point: QPointF | None = None
+        self.highlight_shape: Optional['Shape'] = None
+        self.prev_highlight_shape: Optional['Shape'] = None
+        self.highlight_vertex: Optional[int] = None
+        self.prev_highlight_vertex: Optional[int] = None
+        self.highlight_edge: Optional[int] = None
+        self.prev_highlight_edge: Optional[int] = None
+        self.prev_point: Optional[QtCore.QPointF] = None
+        self.prev_move_point: Optional[QtCore.QPointF] = None
 
         # =============================================
         # ============= History Variables =============
         # =============================================
         # Store zoom size for each shown file
         # key=filename, value=(zoom_mode, zoom_value)
-        self.zoom_history: Dict[str, Tuple[ZoomMode, float]] = {}
+        self.zoom_history: Dict[str, Tuple['ZoomMode', float]] = {}
         # Store scroll positions for each shown file
         # key=filename, value=scroll_value
         self.scroll_values: dict = {
             QtCore.Qt.Horizontal: {},
             QtCore.Qt.Vertical: {},
         }
-        self.scroll_bars = {
+        self.scroll_bars: dict = {
             QtCore.Qt.Vertical: CORE.Object.scroll_area.verticalScrollBar(),
             QtCore.Qt.Horizontal: CORE.Object.scroll_area.horizontalScrollBar(),
         }
-        self.scaler = {
+        self.scaler: dict = {
             ZoomMode.FIT_WINDOW: scale_fit_window,
             ZoomMode.FIT_WIDTH: scale_fit_width,
             ZoomMode.MANUAL_ZOOM: lambda: 1,
@@ -131,32 +130,32 @@ class Canvas(QWidget):
         # Painter for Canvas
         self._painter = QtGui.QPainter()
         # Cross line in Canvas
-        self.cross_line = CrossLine()
+        self.cross_line: 'CrossLine' = CrossLine()
         # Canvas Pixmap
-        self.pixmap = QPixmap()
+        self.pixmap: QtGui.QPixmap = QtGui.QPixmap()
         # Operating Line, It means:
         #     Edge from last point to current if create_mode == ShapeType.POLYGON
         #     Diagonal line of the rectangle if create_mode == ShapeType.RECTANGLE
         #     The current line if create_mode == ShapeType.LINE
         #     The current point if create_mode == ShapeType.POINT
-        self.line: Shape = Shape()
+        self.line: 'Shape' = Shape()
         # All shape objects in canvas of current image
-        self.shapes: List[Shape] = []
+        self.shapes: List['Shape'] = []
         # Shape objects backups for undo operation
-        self.shapes_backups: List[Shape] = []
+        self.shapes_backups: List['Shape'] = []
         # Current operating Shape Object
-        self.current: Shape | None = None
+        self.current: Optional['Shape'] = None
         # All shape objects selected in canvas of current image
-        self.selected_shapes: List[Shape] = []
+        self.selected_shapes: List['Shape'] = []
         # Copy of selected shapes
-        self.selected_shapes_copy: List[Shape] = []
+        self.selected_shapes_copy: List['Shape'] = []
         # Record which shapes are visible(True) or not(False)
-        self.visible_shapes: Dict[Shape, bool] = {}
+        self.visible_shapes: Dict['Shape', bool] = {}
         # Record the offset of horizontal and vertical of point
-        self.offsets = QtCore.QPointF(), QtCore.QPointF()
+        self.offsets: Tuple[QtCore.QPointF, QtCore.QPointF] = QtCore.QPointF(), QtCore.QPointF()
         # Canvas Right click Menus
         # (without selection and dragging of shapes, with selection and dragging of shapes)
-        self.menus = (QMenu(), QMenu())
+        self.menus: Tuple[QMenu, QMenu] = (QMenu(), QMenu())
 
         # Set Canvas options
         self.setMouseTracking(True)
@@ -226,7 +225,7 @@ class Canvas(QWidget):
         return distance(p1, p2) < (self.epsilon / self.scale)
 
     @property
-    def is_no_shape(self):
+    def is_no_shape(self) -> bool:
         """
         Check if canvas has any shapes
         """
@@ -389,7 +388,7 @@ class Canvas(QWidget):
             self.deselect_shape()
 
     # ==================================================
-    # ================ Shapes Methods ================
+    # ================ Shapes Methods ==================
     # ==================================================
     def store_history_shapes(self) -> None:
         """
@@ -580,7 +579,7 @@ class Canvas(QWidget):
             self.update()
         return deleted_shapes
 
-    def delete_shape(self, shape):
+    def delete_shape(self, shape: Shape):
         """
         Delete all shapes in current canvas
         """
@@ -850,7 +849,7 @@ class Canvas(QWidget):
             self.drawing_polygon_signal.emit(False)
         self.update()
 
-    def load_pixmap(self, pixmap: QPixmap, clear_shapes: bool = True) -> None:
+    def load_pixmap(self, pixmap: QtGui.QPixmap, clear_shapes: bool = True) -> None:
         """
         Load pixmap of current image to Canvas
 
