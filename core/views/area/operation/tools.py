@@ -4,6 +4,7 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QToolBar
 
 from core.configs.core import CORE
+from core.services.actions.canvas import paint_canvas
 from core.views.modules.zoom_widget import ZoomWidget
 from utils.qt_utils import create_new_action
 
@@ -49,8 +50,9 @@ class ToolBar(QToolBar):
         self.add_action(CORE.Action.undo)
         self.add_action(None)
         self.add_action(CORE.Object.zoom_widget_action)
+        self.add_action(CORE.Action.fit_width)
         # TODO
-        # fit_width, toggle_auto_labeling_widget, run_all_images,
+        # toggle_auto_labeling_widget, run_all_images,
 
     def add_action(self, action):
         if action is None:
@@ -69,17 +71,11 @@ class ToolBar(QToolBar):
         return True
 
     def __init_zoom_widget(self):
-
         self.zoom_widget = ZoomWidget()
-        self.zoom_widget.setWhatsThis(
-            "Zoom in or out of the image. Also accessible with Ctrl++, Ctrl+- and Ctrl+Wheel from the canvas.")
+        self.zoom_widget.setWhatsThis("Zoom in or out of the image. Also accessible with Ctrl++, Ctrl+- and Ctrl+Wheel from the canvas.")
         self.zoom_widget.setEnabled(False)
-        # TODO
-        self.zoom_widget.valueChanged.connect(self.paint_canvas)
+        self.zoom_widget.valueChanged.connect(paint_canvas)
 
         CORE.Object.zoom_widget_action = QtWidgets.QWidgetAction(self)
         CORE.Object.zoom_widget_action.setDefaultWidget(self.zoom_widget)
         CORE.Object.zoom_widget = self.zoom_widget
-
-    def paint_canvas(self):
-        print(self.zoom_widget.value())

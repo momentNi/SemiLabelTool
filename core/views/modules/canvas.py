@@ -163,7 +163,6 @@ class Canvas(QWidget):
         self.setFocusPolicy(QtCore.Qt.WheelFocus)
 
         self.__bind_signals()
-        # TODO self.__init_actions()
 
     def __bind_signals(self):
         """
@@ -180,23 +179,14 @@ class Canvas(QWidget):
         # self.vertex_selected_signal.connect(self.actions.remove_point.setEnabled)
         # self.auto_labeling_marks_updated_signal.connect()
 
-    def __init_actions(self):
-        self.action_dict = {
-            "canvas_fit_width": None,
-            "canvas_fit_window": None,
-        }
-        for name, widget in self.action_dict.items():
-            if getattr(CORE.Action, name, None) is not None:
-                logger.warning(f"{self.objectName()} already exists in CORE.Action and will be skipped.")
-                continue
-            setattr(CORE.Action, name, widget)
-
+    @property
     def is_shape_restorable(self) -> bool:
         """
         Check if shape can be restored from backup
         """
         return len(self.shapes_backups) >= 2
 
+    @property
     def can_close_shape(self) -> bool:
         """
         Check if a shape can be closed (number of points > 2)
@@ -235,6 +225,7 @@ class Canvas(QWidget):
         #
         return distance(p1, p2) < (self.epsilon / self.scale)
 
+    @property
     def is_no_shape(self):
         """
         Check if canvas has any shapes
@@ -357,9 +348,7 @@ class Canvas(QWidget):
             self.is_auto_labeling = True
             self.auto_labeling_mode = (edit_mode, shape_type)
             self.create_mode = ShapeType(shape_type.value)
-            # TODO self.parent.toggle_draw_mode(
-            #     False, mode.shape_type, disable_auto_labeling=False
-            # )
+            system.toggle_draw_mode(edit=False, create_mode=self.create_mode, disable_auto_labeling=False)
 
     def set_auto_labeling_value(self, value=True) -> None:
         """
@@ -371,9 +360,7 @@ class Canvas(QWidget):
         self.is_auto_labeling = value
         if self.auto_labeling_mode is None:
             self.auto_labeling_mode = (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
-            # TODO self.parent.toggle_draw_mode(
-            #     True, "rectangle", disable_auto_labeling=True
-            # )
+            system.toggle_draw_mode(edit=True, create_mode=ShapeType.RECTANGLE, disable_auto_labeling=True)
 
     def set_loading_status(self, is_loading: bool, loading_text: str = None) -> None:
         """
@@ -1409,7 +1396,7 @@ class Canvas(QWidget):
             return
         # We need at least 4 points here, since the mousePress handler
         # adds an extra one before this handler is called.
-        if self.can_close_shape() and len(self.current) > 3:
+        if self.can_close_shape and len(self.current) > 3:
             self.current.pop_point()
             self.finalise_shape()
 
@@ -1421,7 +1408,7 @@ class Canvas(QWidget):
                 self.current = None
                 self.drawing_polygon_signal.emit(False)
                 self.update()
-            elif key == QtCore.Qt.Key_Return and self.can_close_shape():
+            elif key == QtCore.Qt.Key_Return and self.can_close_shape:
                 self.finalise_shape()
             elif modifiers == QtCore.Qt.AltModifier:
                 self.is_snapping = False

@@ -136,7 +136,7 @@ def undo_shape_edit():
     CORE.Object.canvas.restore_shape()
     CORE.Object.label_list_widget.clear()
     CORE.Object.canvas.load_shapes(CORE.Object.canvas.shapes)
-    CORE.actions.undo.setEnabled(CORE.Object.canvas.is_shape_restorable())
+    CORE.actions.undo.setEnabled(CORE.Object.canvas.is_shape_restorable)
 
 
 def toggle_shapes_visibility(value):

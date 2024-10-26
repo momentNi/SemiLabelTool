@@ -6,21 +6,22 @@ from PyQt5.QtCore import Qt
 from core.configs.constants import Constants
 from core.configs.core import CORE
 from core.dto.enums import ZoomMode, CanvasMode, ShapeType
+from core.services.actions import files
 from utils.function import find_most_similar_label
 from utils.logger import logger
 
 
 def set_dirty():
-    # CORE.Action.undo.setEnabled(self.canvas.is_shape_restorable)
+    CORE.Action.undo.setEnabled(CORE.Object.canvas.is_shape_restorable)
 
-    if CORE.Variable.settings["auto_save"]:
+    if CORE.Variable.settings.get("auto_save", True):
         label_file = f"{os.path.splitext(CORE.Variable.label_file.image_path)[0]}.json"
         if CORE.Variable.output_dir:
             label_file = os.path.join(CORE.Variable.output_dir, os.path.basename(label_file))
-        # self.save_labels(label_file)
+        files.save_labels(label_file)
         return
     CORE.Variable.is_dirty = True
-    # CORE.Action.save.setEnabled(True)
+    CORE.Action.save_file.setEnabled(True)
     title = Constants.APP_NAME
     if CORE.Variable.current_file_full_path is not None:
         title = f"{title} - {CORE.Variable.current_file_full_path}"
@@ -29,24 +30,25 @@ def set_dirty():
 
 def set_clean():
     CORE.Variable.is_dirty = False
+    CORE.Action.save_file.setEnabled(False)
+    # TODO CORE.Action.union_selection.setEnabled(False)
+    CORE.Action.create_mode.setEnabled(True)
+    CORE.Action.create_rectangle_mode.setEnabled(True)
+    CORE.Action.create_rotation_mode.setEnabled(True)
+    CORE.Action.create_circle_mode.setEnabled(True)
+    CORE.Action.create_line_mode.setEnabled(True)
+    CORE.Action.create_point_mode.setEnabled(True)
+    CORE.Action.create_line_strip_mode.setEnabled(True)
+
     title = Constants.APP_NAME
     if CORE.Variable.current_file_full_path is not None:
         title = f"{title} - {CORE.Variable.current_file_full_path}"
     CORE.Object.main_window.setWindowTitle(title)
 
-    # CORE.Action.save.setEnabled(False)
-    # CORE.Action.union_selection.setEnabled(False)
-    # CORE.Action.create_mode.setEnabled(True)
-    # CORE.Action.create_rectangle_mode.setEnabled(True)
-    # CORE.Action.create_rotation_mode.setEnabled(True)
-    # CORE.Action.create_circle_mode.setEnabled(True)
-    # CORE.Action.create_line_mode.setEnabled(True)
-    # CORE.Action.create_point_mode.setEnabled(True)
-    # CORE.Action.create_line_strip_mode.setEnabled(True)
-    # if has_label_file():
-    #     CORE.Action.delete_file.setEnabled(True)
-    # else:
-    #     CORE.Action.delete_file.setEnabled(False)
+    if has_label_file():
+        CORE.Action.delete_file.setEnabled(True)
+    else:
+        CORE.Action.delete_file.setEnabled(False)
 
 
 def reset_state():
@@ -74,11 +76,10 @@ def get_label_file():
 
 
 def toggle_drawing_sensitive(drawing=True):
-    print("toggle_drawing_sensitive")
-    # CORE.Action.edit_mode.setEnabled(not drawing)
-    # CORE.Action.undo_last_point.setEnabled(drawing)
-    # CORE.Action.undo.setEnabled(not drawing)
-    # CORE.Action.delete.setEnabled(not drawing)
+    CORE.Action.edit_object.setEnabled(not drawing)
+    CORE.Action.undo_last_point.setEnabled(drawing)
+    CORE.Action.undo.setEnabled(not drawing)
+    CORE.Action.delete_polygon.setEnabled(not drawing)
 
 
 def on_item_description_change():
@@ -94,9 +95,8 @@ def on_item_description_change():
 
 
 def set_zoom(value):
-    print("set_zoom")
-    # self.actions.fit_width.setChecked(False)
-    # self.actions.fit_window.setChecked(False)
+    CORE.Action.fit_width.setChecked(False)
+    CORE.Action.fit_window.setChecked(False)
     CORE.Object.canvas.zoom_mode = ZoomMode.MANUAL_ZOOM
     CORE.Object.zoom_widget.setValue(value)
     CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path] = (CORE.Object.canvas.zoom_mode, value)
@@ -284,3 +284,25 @@ def reset_attribute(text):
         )
         text = most_similar_label
     return text
+
+
+def toggle_zoom_related_action(value: bool):
+    CORE.Object.zoom_widget_action.setEnabled(value)
+    CORE.Action.zoom_in.setEnabled(value)
+    CORE.Action.zoom_out.setEnabled(value)
+    CORE.Action.zoom_original.setEnabled(value)
+    CORE.Action.fit_window.setEnabled(value)
+    CORE.Action.fit_width.setEnabled(value)
+
+
+def toggle_load_related_action(value: bool):
+    CORE.Action.close.setEnabled(value)
+    CORE.Action.create_mode.setEnabled(value)
+    CORE.Action.create_rectangle_mode.setEnabled(value)
+    CORE.Action.create_rotation_mode.setEnabled(value)
+    CORE.Action.create_circle_mode.setEnabled(value)
+    CORE.Action.create_line_mode.setEnabled(value)
+    CORE.Action.create_point_mode.setEnabled(value)
+    CORE.Action.create_line_strip_mode.setEnabled(value)
+    CORE.Action.edit_object.setEnabled(value)
+    CORE.Action.set_brightness_contrast.setEnabled(value)

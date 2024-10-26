@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDockWidget, QPlainTextEdit, Q
 
 from core.configs.constants import Constants
 from core.services import system
+from core.services.actions.edit import edit_label
 from core.services.signals import files as files_signal
 from core.services.signals.views.area.information import *
 from core.services.system import load_flags, set_dirty
@@ -117,7 +118,7 @@ class InformationArea(QWidget):
         label_list_widget = LabelListWidget()
         CORE.Object.label_list_widget = label_list_widget
         label_list_widget.item_selection_changed_signal.connect(label_selection_changed)
-        # TODO label_list.item_double_clicked_signal.connect(self.edit_label)
+        label_list_widget.item_double_clicked_signal.connect(edit_label)
         label_list_widget.item_changed.connect(label_item_changed)
         label_list_widget.item_dropped.connect(label_order_changed)
 

@@ -8,7 +8,7 @@ from utils.logger import logger
 
 def paint_canvas():
     if CORE.Variable.image.isNull():
-        logger.error("cannot paint null image")
+        logger.error(f"Paint image is null: {CORE.Variable.image}")
         return
     CORE.Object.canvas.scale = 0.01 * CORE.Object.zoom_widget.value()
     CORE.Object.canvas.adjustSize()
@@ -25,8 +25,8 @@ def add_zoom_value(increment):
 
 
 def set_zoom_value(value):
-    # TODO CORE.Action.fit_width.setChecked(False)
-    # TODO CORE.Action.fit_window.setChecked(False)
+    CORE.Action.fit_width.setChecked(False)
+    CORE.Action.fit_window.setChecked(False)
     CORE.Object.zoom_widget.setValue(value)
     CORE.Object.canvas.zoom_mode = ZoomMode.MANUAL_ZOOM
     CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path] = (CORE.Object.canvas.zoom_mode, value)

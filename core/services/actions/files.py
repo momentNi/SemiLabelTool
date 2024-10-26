@@ -10,9 +10,8 @@ from core.configs.core import CORE
 from core.dto.enums import ShapeType, AutoLabelEditMode
 from core.dto.exceptions import LabelFileError
 from core.dto.label_file import LabelFile
-from core.services import system
-from core.services.actions.canvas import paint_canvas
-from core.services.system import set_clean, reset_state, load_flags
+from core.services.actions.canvas import paint_canvas, set_scroll_value
+from core.services.system import set_clean, reset_state, load_flags, set_dirty, set_zoom, adjust_scale, on_item_description_change, toggle_zoom_related_action, toggle_load_related_action
 from core.views.dialogs.brightness_contrast_dialog import BrightnessContrastDialog
 from core.views.dialogs.file_dialog_preview import FileDialogPreview
 from core.views.dialogs.save_file_dialog import SaveFileDialog
@@ -161,7 +160,7 @@ def load_file(filename: str = None):
         CORE.Object.info_file_list_widget.repaint()
         return False
 
-    system.reset_state()
+    reset_state()
     CORE.Object.canvas.setEnabled(False)
     if filename is None:
         filename = CORE.Variable.settings.get("filename", "")
@@ -198,7 +197,7 @@ def load_file(filename: str = None):
             return False
         CORE.Object.item_description.textChanged.disconnect()
         CORE.Object.item_description.setPlainText(CORE.Variable.label_file.other_data.get("image_description", ""))
-        CORE.Object.item_description.textChanged.connect(system.on_item_description_change)
+        CORE.Object.item_description.textChanged.connect(on_item_description_change)
     else:
         CORE.Variable.label_file = LabelFile()
         CORE.Variable.label_file.load_image_file(filename)
@@ -230,11 +229,11 @@ def load_file(filename: str = None):
             flags.update(CORE.Variable.label_file.flags)
     load_flags(flags)
 
-    if CORE.Variable.settings.get("keep_prev", False) and CORE.Object.canvas.is_no_shape():
+    if CORE.Variable.settings.get("keep_prev", False) and CORE.Object.canvas.is_no_shape:
         CORE.Object.canvas.load_shapes(prev_shapes, replace=False)
-        system.set_dirty()
+        set_dirty()
     else:
-        system.set_clean()
+        set_clean()
 
     CORE.Object.canvas.setEnabled(True)
 
@@ -242,14 +241,14 @@ def load_file(filename: str = None):
     is_initial_load = not CORE.Object.canvas.zoom_history
     if CORE.Variable.current_file_full_path in CORE.Object.canvas.zoom_history:
         CORE.Object.canvas.zoom_mode = CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path][0]
-        system.set_zoom(CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path][1])
+        set_zoom(CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path][1])
     elif is_initial_load or not CORE.Variable.settings.get("keep_prev_scale", False):
-        system.adjust_scale(initial=True)
+        adjust_scale(initial=True)
 
     # set scroll values
     for orientation in CORE.Object.canvas.scroll_values:
         if CORE.Variable.current_file_full_path in CORE.Object.canvas.scroll_values[orientation]:
-            CORE.Object.canvas.set_scroll(orientation, CORE.Object.canvas.scroll_values[orientation][CORE.Variable.current_file_full_path])
+            set_scroll_value(orientation, CORE.Object.canvas.scroll_values[orientation][CORE.Variable.current_file_full_path])
 
     # set brightness contrast values
     dialog = BrightnessContrastDialog(img_data_to_pil(CORE.Variable.label_file.image_data))
@@ -267,7 +266,8 @@ def load_file(filename: str = None):
         dialog.on_new_value()
     paint_canvas()
     add_recent_file(CORE.Variable.current_file_full_path)
-    # TODO self.toggle_actions(True)
+    toggle_zoom_related_action(True)
+    toggle_load_related_action(True)
     CORE.Object.canvas.setFocus()
     basename = os.path.basename(str(filename))
     if CORE.Variable.image_list and filename in CORE.Variable.image_list:
@@ -566,6 +566,7 @@ def close_file():
         return
     reset_state()
     set_clean()
-    # TODO self.toggle_actions(False)
+    toggle_zoom_related_action(False)
+    toggle_load_related_action(False)
     CORE.Object.canvas.setEnabled(False)
     CORE.Action.save_file_as.setEnabled(False)
