@@ -1,8 +1,5 @@
-from core.configs.core import CORE
 from core.dto.enums import ShapeType
-from core.services import system
-from core.services.actions.edit import edit_label, duplicate_selected_shape, delete_selected_shape, copy_selected_shape, paste_selected_shape, remove_selected_point, undo_shape_edit, \
-    toggle_shapes_visibility
+from core.services.actions.edit import *
 from core.views.area.menu.sub import BaseMenu
 
 
@@ -84,6 +81,14 @@ class EditMenu(BaseMenu):
                 "Ctrl+E",
                 "edit",
                 "Modify the label of the selected polygon",
+                enabled=False
+            ),
+            "union_selection": self.menu_action(
+                "Union Selection",
+                union_selection,
+                None,
+                "union",
+                "Union multiple selected rectangle shapes",
                 enabled=False
             ),
             "duplicate_polygon": self.menu_action(

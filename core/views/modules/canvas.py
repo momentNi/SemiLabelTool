@@ -11,11 +11,13 @@ from core.dto.enums import ShapeType, CanvasMode, AutoLabelEditMode, AutoLabelSh
 from core.dto.exceptions import CanvasError
 from core.dto.shape import Shape
 from core.services.actions.canvas import *
+from core.services.actions.edit import copy_shape, move_shape
 from core.services.signals.canvas import *
 from core.services.system import set_dirty, toggle_drawing_sensitive, scale_fit_window, scale_fit_width, update_combo_box
 from utils.calculator import get_adjacent_points, rotate_point, intersection_point_with_box, distance
 from utils.function import hex_to_rgb
 from utils.logger import logger
+from utils.qt_utils import create_new_action
 
 
 class Canvas(QWidget):
@@ -177,6 +179,28 @@ class Canvas(QWidget):
         self.drawing_polygon_signal.connect(toggle_drawing_sensitive)
         # self.vertex_selected_signal.connect(self.actions.remove_point.setEnabled)
         # self.auto_labeling_marks_updated_signal.connect()
+
+    def init_menus(self):
+        self.menus = (QMenu(), QMenu())
+        self.menus[0].addAction(CORE.Action.create_mode)
+        self.menus[0].addAction(CORE.Action.create_rectangle_mode)
+        self.menus[0].addAction(CORE.Action.create_rotation_mode)
+        self.menus[0].addAction(CORE.Action.create_circle_mode)
+        self.menus[0].addAction(CORE.Action.create_line_mode)
+        self.menus[0].addAction(CORE.Action.create_point_mode)
+        self.menus[0].addAction(CORE.Action.create_line_strip_mode)
+        self.menus[0].addAction(CORE.Action.edit_object)
+        self.menus[0].addAction(CORE.Action.edit_label)
+        self.menus[0].addAction(CORE.Action.union_selection)
+        self.menus[0].addAction(CORE.Action.duplicate_polygon)
+        self.menus[0].addAction(CORE.Action.copy_object)
+        self.menus[0].addAction(CORE.Action.paste_object)
+        self.menus[0].addAction(CORE.Action.delete_polygon)
+        self.menus[0].addAction(CORE.Action.undo)
+        self.menus[0].addAction(CORE.Action.undo_last_point)
+        self.menus[0].addAction(CORE.Action.remove_selected_point)
+        self.menus[1].addAction(create_new_action(self.menus[1], 'Copy Here', copy_shape, None, 'copy'))
+        self.menus[1].addAction(create_new_action(self.menus[1], 'Move Here', move_shape, None, 'cartesian'))
 
     @property
     def is_shape_restorable(self) -> bool:

@@ -31,7 +31,7 @@ def set_dirty():
 def set_clean():
     CORE.Variable.is_dirty = False
     CORE.Action.save_file.setEnabled(False)
-    # TODO CORE.Action.union_selection.setEnabled(False)
+    CORE.Action.union_selection.setEnabled(False)
     CORE.Action.create_mode.setEnabled(True)
     CORE.Action.create_rectangle_mode.setEnabled(True)
     CORE.Action.create_rotation_mode.setEnabled(True)
@@ -103,7 +103,7 @@ def set_zoom(value):
 
 
 def adjust_scale(initial=False):
-    value = CORE.Object.canvas.scaler[ZoomMode.FIT_WINDOW if initial else CORE.Variable.zoom_mode]()
+    value = CORE.Object.canvas.scaler[ZoomMode.FIT_WINDOW if initial else CORE.Object.canvas.zoom_mode]()
     value = int(100 * value)
     CORE.Object.zoom_widget.setValue(value)
     CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path] = (CORE.Object.canvas.zoom_mode, 100)

@@ -46,6 +46,6 @@ def set_fit_window(value=True):
 
 def set_fit_width(value=True):
     if value:
-        CORE.Actions.fit_window.setChecked(False)
+        CORE.Action.fit_window.setChecked(False)
     CORE.Object.canvas.zoom_mode = ZoomMode.FIT_WIDTH if value else ZoomMode.MANUAL_ZOOM
     system.adjust_scale()

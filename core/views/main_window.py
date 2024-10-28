@@ -50,13 +50,15 @@ class MainWindow(QMainWindow):
         status_bar.showMessage(f"{Constants.APP_NAME} - {Constants.APP_DESCRIPTION}")
         self.setStatusBar(status_bar)
 
+        CORE.Object.canvas.init_menus()
+
     def closeEvent(self, event):
         if not utils.qt_utils.may_continue():
             event.ignore()
-        # CORE.Variable.settings["filename"] = self.filename if self.filename else ""
-        # CORE.Variable.settings.setValue("window/size", self.size())
-        # CORE.Variable.settings.setValue("window/position", self.pos())
-        # CORE.Variable.settings.setValue("window/state", self.parent.parent.saveState())
-        CORE.Variable.settings["recent_files"] = CORE.Variable.recent_files
+        CORE.Variable.settings.set("filename", CORE.Variable.current_file_full_path if CORE.Variable.current_file_full_path else "")
+        CORE.Variable.settings.set("window/size", self.size())
+        CORE.Variable.settings.set("window/position", self.pos())
+        # CORE.Variable.settings.set("window/state", self.parent.parent.saveState())
+        CORE.Variable.settings.set("recent_files", CORE.Variable.recent_files)
 
         CORE.Variable.settings.save()

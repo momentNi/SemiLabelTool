@@ -1,7 +1,7 @@
 import html
 from typing import List
 
-from PyQt5 import QtGui
+from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 
 from core.configs.core import CORE
@@ -143,3 +143,65 @@ def toggle_shapes_visibility(value):
     for item in CORE.Object.label_list_widget:
         item.setCheckState(Qt.Checked if value else Qt.Unchecked)
     CORE.Variable.settings.set("show_shapes", value)
+
+
+def union_selection():
+    """
+    Merges selected shapes into one shape.
+    """
+    if len(CORE.Object.canvas.selected_shapes) < 2:
+        QtWidgets.QMessageBox.warning(
+            CORE.Object.main_window,
+            "Warning",
+            "Please select at least two shapes to perform union.",
+            QtWidgets.QMessageBox.Ok,
+        )
+        return
+
+    # Get rectangle of all selected shapes
+    rectangle_shapes = []
+    for shape in CORE.Object.canvas.selected_shapes:
+        points = shape.points
+        # Convert QPointF objects to tuples
+        x_min, y_min = (points[0].x(), points[0].y())
+        x_max, y_max = (points[2].x(), points[2].y())
+        rectangle_shapes.append([x_min, y_min, x_max, y_max])
+
+    # Calculate the rectangle
+    min_x = min([bbox[0] for bbox in rectangle_shapes])
+    min_y = min([bbox[1] for bbox in rectangle_shapes])
+    max_x = max([bbox[2] for bbox in rectangle_shapes])
+    max_y = max([bbox[3] for bbox in rectangle_shapes])
+
+    # Create a new rectangle shape representing the union
+    union_shape = CORE.Object.canvas.selected_shapes[-1].copy()
+    union_shape.points[0].setX(min_x)
+    union_shape.points[0].setY(min_y)
+    union_shape.points[1].setX(max_x)
+    union_shape.points[1].setY(min_y)
+    union_shape.points[2].setX(max_x)
+    union_shape.points[2].setY(max_y)
+    union_shape.points[3].setX(min_x)
+    union_shape.points[3].setY(max_y)
+    add_label(union_shape)
+
+    # clear selected shapes
+    remove_labels(CORE.Object.canvas.delete_selected())
+    system.set_dirty()
+
+    # Update UI state
+    if CORE.Object.canvas.is_no_shape:
+        CORE.Action.save_as.setEnabled(False)
+
+
+def copy_shape():
+    CORE.Object.canvas.end_move(copy=True)
+    for shape in CORE.Object.canvas.selected_shapes:
+        add_label(shape)
+    CORE.Object.label_list_widget.clearSelection()
+    system.set_dirty()
+
+
+def move_shape():
+    CORE.Object.canvas.end_move(copy=False)
+    system.set_dirty()
