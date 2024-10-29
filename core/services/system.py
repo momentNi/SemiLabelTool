@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt
 
 from core.configs.constants import Constants
 from core.configs.core import CORE
-from core.dto.enums import ZoomMode, CanvasMode, ShapeType
+from core.dto.enums import ZoomMode, CanvasMode, ShapeType, AutoLabelEditMode
 from core.services.actions import files
 from utils.function import find_most_similar_label
 from utils.logger import logger
@@ -271,6 +271,32 @@ def validate_label(label):
         if label_i == label:
             return True
     return False
+
+
+def find_last_label() -> str:
+    """
+    Find the last label in the label list.
+    Exclude labels for auto labeling.
+    """
+    # Get from dialog history
+    last_label = CORE.Object.label_dialog.get_last_label()
+    if last_label:
+        return last_label
+
+    # Get selected label from the label list
+    items = CORE.Object.label_list_widget.selected_items()
+    if items:
+        shape = items[0].data(Qt.UserRole)
+        return shape.label
+
+    # Get the last label from the label list
+    for item in reversed(CORE.Object.label_list_widget):
+        shape = item.data(Qt.UserRole)
+        if shape.label not in (AutoLabelEditMode.OBJECT.value, AutoLabelEditMode.ADD.value, AutoLabelEditMode.REMOVE.value):
+            return shape.label
+
+    # No label is found
+    return ""
 
 
 def reset_attribute(text):

@@ -6,17 +6,14 @@ from PyQt5.QtCore import QPointF, QRectF
 
 from core.configs.constants import Constants
 from core.dto.enums import ShapeType, PointType, ShapeHighlightMode
+from core.dto.exceptions import WrongShapeError
 from utils.calculator import get_rect_from_line, get_circle_rect_from_line, distance, distance_to_line
 from utils.function import get_rgb_by_label
-
-
-class WrongShapeError(Exception):
-    pass
+from utils.logger import logger
 
 
 class Shape:
-    def __init__(self, label=None, score=None, line_color=None, shape_type=None, flags=None, group_id=None,
-                 description=None, is_difficult=False, direction=0, attributes=None, kie_linking=None):
+    def __init__(self, label=None, score=None, line_color=None, shape_type=None, flags=None, group_id=None, description=None, is_difficult=False, direction=0, attributes=None, kie_linking=None):
         self.label: str = label
         self.cache_label: str | None = None
         self.score: float = score
@@ -321,6 +318,7 @@ class Shape:
         elif shape == PointType.ROUND:
             path.addEllipse(point, d / 2.0, d / 2.0)
         else:
+            logger.error(f"Unsupported vertex shape: {shape}")
             raise WrongShapeError("Unsupported vertex shape")
 
     def paint(self, painter: QtGui.QPainter):
@@ -344,6 +342,7 @@ class Shape:
 
             if self.shape_type == ShapeType.RECTANGLE or self.shape_type == ShapeType.ROTATION:
                 if len(self.points) not in [1, 2, 4]:
+                    logger.error(f"Invalid points length (points = {self.points}) for {self.shape_type}")
                     raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self.shape_type}")
                 if len(self.points) == 2:
                     rectangle = get_rect_from_line(*self.points)
@@ -358,6 +357,7 @@ class Shape:
                         line_path.lineTo(self.points[0])
             elif self.shape_type == ShapeType.CIRCLE:
                 if len(self.points) not in [1, 2]:
+                    logger.error(f"Invalid points length (points = {self.points}) for {self.shape_type}")
                     raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self.shape_type}")
                 if len(self.points) == 2:
                     rectangle = get_circle_rect_from_line(self.points)
@@ -373,6 +373,7 @@ class Shape:
                         self.draw_vertex(vertex_path, i)
             elif self.shape_type == ShapeType.POINT:
                 if len(self.points) != 1:
+                    logger.error(f"Invalid points length (points = {self.points}) for {self.shape_type}")
                     raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self.shape_type}")
                 self.draw_vertex(vertex_path, 0)
             else:

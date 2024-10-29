@@ -1,9 +1,14 @@
 import os
 
 from PyQt5.QtCore import QPointF, Qt
+from PyQt5.QtWidgets import QMessageBox
 
 from core.configs.core import CORE
+from core.dto.enums import AutoLabelEditMode, ShapeType
+from core.services import system
 from core.services.actions.canvas import add_zoom_value, set_scroll_value
+from core.services.actions.edit import add_label
+from core.services.system import find_last_label
 
 
 def handle_zoom_request(delta: float, pos: QPointF):
@@ -28,11 +33,56 @@ def handle_scroll_request(delta, orientation):
 
 
 def handle_new_shape():
-    """Pop-up and give focus to the label editor.
+    items = CORE.Object.unique_label_list_widget.selectedItems()
+    text = None
+    if items:
+        text = items[0].data(Qt.UserRole)
+    flags = {}
+    group_id = None
+    description = ""
+    is_difficult = False
+    kie_linking = []
 
-    position MUST be in global coordinates.
-    """
-    print("new shape")
+    if CORE.Object.canvas.shapes[-1].label in (AutoLabelEditMode.ADD.value, AutoLabelEditMode.REMOVE.value):
+        text = CORE.Object.canvas.shapes[-1].label
+    elif not text or CORE.Object.canvas.shapes[-1].label == AutoLabelEditMode.OBJECT.value:
+        last_label = find_last_label()
+        if CORE.Variable.settings.get("auto_use_last_label", False) and last_label:
+            text = last_label
+        else:
+            previous_text = CORE.Object.label_dialog.edit.text()
+            text, flags, group_id, description, is_difficult, kie_linking = CORE.Object.label_dialog.pop_up(text)
+            if not text:
+                CORE.Object.label_dialog.edit.setText(previous_text)
+
+    if text and not system.validate_label(text):
+        QMessageBox.critical(
+            CORE.Object.main_window,
+            "Invalid label",
+            f"Invalid label '{text}' with validation type '{CORE.Variable.settings.get('validate_label', None)}'",
+            QMessageBox.Ok
+        )
+        return
+
+    if CORE.Variable.attributes and text:
+        text = system.reset_attribute(text)
+
+    if text:
+        CORE.Object.label_list_widget.clearSelection()
+        shape = CORE.Object.canvas.set_last_label(text, flags)
+        shape.group_id = group_id
+        shape.description = description
+        shape.label = text
+        shape.is_difficult = is_difficult
+        shape.kie_linking = kie_linking
+        add_label(shape)
+        CORE.Action.edit_mode.setEnabled(True)
+        CORE.Action.undo_last_point.setEnabled(False)
+        CORE.Action.undo.setEnabled(True)
+        system.set_dirty()
+    else:
+        CORE.Object.canvas.undo_last_line()
+        CORE.Object.canvas.shapes_backups.pop()
 
 
 def handle_show_shape(shape_height: float, shape_width: float, pos: QPointF):
@@ -65,5 +115,31 @@ def handle_show_shape(shape_height: float, shape_width: float, pos: QPointF):
             CORE.Object.status_bar.showMessage(f"X: {int(pos.x())}, Y: {int(pos.y())}")
 
 
-def handle_selection_changed():
-    print("selection changed")
+def handle_selection_changed(selected_shapes):
+    CORE.Variable.has_selection_slot = False
+    for shape in CORE.Object.canvas.selected_shapes:
+        shape.selected = False
+    CORE.Object.label_list_widget.clearSelection()
+    CORE.Object.canvas.selected_shapes = selected_shapes
+    can_merge = True
+    for shape in CORE.Object.canvas.selected_shapes:
+        shape.selected = True
+        if shape.shape_type != ShapeType.RECTANGLE:
+            can_merge = False
+        item = CORE.Object.label_list_widget.find_item_by_shape(shape)
+        if item is not None:
+            CORE.Object.label_list_widget.select_item(item)
+            CORE.Object.label_list_widget.scroll_to_item(item)
+    CORE.Variable.has_selection_slot = True
+    n_selected = len(selected_shapes)
+    CORE.Action.delete_polygon.setEnabled(n_selected)
+    CORE.Action.duplicate_polygon.setEnabled(n_selected)
+    CORE.Action.copy_object.setEnabled(n_selected)
+    CORE.Action.edit_label.setEnabled(n_selected == 1)
+    CORE.Action.union_selection.setEnabled(can_merge and n_selected > 1)
+    system.set_item_description(True)
+    if CORE.Variable.attributes:
+        for i in range(len(CORE.Object.canvas.shapes)):
+            if CORE.Object.canvas.shapes[i].selected:
+                self.update_attributes(i)
+                break

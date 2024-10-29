@@ -61,4 +61,4 @@ class MainWindow(QMainWindow):
         # CORE.Variable.settings.set("window/state", self.parent.parent.saveState())
         CORE.Variable.settings.set("recent_files", CORE.Variable.recent_files)
 
-        CORE.Variable.settings.save()
+        # CORE.Variable.settings.save()

@@ -307,7 +307,6 @@ class LabelQLineEdit(QtWidgets.QLineEdit):
     def set_list_widget(self, list_widget):
         self.list_widget = list_widget
 
-    # QT Overload
     def keyPressEvent(self, e):
         if e.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Down]:
             self.list_widget.keyPressEvent(e)
