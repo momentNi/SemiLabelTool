@@ -57,3 +57,23 @@ def find_most_similar_label(text, valid_labels):
             max_similarity = similarity
             most_similar_label = label
     return most_similar_label
+
+
+def is_possible_rectangle(points):
+    if len(points) != 4:
+        return False
+
+    # Check if four points form a rectangle
+    # The points are expected to be in the format:
+    # [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+    dists = [square_distance(points[i], points[(i + 1) % 4]) for i in range(4)]
+    dists.sort()
+
+    # For a rectangle, the two smallest distances
+    # should be equal and the two largest should be equal
+    return dists[0] == dists[1] and dists[2] == dists[3]
+
+
+def square_distance(p, q):
+    # Calculate the square distance between two points
+    return (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2

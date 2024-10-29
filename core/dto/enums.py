@@ -35,6 +35,9 @@ class ShapeType(Enum):
     ROTATION = 6
     LINE_STRIP = 7
 
+    def __str__(self):
+        return self.name
+
 
 @unique
 class CanvasMode(Enum):

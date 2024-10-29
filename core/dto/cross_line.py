@@ -8,3 +8,6 @@ class CrossLine:
         self.width = width
         self.color = color
         self.opacity = opacity
+
+    def __str__(self):
+        return f"CrossLine(width={self.width}, color={self.color}, opacity={self.opacity})"

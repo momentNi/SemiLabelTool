@@ -3,6 +3,10 @@ import json
 import os
 
 import utils
+from core.configs.constants import Constants
+from core.dto.enums import ShapeType
+from core.dto.exceptions import LabelFileError
+from utils.label_converter import LabelConverter
 from utils.logger import logger
 
 
@@ -28,10 +32,10 @@ class LabelFile:
     def _check_image_height_and_width(image_data, image_height, image_width):
         img_arr = utils.image.img_b64_to_arr(image_data)
         if image_height is not None and img_arr.shape[0] != image_height:
-            logger.error("image_height does not match with image_data or image_path, so getting image_height from actual image.")
+            logger.warning("image_height does not match with image_data or image_path, so getting image_height from actual image.")
             image_height = img_arr.shape[0]
         if image_width is not None and img_arr.shape[1] != image_width:
-            logger.error("image_width does not match with image_data or image_path, so getting image_width from actual image.")
+            logger.warning("image_width does not match with image_data or image_path, so getting image_width from actual image.")
             image_width = img_arr.shape[1]
         return image_height, image_width
 
@@ -45,7 +49,7 @@ class LabelFile:
 
     def load(self, filename):
         keys = ["version", "imageData", "imagePath", "shapes", "flags", "imageHeight", "imageWidth"]
-        shape_keys = ["label", "score", "points", "group_id", "difficult", "shape_type", "flags", "description", "attributes", "kie_linking"]
+        shape_keys = ["label", "score", "points", "group_id", "is_difficult", "shape_type", "flags", "description", "attributes", "kie_linking"]
         try:
             with open(filename, "r", encoding='utf-8') as f:
                 data = json.load(f)
@@ -74,23 +78,22 @@ class LabelFile:
                     "label": shape["label"],
                     "score": shape.get("score", None),
                     "points": shape["points"],
-                    "shape_type": shape.get("shape_type", "polygon"),
+                    "shape_type": shape.get("shape_type", ShapeType.POLYGON.name),
                     "flags": shape.get("flags", {}),
                     "group_id": shape.get("group_id"),
                     "description": shape.get("description"),
-                    "difficult": shape.get("difficult", False),
+                    "is_difficult": shape.get("is_difficult", False),
                     "attributes": shape.get("attributes", {}),
                     "kie_linking": shape.get("kie_linking", []),
-                    "other_data": {
-                        k: v for k, v in shape.items() if k not in shape_keys
-                    },
+                    "other_data": {k: v for k, v in shape.items() if k not in shape_keys},
                 }
                 for shape in data["shapes"]
             ]
             for i, s in enumerate(data["shapes"]):
-                if s.get("shape_type", "polygon") == "rotation":
+                if s.get("shape_type", ShapeType.POLYGON.name) == ShapeType.ROTATION.name:
                     shapes[i]["direction"] = s.get("direction", 0)
         except Exception as e:
+            logger.error(e)
             raise LabelFileError(e) from e
 
         other_data = {}
@@ -118,20 +121,18 @@ class LabelFile:
         if flags is None:
             flags = {}
         for i, shape in enumerate(shapes):
-            if shape["shape_type"] == "rectangle":
-                sorted_box = LabelConverter.calculate_bounding_box(
-                    shape["points"]
-                )
-                xmin, ymin, xmax, ymax = sorted_box
+            if shape["shape_type"] == ShapeType.RECTANGLE.name:
+                sorted_box = LabelConverter.calculate_bounding_box(shape["points"])
+                x_min, y_min, x_max, y_max = sorted_box
                 shape["points"] = [
-                    [xmin, ymin],
-                    [xmax, ymin],
-                    [xmax, ymax],
-                    [xmin, ymax],
+                    [x_min, y_min],
+                    [x_max, y_min],
+                    [x_max, y_max],
+                    [x_min, y_max],
                 ]
                 shapes[i] = shape
         data = {
-            "version": __version__,
+            "version": Constants.APP_VERSION,
             "flags": flags,
             "shapes": shapes,
             "imagePath": image_path,
@@ -141,11 +142,13 @@ class LabelFile:
         }
 
         for key, value in other_data.items():
-            assert key not in data
+            if key in data:
+                logger.error(f"Not expected key in other_data: {key}")
+                continue
             data[key] = value
         try:
-            with io_open(filename, "w") as f:
+            with open(filename, "w") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             self.filename = filename
-        except Exception as e:  # noqa
+        except Exception as e:
             raise LabelFileError(e) from e
