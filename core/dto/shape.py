@@ -45,6 +45,9 @@ class Shape:
     def __len__(self) -> int:
         return len(self.points)
 
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
     def __getitem__(self, key: int) -> QPointF:
         return self.points[key]
 

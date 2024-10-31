@@ -1,23 +1,22 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDockWidget, QPlainTextEdit, QListWidget, QLineEdit
+from PyQt5 import QtWidgets, QtCore
 
 from core.configs.constants import Constants
+from core.configs.core import CORE
 from core.services import system
 from core.services.actions.edit import edit_label
 from core.services.signals import files as files_signal
-from core.services.signals.views.area.information import *
-from core.services.system import load_flags, set_dirty
+from core.services.signals.views.area.information import label_selection_changed, label_item_changed, label_order_changed, file_search_changed
 from core.views.modules.label_filter_combo_box import LabelFilterComboBox
 from core.views.modules.label_list_widget import LabelListWidget
 from core.views.modules.unique_label_list_widget import UniqueLabelListWidget
 from utils.function import get_rgb_by_label
 
 
-class InformationArea(QWidget):
+class InformationArea(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__()
         self.parent = parent
-        self.layout = QVBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.generate_attribute_dock()
@@ -44,10 +43,10 @@ class InformationArea(QWidget):
         attribute_dock_layout.setContentsMargins(0, 0, 0, 0)
         attribute_dock_layout.setSpacing(0)
         attribute_content_area = QtWidgets.QScrollArea()
-        attribute_content_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        attribute_content_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        attribute_content_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        attribute_content_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         attribute_content_area.setWidgetResizable(True)
-        attribute_dock_layout_container = QWidget()
+        attribute_dock_layout_container = QtWidgets.QWidget()
         attribute_dock_layout_container.setLayout(attribute_dock_layout)
         attribute_content_area.setWidget(attribute_dock_layout_container)
 
@@ -66,7 +65,7 @@ class InformationArea(QWidget):
             "background-color: #f0f0f0;"
             "}"
         )
-        item_description = QPlainTextEdit()
+        item_description = QtWidgets.QPlainTextEdit()
         item_description.setPlaceholderText("Customize description about selected Object.")
         item_description.textChanged.connect(system.on_item_description_change)
         description_dock.setWidget(item_description)
@@ -77,12 +76,12 @@ class InformationArea(QWidget):
         flag_dock = QtWidgets.QDockWidget("Flags", self)
         flag_dock.setObjectName("FlagDock")
         if CORE.Variable.settings["image_flags"]:
-            load_flags({k: False for k in CORE.Variable.settings["image_flags"]})
+            system.load_flags({k: False for k in CORE.Variable.settings["image_flags"]})
         else:
             flag_dock.hide()
         CORE.Object.flag_widget = QtWidgets.QListWidget()
         flag_dock.setWidget(CORE.Object.flag_widget)
-        CORE.Object.flag_widget.itemChanged.connect(set_dirty)
+        CORE.Object.flag_widget.itemChanged.connect(system.set_dirty)
         flag_dock.setStyleSheet(
             "QDockWidget::title {"
             "text-align: center;"
@@ -94,7 +93,7 @@ class InformationArea(QWidget):
         self.layout.addWidget(flag_dock)
 
     def generate_label_dock(self):
-        label_dock = QDockWidget("Labels", self)
+        label_dock = QtWidgets.QDockWidget("Labels", self)
         label_dock.setObjectName("LabelDock")
         label_dock.setStyleSheet("""
             QDockWidget::title {
@@ -120,19 +119,19 @@ class InformationArea(QWidget):
                 rgb = get_rgb_by_label(label)
                 unique_label_list.set_item_label(item, label, rgb, Constants.LABEL_OPACITY)
 
-        label_dock_layout = QVBoxLayout()
+        label_dock_layout = QtWidgets.QVBoxLayout()
         label_dock_layout.setContentsMargins(0, 0, 0, 0)
         label_dock_layout.setSpacing(0)
         label_dock_layout.addWidget(label_filter_combo_box)
         label_dock_layout.addWidget(unique_label_list)
-        label_dock_widget = QWidget()
+        label_dock_widget = QtWidgets.QWidget()
         label_dock_widget.setLayout(label_dock_layout)
         label_dock.setWidget(label_dock_widget)
 
         self.layout.addWidget(label_dock)
 
     def generate_shape_dock(self):
-        shape_dock = QDockWidget("Objects", self)
+        shape_dock = QtWidgets.QDockWidget("Objects", self)
         shape_dock.setObjectName("ShapeDock")
         shape_dock.setStyleSheet("""
             QDockWidget::title {
@@ -155,26 +154,26 @@ class InformationArea(QWidget):
         self.layout.addWidget(shape_dock)
 
     def generate_file_dock(self):
-        file_search = QLineEdit()
+        file_search = QtWidgets.QLineEdit()
         file_search.setObjectName("FileSearch")
         file_search.setPlaceholderText(self.tr("Search Filename"))
         file_search.textChanged.connect(file_search_changed)
         CORE.Object.info_file_search_widget = file_search
 
-        file_list_widget = QListWidget()
+        file_list_widget = QtWidgets.QListWidget()
         file_list_widget.setObjectName("FileList")
         file_list_widget.itemSelectionChanged.connect(files_signal.file_selection_changed)
         CORE.Object.info_file_list_widget = file_list_widget
 
-        file_list_layout = QVBoxLayout()
+        file_list_layout = QtWidgets.QVBoxLayout()
         file_list_layout.setContentsMargins(0, 0, 0, 0)
         file_list_layout.setSpacing(0)
         file_list_layout.addWidget(file_search)
         file_list_layout.addWidget(file_list_widget)
 
-        file_dock = QDockWidget("Files", self)
+        file_dock = QtWidgets.QDockWidget("Files", self)
         file_dock.setObjectName("FileDock")
-        file_list_widget = QWidget()
+        file_list_widget = QtWidgets.QWidget()
         file_list_widget.setLayout(file_list_layout)
         file_dock.setWidget(file_list_widget)
         file_dock.setStyleSheet("""

@@ -60,6 +60,7 @@ class Core(object):
     class Object:
         # 主窗口对象
         main_window: QtWidgets.QMainWindow = None
+        instruction_part: QtWidgets.QLabel = None
         # 状态栏
         status_bar: QtWidgets.QStatusBar = None
         # 中心滚动区域
