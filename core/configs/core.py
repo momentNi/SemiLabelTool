@@ -69,11 +69,13 @@ class Core(object):
         # 对象描述信息
         item_description: QtWidgets.QPlainTextEdit = None
         # Information区域
+        attribute_dock: QtWidgets.QDockWidget = None
         flag_dock: QtWidgets.QDockWidget = None
         label_dock: QtWidgets.QDockWidget = None
         shape_dock: QtWidgets.QDockWidget = None
         file_dock: QtWidgets.QDockWidget = None
 
+        attribute_content_area: QtWidgets.QScrollArea = None
         flag_widget: QtWidgets.QListWidget = None
         # 文件列表
         info_file_search_widget: QtWidgets.QLineEdit = None

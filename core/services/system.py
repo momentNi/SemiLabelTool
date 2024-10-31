@@ -6,6 +6,8 @@ from PyQt5.QtCore import Qt
 from core.configs.constants import Constants
 from core.configs.core import CORE
 from core.dto.enums import ZoomMode, CanvasMode, ShapeType, AutoLabelEditMode
+from core.dto.exceptions import LabelFileError
+from core.dto.label_file import LabelFile
 from core.services.actions import files
 from utils.function import find_most_similar_label
 from utils.logger import logger
@@ -297,6 +299,128 @@ def find_last_label() -> str:
 
     # No label is found
     return ""
+
+
+def update_attributes(i: int):
+    def attribute_selection_changed(i, prop, combo):
+        selected_option = combo.currentText()
+        CORE.Object.canvas.shapes[i].attributes[prop] = selected_option
+        save_attributes(CORE.Object.canvas.shapes)
+
+    selected_options = {}
+    target_shape = CORE.Object.canvas.shapes[i]
+    target_label = target_shape.label
+    target_attribute = target_shape.attributes
+    current_attribute = CORE.Variable.attributes.get(target_label, {})
+    # Clear the existing widgets from the QGridLayout
+    grid_layout = QtWidgets.QGridLayout()
+    # Repopulate the QGridLayout with the updated data
+    for row, (prop, options) in enumerate(current_attribute.items()):
+        property_label = QtWidgets.QLabel(prop)
+        property_combo = QtWidgets.QComboBox()
+        property_combo.addItems(options)
+        property_combo.currentIndexChanged.connect(lambda _: attribute_selection_changed(i, prop, property_combo))
+        grid_layout.addWidget(property_label, row, 0)
+        grid_layout.addWidget(property_combo, row, 1)
+        selected_options[prop] = options[0]
+    # Ensure the scroll_area updates its contents
+    grid_layout_container = QtWidgets.QWidget()
+    grid_layout_container.setLayout(grid_layout)
+    CORE.Object.attribute_content_area.setWidget(grid_layout_container)
+    CORE.Object.attribute_content_area.setWidgetResizable(True)
+
+    if target_attribute:
+        for prop, option in target_attribute.items():
+            selected_options[prop] = option
+        for row in range(len(selected_options)):
+            category_label = None
+            property_combo = None
+            if grid_layout.itemAtPosition(row, 0):
+                category_label = grid_layout.itemAtPosition(row, 0).widget()
+            if grid_layout.itemAtPosition(row, 1):
+                property_combo = grid_layout.itemAtPosition(row, 1).widget()
+            if category_label is not None and property_combo is not None:
+                category = category_label.text()
+                if category in selected_options:
+                    selected_option = selected_options[category]
+                    index = property_combo.findText(selected_option)
+                    if index >= 0:
+                        property_combo.setCurrentIndex(index)
+    else:
+        target_shape.attributes = selected_options
+        CORE.Object.canvas.shapes[i] = target_shape
+        save_attributes(CORE.Object.canvas.shapes)
+
+
+def save_attributes(_shapes):
+    filename = os.path.splitext(CORE.Variable.label_file.image_path)[0] + ".json"
+    if CORE.Variable.output_dir:
+        label_file_without_path = os.path.basename(filename)
+        filename = os.path.join(CORE.Variable.output_dir, label_file_without_path)
+    label_file = LabelFile()
+
+    def format_shape(s):
+        data = s.other_data.copy()
+        # TODO implement Shape.__dict__ to achieve this
+        info = {
+            "label": s.label,
+            "points": [(p.x(), p.y()) for p in s.points],
+            "group_id": s.group_id,
+            "description": s.description,
+            "is_difficult": s.difficult,
+            "shape_type": s.shape_type,
+            "flags": s.flags,
+            "attributes": s.attributes,
+            "kie_linking": s.kie_linking,
+        }
+        if s.shape_type == ShapeType.ROTATION.name:
+            info["direction"] = s.direction
+        data.update(info)
+
+        return data
+
+    # Get current shapes
+    # Excluding auto labeling special shapes
+    shapes = [
+        format_shape(shape)
+        for shape in _shapes
+        if shape.label not in (AutoLabelEditMode.OBJECT.name, AutoLabelEditMode.ADD.name, AutoLabelEditMode.REMOVE.name)
+    ]
+    flags = {}
+    for i in range(CORE.Object.flag_widget.count()):
+        item = CORE.Object.flag_widget.item(i)
+        key = item.text()
+        flag = item.checkState() == Qt.Checked
+        flags[key] = flag
+    try:
+        if os.path.dirname(filename) and not os.path.exists(os.path.dirname(filename)):
+            os.makedirs(os.path.dirname(filename))
+        label_file.save(
+            filename=filename,
+            shapes=shapes,
+            image_path=os.path.relpath(CORE.Variable.label_file.image_path, os.path.dirname(filename)),
+            image_data=CORE.Variable.label_file.image_data if CORE.Variable.settings.get("store_data", False) else None,
+            image_height=CORE.Variable.image.height(),
+            image_width=CORE.Variable.image.width(),
+            other_data=CORE.Variable.label_file.other_data,
+            flags=flags,
+        )
+        CORE.Variable.label_file = label_file
+        items = CORE.Object.info_file_list_widget.findItems(CORE.Variable.label_file.image_path, Qt.MatchExactly)
+        if len(items) > 0:
+            if len(items) != 1:
+                raise RuntimeError("There are duplicate files.")
+            items[0].setCheckState(Qt.Checked)
+        return True
+    except LabelFileError as e:
+        QtWidgets.QMessageBox.critical(
+            CORE.Object.main_window,
+            "Error saving label data",
+            f"<b>{e}</b>",
+            QtWidgets.QMessageBox.Ok
+        )
+        logger.error(f"Error saving label data: {e}")
+        return False
 
 
 def reset_attribute(text):

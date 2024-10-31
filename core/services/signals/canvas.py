@@ -8,7 +8,7 @@ from core.dto.enums import AutoLabelEditMode, ShapeType
 from core.services import system
 from core.services.actions.canvas import add_zoom_value, set_scroll_value
 from core.services.actions.edit import add_label
-from core.services.system import find_last_label
+from core.services.system import find_last_label, update_attributes
 
 
 def handle_zoom_request(delta: float, pos: QPointF):
@@ -141,5 +141,5 @@ def handle_selection_changed(selected_shapes):
     if CORE.Variable.attributes:
         for i in range(len(CORE.Object.canvas.shapes)):
             if CORE.Object.canvas.shapes[i].selected:
-                self.update_attributes(i)
+                update_attributes(i)
                 break

@@ -20,6 +20,7 @@ class InformationArea(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+        self.generate_attribute_dock()
         self.generate_description_dock()
         self.generate_flag_dock()
         self.generate_label_dock()
@@ -27,6 +28,33 @@ class InformationArea(QWidget):
         self.generate_file_dock()
 
         self.setLayout(self.layout)
+
+    def generate_attribute_dock(self):
+        attribute_dock = QtWidgets.QDockWidget("Attributes", self)
+        attribute_dock.setObjectName("Attributes")
+        attribute_dock.setStyleSheet(
+            "QDockWidget::title {"
+            "text-align: center;"
+            "padding: 0px;"
+            "background-color: #f0f0f0;"
+            "}"
+        )
+
+        attribute_dock_layout = QtWidgets.QGridLayout()
+        attribute_dock_layout.setContentsMargins(0, 0, 0, 0)
+        attribute_dock_layout.setSpacing(0)
+        attribute_content_area = QtWidgets.QScrollArea()
+        attribute_content_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        attribute_content_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        attribute_content_area.setWidgetResizable(True)
+        attribute_dock_layout_container = QWidget()
+        attribute_dock_layout_container.setLayout(attribute_dock_layout)
+        attribute_content_area.setWidget(attribute_dock_layout_container)
+
+        CORE.Object.attribute_dock = attribute_dock
+        CORE.Object.attribute_content_area = attribute_content_area
+        # TODO attribute_dock.setHidden(True)
+        self.layout.addWidget(attribute_dock)
 
     def generate_description_dock(self):
         description_dock = QtWidgets.QDockWidget("Description", self)

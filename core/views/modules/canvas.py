@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QMenu
 
 from core.configs.constants import Constants
 from core.dto.cross_line import CrossLine
-from core.dto.enums import ShapeType, CanvasMode, AutoLabelEditMode, AutoLabelShapeType, ShapeHighlightMode
+from core.dto.enums import CanvasMode, AutoLabelShapeType, ShapeHighlightMode
 from core.dto.exceptions import CanvasError
 from core.dto.shape import Shape
 from core.services.actions.canvas import *
@@ -177,7 +177,7 @@ class Canvas(QWidget):
         self.shape_moved_signal.connect(set_dirty)
         self.shape_rotated_signal.connect(set_dirty)
         self.drawing_polygon_signal.connect(toggle_drawing_sensitive)
-        # self.vertex_selected_signal.connect(self.actions.remove_point.setEnabled)
+        self.vertex_selected_signal.connect(CORE.Action.remove_selected_point.setEnabled)
         # self.auto_labeling_marks_updated_signal.connect()
 
     def init_menus(self):
