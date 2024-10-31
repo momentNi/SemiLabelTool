@@ -1,3 +1,4 @@
+from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
 import utils
@@ -30,14 +31,14 @@ def file_selection_changed():
         filename = CORE.Variable.image_list[current_index]
         if filename:
             files_action.load_file(filename)
-            # if self.attributes:
-            #     # Clear the history widgets from the QGridLayout
-            #     self.grid_layout = QGridLayout()
-            #     self.grid_layout_container = QWidget()
-            #     self.grid_layout_container.setLayout(self.grid_layout)
-            #     self.scroll_area.setWidget(self.grid_layout_container)
-            #     self.scroll_area.setWidgetResizable(True)
-            #     # Create a container widget for the grid layout
-            #     self.grid_layout_container = QWidget()
-            #     self.grid_layout_container.setLayout(self.grid_layout)
-            #     self.scroll_area.setWidget(self.grid_layout_container)
+            if CORE.Variable.attributes:
+                # Clear the history widgets from the QGridLayout
+                grid_layout = QtWidgets.QGridLayout()
+                grid_layout_container = QtWidgets.QWidget()
+                grid_layout_container.setLayout(grid_layout)
+                CORE.Object.attribute_content_area.setWidget(grid_layout_container)
+                CORE.Object.attribute_content_area.setWidgetResizable(True)
+                # Create a container widget for the grid layout
+                grid_layout_container = QtWidgets.QWidget()
+                grid_layout_container.setLayout(grid_layout)
+                CORE.Object.attribute_content_area.setWidget(grid_layout_container)

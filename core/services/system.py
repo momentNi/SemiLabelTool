@@ -13,6 +13,11 @@ from utils.function import find_most_similar_label
 from utils.logger import logger
 
 
+def get_instruction_label():
+    return (f"<b>Mode:</b> {CORE.Object.canvas.get_canvas_mode() if CORE.Object.canvas is not None else '    '} | "
+            "<b>Shortcuts:</b> Previous(<b>A</b>), Next(<b>D</b>), Rectangle(<b>R</b>), Polygon(<b>P</b>), Rotation(<b>O</b>)")
+
+
 def set_dirty():
     CORE.Action.undo.setEnabled(CORE.Object.canvas.is_shape_restorable)
 
@@ -249,7 +254,7 @@ def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, d
             logger.error(f"Unsupported create_mode: {create_mode}")
             raise ValueError(f"Unsupported create_mode: {create_mode}")
     CORE.Action.edit_object.setEnabled(not edit)
-    update_label_instruction()
+    CORE.Object.instruction_part.setText(get_instruction_label())
 
 
 def set_edit_mode():
@@ -259,12 +264,7 @@ def set_edit_mode():
 
     toggle_draw_mode(True)
     set_item_description(True)
-    update_label_instruction()
-
-
-def update_label_instruction():
-    logger.info(f"Current mode: {CORE.Object.canvas.canvas_mode}")
-    # TODO 更新instruction部分的文字状态，可能需要信号介入，待实现
+    CORE.Object.instruction_part.setText(get_instruction_label())
 
 
 def validate_label(label):

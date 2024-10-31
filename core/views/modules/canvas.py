@@ -163,9 +163,7 @@ class Canvas(QWidget):
         self.setMouseTracking(True)
         self.setFocusPolicy(QtCore.Qt.WheelFocus)
 
-        self.__bind_signals()
-
-    def __bind_signals(self):
+    def bind_signals(self):
         """
         Bind Signals with their corresponding functions
         """
@@ -177,7 +175,7 @@ class Canvas(QWidget):
         self.shape_moved_signal.connect(set_dirty)
         self.shape_rotated_signal.connect(set_dirty)
         self.drawing_polygon_signal.connect(toggle_drawing_sensitive)
-        self.vertex_selected_signal.connect(CORE.Action.remove_selected_point.setEnabled)
+        # self.vertex_selected_signal.connect(CORE.Action.remove_selected_point.setEnabled)
         # self.auto_labeling_marks_updated_signal.connect()
 
     def init_menus(self):
