@@ -1,8 +1,7 @@
 import copy
-from typing import List, Self
+from typing import List, Self, Optional
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import QPointF, QRectF
+from PyQt5 import QtGui, QtCore
 
 from core.configs.constants import Constants
 from core.dto.enums import ShapeType, PointType, ShapeHighlightMode
@@ -15,7 +14,7 @@ from utils.logger import logger
 class Shape:
     def __init__(self, label=None, score=None, line_color=None, shape_type=None, flags=None, group_id=None, description=None, is_difficult=False, direction=0, attributes=None, kie_linking=None):
         self.label: str = label
-        self.cache_label: str | None = None
+        self.cache_label: Optional[str] = None
         self.score: float = score
         self.line_color: QtGui.QColor = line_color if line_color is not None else Constants.DEFAULT_LINE_COLOR
         self.shape_type: ShapeType = shape_type if shape_type is not None else ShapeType.POLYGON
@@ -28,19 +27,19 @@ class Shape:
         self.kie_linking: List[str] = kie_linking if kie_linking is not None else []
         self.other_data: dict = {}
 
-        self.point_type: PointType = PointType.ROUND
-        self.points: List[QPointF] = []
-        self.center: QPointF | None = None
+        self.point_type: 'PointType' = PointType.ROUND
+        self.points: List[QtCore.QPointF] = []
+        self.center: Optional[QtCore.QPointF] = None
 
         self.highlight_vertex_index: int | None = None
-        self.highlight_mode: ShapeHighlightMode = ShapeHighlightMode.NEAR_VERTEX
+        self.highlight_mode: 'ShapeHighlightMode' = ShapeHighlightMode.NEAR_VERTEX
         self.highlight_vertex_fill_color: QtGui.QColor | None = None
 
         self.is_visible: bool = True
         self.is_fill: bool = False
         self.is_selected: bool = False
         self.is_closed: bool = False
-        self.show_degrees = True
+        self.show_degrees: bool = True
 
     def __len__(self) -> int:
         return len(self.points)
@@ -48,10 +47,10 @@ class Shape:
     def __str__(self) -> str:
         return str(self.__dict__)
 
-    def __getitem__(self, key: int) -> QPointF:
+    def __getitem__(self, key: int) -> QtCore.QPointF:
         return self.points[key]
 
-    def __setitem__(self, key: int, value: QPointF) -> QPointF:
+    def __setitem__(self, key: int, value: QtCore.QPointF) -> QtCore.QPointF:
         self.points[key] = value
         return value
 
@@ -104,7 +103,7 @@ class Shape:
         if self.shape_type == ShapeType.ROTATION and len(self.points) == 4:
             cx = (self.points[0].x() + self.points[2].x()) / 2
             cy = (self.points[0].y() + self.points[2].y()) / 2
-            self.center = QPointF(cx, cy)
+            self.center = QtCore.QPointF(cx, cy)
         self.is_closed = True
 
     def is_reach_max_points(self) -> bool:
@@ -116,7 +115,7 @@ class Shape:
         """
         return len(self.points) >= 4
 
-    def contains_point(self, point: QPointF) -> bool:
+    def contains_point(self, point: QtCore.QPointF) -> bool:
         """
         Check if shape contains a point
 
@@ -140,7 +139,7 @@ class Shape:
         """
         return self.shape_type in (ShapeType.POLYGON, ShapeType.LINE_STRIP)
 
-    def get_nearest_vertex(self, point: QPointF, epsilon: float) -> int | None:
+    def get_nearest_vertex(self, point: QtCore.QPointF, epsilon: float) -> int | None:
         """
         Find the nearest vertex to a given point from a collection of vertices.
 
@@ -160,7 +159,7 @@ class Shape:
                 min_i = i
         return min_i
 
-    def get_nearest_edge(self, point: QPointF, epsilon: float) -> int | None:
+    def get_nearest_edge(self, point: QtCore.QPointF, epsilon: float) -> int | None:
         """
         Get the index of the nearest edge to the given point.
 
@@ -184,7 +183,7 @@ class Shape:
                 post_i = i
         return post_i
 
-    def get_bounding_rect(self) -> QRectF:
+    def get_bounding_rect(self) -> QtCore.QRectF:
         """
         Gets the bounding rectangle of the current object.
 
@@ -196,7 +195,7 @@ class Shape:
         """
         return self.make_path().boundingRect()
 
-    def add_point(self, point: QPointF) -> None:
+    def add_point(self, point: QtCore.QPointF) -> None:
         """
         Add a new point to current shape.
 
@@ -212,7 +211,7 @@ class Shape:
             else:
                 self.points.append(point)
 
-    def insert_point(self, i: int, point: QPointF) -> None:
+    def insert_point(self, i: int, point: QtCore.QPointF) -> None:
         """
         Insert a new point into the current shape at a specified index.
 
@@ -222,7 +221,7 @@ class Shape:
         """
         self.points.insert(i, point)
 
-    def pop_point(self) -> QPointF | None:
+    def pop_point(self) -> QtCore.QPointF | None:
         """
         Remove and return the last point of the shape.
 
@@ -234,7 +233,7 @@ class Shape:
         """
         return self.points.pop() if self.points else None
 
-    def remove_point(self, i: int) -> QPointF | None:
+    def remove_point(self, i: int) -> QtCore.QPointF | None:
         """
         Remove and return the point at the specified index.
         Returns None if the index is out of range.
@@ -250,7 +249,7 @@ class Shape:
         except IndexError:
             return None
 
-    def move_point(self, i: int, offset: QPointF) -> None:
+    def move_point(self, i: int, offset: QtCore.QPointF) -> None:
         """
         Move the position of a specified point.
 
@@ -262,7 +261,7 @@ class Shape:
         """
         self.points[i] = self.points[i] + offset
 
-    def move_shape(self, offset: QPointF) -> None:
+    def move_shape(self, offset: QtCore.QPointF) -> None:
         """
         Move the shape to a new position.
 

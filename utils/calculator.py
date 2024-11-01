@@ -1,5 +1,5 @@
 import math
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import numpy as np
 from PyQt5 import QtCore
@@ -270,9 +270,9 @@ def get_rect_from_line(p1: QtCore.QPointF, p2: QtCore.QPointF) -> QtCore.QRectF:
     return QtCore.QRectF(x1, y1, x2 - x1, y2 - y1)
 
 
-def get_circle_rect_from_line(line: List[QtCore.QPointF]) -> QtCore.QRectF:
+def get_circle_rect_from_line(line: List[QtCore.QPointF]) -> Optional[QtCore.QRectF]:
     if len(line) != 2:
-        return QtCore.QRectF()
+        return None
     (c, _) = line
     r = line[0] - line[1]
     d = math.sqrt(r.x() ** 2 + r.y() ** 2)
