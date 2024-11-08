@@ -61,7 +61,7 @@ def save_labels(filename):
             "group_id": s.group_id,
             "description": s.description,
             "is_difficult": s.is_difficult,
-            "shape_type": s.shape_type.name,
+            "shape_type": s.shape_type,
             "flags": s.flags,
             "attributes": s.attributes,
             "kie_linking": s.kie_linking,

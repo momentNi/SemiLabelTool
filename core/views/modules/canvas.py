@@ -1704,12 +1704,15 @@ class Canvas(QWidget):
                     continue
                 if shape.label in [AutoLabelEditMode.OBJECT.value, AutoLabelEditMode.ADD.value, AutoLabelEditMode.REMOVE.value]:
                     continue
-                label_text = f"id: {shape.group_id if shape.group_id is not None else ''} {shape.label} {round(float(shape.score), 2) if shape.score is not None and self.need_show_scores else ''}"
+                label_text = f"id: {shape.group_id}" if shape.group_id is not None else ''
+                label_text += shape.label
+                if shape.score is not None and self.need_show_scores:
+                    label_text += f" {round(float(shape.score), 2)}"
                 if not label_text:
                     continue
                 fm = QtGui.QFontMetrics(p.font())
                 bound_rect = fm.boundingRect(label_text)
-                if shape.shape_type in [ShapeType.RECTANGLE, ShapeType.POLYGON, ShapeType.ROTATION]:
+                if shape.shape_type in (ShapeType.RECTANGLE.name, ShapeType.POLYGON.name, ShapeType.ROTATION.name):
                     try:
                         bbox = shape.get_bounding_rect()
                     except IndexError:
@@ -1721,7 +1724,7 @@ class Canvas(QWidget):
                         int(bound_rect.height()),
                     )
                     text_pos = QtCore.QPoint(int(bbox.x()), int(bbox.y() + bound_rect.height() - d_text))
-                elif shape.shape_type in [ShapeType.CIRCLE, ShapeType.LINE, ShapeType.LINE_STRIP, ShapeType.POINT]:
+                elif shape.shape_type in (ShapeType.CIRCLE.name, ShapeType.LINE.name, ShapeType.LINE_STRIP.name, ShapeType.POINT.name):
                     points = shape.points
                     point = points[0]
                     rect = QtCore.QRect(

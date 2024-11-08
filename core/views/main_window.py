@@ -60,6 +60,7 @@ class MainWindow(QMainWindow):
         self.left_widget.generate_tools()
         # Canvas
         CORE.Object.canvas.bind_signals()
+        CORE.Object.canvas.init_menus()
         set_item_description(False)
 
     def closeEvent(self, event):
