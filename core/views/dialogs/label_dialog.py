@@ -238,7 +238,7 @@ class LabelDialog(QtWidgets.QDialog):
             kie_linking.append(eval(item.text()))
         return kie_linking
 
-    def pop_up(self, text=None, move=True, flags=None, group_id=None, description="", difficult=False, kie_linking=None):
+    def pop_up(self, text=None, move=True, flags=None, group_id=None, description="", is_difficult=False, kie_linking=None):
         if kie_linking is None:
             kie_linking = []
         self.label_list.setMinimumWidth(self.label_list.sizeHintForColumn(0) + 2)
@@ -253,7 +253,7 @@ class LabelDialog(QtWidgets.QDialog):
             self.set_flags(flags)
         else:
             self.reset_flags(text)
-        if difficult:
+        if is_difficult:
             self.edit_difficult.setChecked(True)
         else:
             self.edit_difficult.setChecked(False)

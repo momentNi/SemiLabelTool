@@ -28,7 +28,7 @@ def edit_label(item: 'LabelListWidgetItem'):
         flags=shape.flags,
         group_id=shape.group_id,
         description=shape.description,
-        difficult=shape.is_difficult,
+        is_difficult=shape.is_difficult,
         kie_linking=shape.kie_linking
     )
     if text is None:
@@ -98,7 +98,7 @@ def duplicate_selected_shape():
 
 
 def delete_selected_shape():
-    remove_labels(CORE.Object.canvas.delete_selected())
+    remove_labels(CORE.Object.canvas.delete_selected_shapes())
     system.set_dirty()
     if CORE.Object.canvas.is_no_shape:
         CORE.Action.save_as.setEnabled(False)
@@ -136,7 +136,7 @@ def undo_shape_edit():
     CORE.Object.canvas.restore_shape()
     CORE.Object.label_list_widget.clear()
     CORE.Object.canvas.load_shapes(CORE.Object.canvas.shapes)
-    CORE.actions.undo.setEnabled(CORE.Object.canvas.is_shape_restorable)
+    CORE.Action.undo.setEnabled(CORE.Object.canvas.is_shape_restorable)
 
 
 def toggle_shapes_visibility(value):
@@ -186,7 +186,7 @@ def union_selection():
     add_label(union_shape)
 
     # clear selected shapes
-    remove_labels(CORE.Object.canvas.delete_selected())
+    remove_labels(CORE.Object.canvas.delete_selected_shapes())
     system.set_dirty()
 
     # Update UI state

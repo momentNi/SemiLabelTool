@@ -65,7 +65,7 @@ class Canvas(QWidget):
         # ============= Status Variables =============
         # ============================================
         # Whether to fill the boxes
-        self.is_fill_box: bool = False
+        self.is_fill_box: bool = CORE.Variable.settings.get("fill_box", True)
         # Whether using auto labeling function
         self.is_auto_labeling: bool = False
         # Whether Canvas is loading something
@@ -916,7 +916,7 @@ class Canvas(QWidget):
             flags = shape["flags"]
             group_id = shape["group_id"]
             description = shape.get("description", "")
-            is_difficult = shape.get("difficult", False)
+            is_difficult = shape.get("is_difficult", False)
             attributes = shape.get("attributes", {})
             direction = shape.get("direction", 0)
             kie_linking = shape.get("kie_linking", [])
@@ -1621,6 +1621,9 @@ class Canvas(QWidget):
         for shape in self.shapes:
             if (shape.is_selected or not self.is_hide_background) and self.visible_shapes.get(shape, True):
                 shape.is_fill = self.is_fill_box and (shape.is_selected or shape == self.highlight_shape)
+                if shape.is_fill:
+                    logger.info(shape)
+                    logger.info(self.highlight_shape)
                 shape.paint(p)
             if shape.shape_type == ShapeType.ROTATION and len(shape.points) == 4 and self.visible_shapes.get(shape, True):
                 d = Constants.SHAPE_POINT_SIZE / Constants.SHAPE_SCALE

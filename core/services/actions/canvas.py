@@ -39,7 +39,7 @@ def set_scroll_value(orientation, value):
 
 def set_fit_window(value=True):
     if value:
-        CORE.Actions.fit_width.setChecked(False)
+        CORE.Action.fit_width.setChecked(False)
     CORE.Object.canvas.zoom_mode = ZoomMode.FIT_WINDOW if value else ZoomMode.MANUAL_ZOOM
     system.adjust_scale()
 

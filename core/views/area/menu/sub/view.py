@@ -26,6 +26,7 @@ class ViewMenu(BaseMenu):
                 None,
                 "Fill polygon while drawing",
                 checkable=True,
+                checked=CORE.Variable.settings.get("fill_box", True),
                 enabled=True
             ),
             "d2": None,
