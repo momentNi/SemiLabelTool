@@ -13,7 +13,7 @@ from core.dto.shape import Shape
 from core.services.actions.canvas import *
 from core.services.actions.edit import copy_shape, move_shape
 from core.services.signals.canvas import *
-from core.services.system import set_dirty, toggle_drawing_sensitive, scale_fit_window, scale_fit_width, update_combo_box
+from core.services.system import set_dirty, toggle_drawing_sensitive, scale_fit_window, scale_fit_width, update_combo_box, set_edit_mode
 from utils.calculator import get_adjacent_points, rotate_point, intersection_point_with_box, distance
 from utils.function import hex_to_rgb
 from utils.logger import logger
@@ -144,7 +144,7 @@ class Canvas(QWidget):
         # All shape objects in canvas of current image
         self.shapes: List['Shape'] = []
         # Shape objects backups for undo operation
-        self.shapes_backups: List['Shape'] = []
+        self.shapes_backups: List[List['Shape']] = []
         # Current operating Shape Object
         self.current: Optional['Shape'] = None
         # All shape objects selected in canvas of current image
@@ -172,10 +172,11 @@ class Canvas(QWidget):
         self.new_shape_signal.connect(handle_new_shape)
         self.show_shape_signal.connect(handle_show_shape)
         self.selection_changed_signal.connect(handle_selection_changed)
+        self.canvas_mode_changed_signal.connect(set_edit_mode)
         self.shape_moved_signal.connect(set_dirty)
         self.shape_rotated_signal.connect(set_dirty)
         self.drawing_polygon_signal.connect(toggle_drawing_sensitive)
-        # self.vertex_selected_signal.connect(CORE.Action.remove_selected_point.setEnabled)
+        self.vertex_selected_signal.connect(CORE.Action.remove_selected_point.setEnabled)
         # self.auto_labeling_marks_updated_signal.connect()
 
     def init_menus(self):
@@ -368,7 +369,7 @@ class Canvas(QWidget):
         else:
             self.is_auto_labeling = True
             self.auto_labeling_mode = (edit_mode, shape_type)
-            self.create_mode = ShapeType(shape_type.value)
+            self.create_mode = ShapeType(shape_type)
             system.toggle_draw_mode(edit=False, create_mode=self.create_mode, disable_auto_labeling=False)
 
     def set_auto_labeling_value(self, value=True) -> None:
@@ -422,7 +423,7 @@ class Canvas(QWidget):
         # Store at most 10 shapes
         if len(self.shapes_backups) > 10:
             self.shapes_backups = self.shapes_backups[-11:]
-        self.shapes_backups = shapes_backup
+        self.shapes_backups.append(shapes_backup)
 
     def restore_shape(self) -> None:
         """
@@ -435,14 +436,14 @@ class Canvas(QWidget):
         self.shapes = shapes_backup
         self.selected_shapes = []
         for shape in self.shapes:
-            shape.selected = False
+            shape.is_selected = False
         self.update()
 
     def clear_highlight(self) -> None:
         """
         Clear highlight of shape/vertex/edge
         """
-        if self.highlight_shape is not None:
+        if self.highlight_shape:
             self.highlight_shape.highlight_clear()
             self.update()
         self.prev_highlight_shape = self.highlight_shape
@@ -456,8 +457,8 @@ class Canvas(QWidget):
         """
         Add a point to current shape
         """
-        shape: Shape = self.prev_highlight_shape
-        edge: int = self.prev_highlight_edge
+        shape = self.prev_highlight_shape
+        edge = self.prev_highlight_edge
         point = self.prev_move_point
         if shape is None or edge is None or point is None:
             return
@@ -472,8 +473,8 @@ class Canvas(QWidget):
         """
         Remove a point from current shape
         """
-        shape: Shape = self.prev_highlight_shape
-        vertex: int = self.prev_highlight_vertex
+        shape = self.prev_highlight_shape
+        vertex = self.prev_highlight_vertex
         if shape is None or vertex is None:
             return
         shape.remove_point(vertex)
@@ -787,6 +788,8 @@ class Canvas(QWidget):
             raise CanvasError(f"No shape to finalise: {self.current}")
         if self.is_auto_labeling and self.auto_labeling_mode != (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF):
             self.current.label = self.auto_labeling_mode[0].value
+        if self.current.label is None:
+            self.current.label = ""
         self.current.close_shape()
         self.shapes.append(self.current)
         self.store_history_shapes()
@@ -1048,7 +1051,7 @@ class Canvas(QWidget):
         marks = []
         for shape in self.shapes:
             if shape.label == AutoLabelEditMode.ADD.value:
-                if shape.shape_type == AutoLabelShapeType.POINT:
+                if shape.shape_type.value == AutoLabelShapeType.POINT.value:
                     marks.append({
                         "type": shape.shape_type.name,
                         "data": [
@@ -1057,7 +1060,7 @@ class Canvas(QWidget):
                         ],
                         "label": 1,
                     })
-                elif shape.shape_type == AutoLabelShapeType.RECTANGLE:
+                elif shape.shape_type.value == AutoLabelShapeType.RECTANGLE.value:
                     marks.append({
                         "type": shape.shape_type.name,
                         "data": [
@@ -1069,7 +1072,7 @@ class Canvas(QWidget):
                         "label": 1,
                     })
             elif shape.label == AutoLabelEditMode.REMOVE.name:
-                if shape.shape_type == AutoLabelShapeType.POINT:
+                if shape.shape_type.value == AutoLabelShapeType.POINT.value:
                     marks.append({
                         "type": shape.shape_type.name,
                         "data": [
@@ -1078,7 +1081,7 @@ class Canvas(QWidget):
                         ],
                         "label": 0,
                     })
-                elif shape.shape_type == AutoLabelShapeType.RECTANGLE:
+                elif shape.shape_type.value == AutoLabelShapeType.RECTANGLE.value:
                     marks.append({
                         "type": shape.shape_type.name,
                         "data": [
@@ -1098,7 +1101,7 @@ class Canvas(QWidget):
         self.override_cursor(self._cursor)
 
     def leaveEvent(self, _):
-        # self.un_highlight()
+        self.clear_highlight()
         self.restore_cursor()
 
     def focusOutEvent(self, _):
@@ -1128,8 +1131,7 @@ class Canvas(QWidget):
             return
         try:
             pos = self.transform_pos(ev.localPos())
-        except AttributeError as e:
-            logger.error(f"transform position failed: {e}")
+        except AttributeError:
             return
 
         self.show_shape_signal.emit(-1, -1, pos)
@@ -1173,7 +1175,7 @@ class Canvas(QWidget):
                 self.line[1] = pos
             elif self.create_mode == ShapeType.RECTANGLE:
                 self.line.points = [self.current[0], pos]
-                self.line.is_closed = True
+                self.line.close_shape()
             elif self.create_mode == ShapeType.ROTATION:
                 self.line[1] = pos
                 self.line.line_color = color
@@ -1182,10 +1184,10 @@ class Canvas(QWidget):
                 self.line.shape_type = ShapeType.CIRCLE
             elif self.create_mode == ShapeType.LINE:
                 self.line.points = [self.current[0], pos]
-                self.line.is_closed = True
+                self.line.close_shape()
             elif self.create_mode == ShapeType.POINT:
                 self.line.points = [self.current[0]]
-                self.line.is_closed = True
+                self.line.close_shape()
 
             self.repaint()
             self.current.highlight_clear()
@@ -1204,7 +1206,7 @@ class Canvas(QWidget):
 
         # Polygon/Vertex moving.
         if QtCore.Qt.LeftButton & ev.buttons():
-            if self.highlight_vertex is not None:
+            if self.highlight_vertex:
                 try:
                     self.bounded_move_vertex(pos)
                     self.repaint()
@@ -1241,12 +1243,12 @@ class Canvas(QWidget):
             vertex_index = shape.get_nearest_vertex(pos, self.epsilon / self.scale)
             edge_index = shape.get_nearest_edge(pos, self.epsilon / self.scale)
             if vertex_index is not None:
-                if self.highlight_vertex:
+                if self.highlight_vertex is not None:
                     self.highlight_shape.highlight_clear()
                 self.prev_highlight_vertex = self.highlight_vertex = vertex_index
                 self.prev_highlight_shape = self.highlight_shape = shape
                 self.prev_highlight_edge = self.highlight_edge
-                self.highlight_shape = None
+                self.highlight_edge = None
                 shape.highlight_vertex(vertex_index, ShapeHighlightMode.MOVE_VERTEX)
                 self.override_cursor(QtCore.Qt.PointingHandCursor)
                 self.setToolTip(f"Click & drag to move point of shape '{shape.label}'")
@@ -1254,7 +1256,7 @@ class Canvas(QWidget):
                 self.update()
                 break
             if edge_index is not None and shape.can_add_point():
-                if self.highlight_vertex is not None:
+                if self.highlight_vertex:
                     self.highlight_shape.highlight_clear()
                 self.prev_highlight_vertex = self.highlight_vertex
                 self.highlight_vertex = None
@@ -1266,7 +1268,7 @@ class Canvas(QWidget):
                 self.update()
                 break
             if len(shape.points) > 1 and shape.contains_point(pos):
-                if self.highlight_vertex is not None:
+                if self.highlight_vertex:
                     self.highlight_shape.highlight_clear()
                 self.prev_highlight_vertex = self.highlight_vertex
                 self.highlight_vertex = None
@@ -1383,8 +1385,7 @@ class Canvas(QWidget):
                 self.repaint()
         elif ev.button() == QtCore.Qt.RightButton and self.canvas_mode == CanvasMode.EDIT:
             group_mode = int(ev.modifiers()) == QtCore.Qt.ControlModifier
-            if not self.selected_shapes or (
-                    self.highlight_shape is not None and self.highlight_shape not in self.selected_shapes):
+            if not self.selected_shapes or (self.highlight_shape is not None and self.highlight_shape not in self.selected_shapes):
                 self.select_shape_point(pos, multiple_selection_mode=group_mode)
                 self.repaint()
             self.prev_point = pos
@@ -1415,8 +1416,7 @@ class Canvas(QWidget):
     def mouseDoubleClickEvent(self, _):
         if self.is_loading:
             return
-        # We need at least 4 points here, since the mousePress handler
-        # adds an extra one before this handler is called.
+        # We need at least 4 points here, since the mousePress handler adds an extra one before this handler is called.
         if self.can_close_shape and len(self.current) > 3:
             self.current.pop_point()
             self.finalise_shape()
@@ -1457,8 +1457,6 @@ class Canvas(QWidget):
             if int(modifiers) == 0:
                 self.is_snapping = True
         elif self.canvas_mode == CanvasMode.EDIT:
-            # NOTE: Temporary fix to avoid ValueError
-            # when the selected shape is not in the shapes list
             if (self.is_moving_shape or self.is_rotating_shape) and self.selected_shapes and self.selected_shapes[0] in self.shapes:
                 index = self.shapes.index(self.selected_shapes[0])
                 if self.shapes_backups[-1][index].points != self.shapes[index].points:
@@ -1622,7 +1620,7 @@ class Canvas(QWidget):
         # Draw degrees
         for shape in self.shapes:
             if (shape.is_selected or not self.is_hide_background) and self.visible_shapes.get(shape, True):
-                shape.fill = self.is_fill_box and (shape.is_selected or shape == self.highlight_shape)
+                shape.is_fill = self.is_fill_box and (shape.is_selected or shape == self.highlight_shape)
                 shape.paint(p)
             if shape.shape_type == ShapeType.ROTATION and len(shape.points) == 4 and self.visible_shapes.get(shape, True):
                 d = Constants.SHAPE_POINT_SIZE / Constants.SHAPE_SCALE
@@ -1660,7 +1658,7 @@ class Canvas(QWidget):
         if self.is_fill_box and self.create_mode == ShapeType.POLYGON and self.current is not None and len(self.current.points) >= 2:
             drawing_shape = self.current.copy()
             drawing_shape.add_point(self.line[1])
-            drawing_shape.fill = True
+            drawing_shape.is_fill = True
             drawing_shape.paint(p)
 
         # Draw texts

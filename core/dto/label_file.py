@@ -46,6 +46,7 @@ class LabelFile:
         except IOError:
             logger.error(f"Failed opening image file: {filename}")
             self.image_data = default
+        return self.image_data
 
     def load(self, filename):
         keys = ["version", "imageData", "imagePath", "shapes", "flags", "imageHeight", "imageWidth"]
@@ -146,6 +147,7 @@ class LabelFile:
                 logger.error(f"Not expected key in other_data: {key}")
                 continue
             data[key] = value
+        logger.info(data)
         try:
             with open(filename, "w") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)

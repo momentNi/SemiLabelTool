@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Optional
 
 from PyQt5 import QtWidgets
 
@@ -34,10 +34,13 @@ class Core(object):
         # 输出目录
         output_dir: str = None
         # 当前正在标注的文件对象 LabelFile
-        label_file: 'LabelFile' = LabelFile()
+        label_file: Optional['LabelFile'] = None
         # 当前正在处理的QImage对象
         image: 'QImage' = None
+        image_path: str = None
+        image_data: str = None
         image_flags: dict = {}
+        other_data: dict = {}
         # 每个图片的亮度对比度记录
         brightness_contrast_map: dict[str, tuple[float, float]] = {}
         # 近期打开的文件

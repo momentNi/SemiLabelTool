@@ -14,15 +14,15 @@ from utils.logger import logger
 
 
 def get_instruction_label():
-    return (f"<b>Mode:</b> {CORE.Object.canvas.get_canvas_mode() if CORE.Object.canvas is not None else '    '} | "
+    return (f"<b>Mode:</b> {CORE.Object.canvas.get_canvas_mode() if CORE.Object.canvas is not None else 'Editing'} | "
             "<b>Shortcuts:</b> Previous(<b>A</b>), Next(<b>D</b>), Rectangle(<b>R</b>), Polygon(<b>P</b>), Rotation(<b>O</b>)")
 
 
 def set_dirty():
     CORE.Action.undo.setEnabled(CORE.Object.canvas.is_shape_restorable)
-
+    logger.info(CORE.Variable.label_file)
     if CORE.Variable.settings.get("auto_save", True):
-        label_file = f"{os.path.splitext(CORE.Variable.label_file.image_path)[0]}.json"
+        label_file = f"{os.path.splitext(CORE.Variable.image_path)[0]}.json"
         if CORE.Variable.output_dir:
             label_file = os.path.join(CORE.Variable.output_dir, os.path.basename(label_file))
         files.save_labels(label_file)
@@ -97,7 +97,7 @@ def on_item_description_change():
     elif CORE.Object.canvas.canvas_mode == CanvasMode.EDIT and len(CORE.Object.canvas.selected_shapes) == 1:
         CORE.Object.canvas.selected_shapes[0].description = description
     else:
-        CORE.Variable.label_file.other_data["image_description"] = description
+        CORE.Variable.other_data["image_description"] = description
     set_dirty()
 
 
@@ -165,7 +165,7 @@ def set_item_description(enable: bool):
         if len(CORE.Object.canvas.selected_shapes) == 1:
             new_text = CORE.Object.canvas.selected_shapes[0].description
         else:
-            new_text = CORE.Variable.label_file.other_data.get("image_description", "")
+            new_text = CORE.Variable.other_data.get("image_description", "")
 
     else:
         CORE.Object.item_description.setDisabled(True)
@@ -267,14 +267,6 @@ def set_edit_mode():
     CORE.Object.instruction_part.setText(get_instruction_label())
 
 
-def validate_label(label):
-    for i in range(CORE.Object.unique_label_list_widget.count()):
-        label_i = CORE.Object.unique_label_list_widget.item(i).data(Qt.UserRole)
-        if label_i == label:
-            return True
-    return False
-
-
 def find_last_label() -> str:
     """
     Find the last label in the label list.
@@ -353,7 +345,7 @@ def update_attributes(i: int):
 
 
 def save_attributes(_shapes):
-    filename = os.path.splitext(CORE.Variable.label_file.image_path)[0] + ".json"
+    filename = os.path.splitext(CORE.Variable.image_path)[0] + ".json"
     if CORE.Variable.output_dir:
         label_file_without_path = os.path.basename(filename)
         filename = os.path.join(CORE.Variable.output_dir, label_file_without_path)
@@ -367,7 +359,7 @@ def save_attributes(_shapes):
             "points": [(p.x(), p.y()) for p in s.points],
             "group_id": s.group_id,
             "description": s.description,
-            "is_difficult": s.difficult,
+            "is_difficult": s.is_difficult,
             "shape_type": s.shape_type,
             "flags": s.flags,
             "attributes": s.attributes,
@@ -398,15 +390,15 @@ def save_attributes(_shapes):
         label_file.save(
             filename=filename,
             shapes=shapes,
-            image_path=os.path.relpath(CORE.Variable.label_file.image_path, os.path.dirname(filename)),
-            image_data=CORE.Variable.label_file.image_data if CORE.Variable.settings.get("store_data", False) else None,
+            image_path=os.path.relpath(CORE.Variable.image_path, os.path.dirname(filename)),
+            image_data=CORE.Variable.image_data if CORE.Variable.settings.get("store_data", False) else None,
             image_height=CORE.Variable.image.height(),
             image_width=CORE.Variable.image.width(),
-            other_data=CORE.Variable.label_file.other_data,
+            other_data=CORE.Variable.other_data,
             flags=flags,
         )
         CORE.Variable.label_file = label_file
-        items = CORE.Object.info_file_list_widget.findItems(CORE.Variable.label_file.image_path, Qt.MatchExactly)
+        items = CORE.Object.info_file_list_widget.findItems(CORE.Variable.image_path, Qt.MatchExactly)
         if len(items) > 0:
             if len(items) != 1:
                 raise RuntimeError("There are duplicate files.")

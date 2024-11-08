@@ -12,8 +12,8 @@ from core.services import system
 from utils.function import get_rgb_by_label
 
 
-def edit_label(item: LabelListWidgetItem):
-    if not CORE.Object.canvas.canvas_mode == CanvasMode.EDIT:
+def edit_label(item: 'LabelListWidgetItem'):
+    if CORE.Object.canvas.canvas_mode != CanvasMode.EDIT:
         return
     if not item:
         items = CORE.Object.label_list_widget.selected_items()
@@ -23,12 +23,12 @@ def edit_label(item: LabelListWidgetItem):
     shape = item.shape()
     if shape is None:
         return
-    text, flags, group_id, description, difficult, kie_linking = CORE.Object.label_dialog.pop_up(
+    text, flags, group_id, description, is_difficult, kie_linking = CORE.Object.label_dialog.pop_up(
         text=shape.label,
         flags=shape.flags,
         group_id=shape.group_id,
         description=shape.description,
-        difficult=shape.difficult,
+        difficult=shape.is_difficult,
         kie_linking=shape.kie_linking
     )
     if text is None:
@@ -39,7 +39,7 @@ def edit_label(item: LabelListWidgetItem):
     shape.flags = flags
     shape.group_id = group_id
     shape.description = description
-    shape.difficult = difficult
+    shape.is_difficult = is_difficult
     shape.kie_linking = kie_linking
 
     # Add to label history
@@ -69,7 +69,7 @@ def add_label(shape: Shape):
     else:
         text = f"{shape.label} ({shape.group_id})"
     label_list_item = LabelListWidgetItem(text, shape)
-    CORE.Object.label_list_widget.add_iem(label_list_item)
+    CORE.Object.label_list_widget.add_item(label_list_item)
     if not CORE.Object.unique_label_list_widget.find_items_by_label(shape.label):
         item = CORE.Object.unique_label_list_widget.create_item_from_label(shape.label)
         CORE.Object.unique_label_list_widget.addItem(item)
@@ -100,7 +100,7 @@ def duplicate_selected_shape():
 def delete_selected_shape():
     remove_labels(CORE.Object.canvas.delete_selected())
     system.set_dirty()
-    if len(CORE.Object.label_list_widget) == 0:
+    if CORE.Object.canvas.is_no_shape:
         CORE.Action.save_as.setEnabled(False)
 
 
@@ -128,7 +128,7 @@ def remove_selected_point():
         CORE.Object.canvas.delete_shape(CORE.Object.canvas.highlight_shape)
         remove_labels([CORE.Object.canvas.highlight_shape])
         system.set_dirty()
-        if len(CORE.Object.label_list_widget) == 0:
+        if CORE.Object.canvas.is_no_shape:
             CORE.Action.save_as.setEnabled(False)
 
 

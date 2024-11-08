@@ -60,7 +60,7 @@ class FileMenu(BaseMenu):
                 "Save labels to file",
                 enabled=False
             ),
-            "save_file_as": self.menu_action(
+            "save_as": self.menu_action(
                 "Save as",
                 files_action.save_file_as,
                 ["Ctrl+Shift+S"],

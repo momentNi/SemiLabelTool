@@ -6,7 +6,6 @@ from PyQt5.QtGui import QPalette
 from PyQt5.QtWidgets import QStyle
 
 from core.dto.label_list_widget_item import LabelListWidgetItem
-from utils.logger import logger
 
 
 class LabelListWidget(QtWidgets.QListView):
@@ -77,7 +76,6 @@ class LabelListWidget(QtWidgets.QListView):
             item = self.model().item(row, 0)
             if item.shape() == shape:
                 return item
-        logger.error(f"cannot find shape: {shape}")
         return None
 
     def clear(self):

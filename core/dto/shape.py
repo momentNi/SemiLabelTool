@@ -17,7 +17,7 @@ class Shape:
         self.cache_label: Optional[str] = None
         self.score: float = score
         self.line_color: QtGui.QColor = line_color if line_color is not None else Constants.DEFAULT_LINE_COLOR
-        self.shape_type: ShapeType = shape_type if shape_type is not None else ShapeType.POLYGON
+        self._shape_type: 'ShapeType' = shape_type if shape_type is not None else ShapeType.POLYGON
         self.flags: dict = flags
         self.group_id: int = group_id
         self.description: str = description
@@ -31,9 +31,9 @@ class Shape:
         self.points: List[QtCore.QPointF] = []
         self.center: Optional[QtCore.QPointF] = None
 
-        self.highlight_vertex_index: int | None = None
+        self.highlight_vertex_index: Optional[int] = None
         self.highlight_mode: 'ShapeHighlightMode' = ShapeHighlightMode.NEAR_VERTEX
-        self.highlight_vertex_fill_color: QtGui.QColor | None = None
+        self.highlight_vertex_fill_color: Optional[QtGui.QColor] = None
 
         self.is_visible: bool = True
         self.is_fill: bool = False
@@ -53,6 +53,18 @@ class Shape:
     def __setitem__(self, key: int, value: QtCore.QPointF) -> QtCore.QPointF:
         self.points[key] = value
         return value
+
+    @property
+    def shape_type(self):
+        return self._shape_type
+
+    @shape_type.setter
+    def shape_type(self, value):
+        try:
+            self._shape_type = ShapeType(value)
+        except ValueError:
+            logger.error(f"Unexpected shape_type: {value}")
+            raise ValueError(f"Unexpected shape_type: {value}")
 
     @staticmethod
     def update_shape_color(shape):
@@ -78,11 +90,11 @@ class Shape:
         Returns:
             QPainterPath: The drawing path representing the shape.
         """
-        if self.shape_type == ShapeType.RECTANGLE:
+        if self._shape_type == ShapeType.RECTANGLE:
             path = QtGui.QPainterPath(self.points[0])
             for p in self.points[1:]:
                 path.lineTo(p)
-        elif self.shape_type == ShapeType.CIRCLE:
+        elif self._shape_type == ShapeType.CIRCLE:
             path = QtGui.QPainterPath()
             if len(self.points) == 2:
                 rectangle = get_circle_rect_from_line(self.points)
@@ -100,7 +112,7 @@ class Shape:
         For rotation type shapes, if there are four points, calculate the center point and assign it to self.center.
         Mark the shape as closed.
         """
-        if self.shape_type == ShapeType.ROTATION and len(self.points) == 4:
+        if self._shape_type == ShapeType.ROTATION and len(self.points) == 4:
             cx = (self.points[0].x() + self.points[2].x()) / 2
             cy = (self.points[0].y() + self.points[2].y()) / 2
             self.center = QtCore.QPointF(cx, cy)
@@ -137,7 +149,7 @@ class Shape:
         Returns:
             bool: A boolean value, returns True if the current shape can add more points, otherwise False.
         """
-        return self.shape_type in (ShapeType.POLYGON, ShapeType.LINE_STRIP)
+        return self._shape_type in (ShapeType.POLYGON, ShapeType.LINE_STRIP)
 
     def get_nearest_vertex(self, point: QtCore.QPointF, epsilon: float) -> int | None:
         """
@@ -202,7 +214,7 @@ class Shape:
         Args:
             point (QPointF): new point to be added
         """
-        if self.shape_type == ShapeType.RECTANGLE:
+        if self._shape_type == ShapeType.RECTANGLE:
             if not self.is_reach_max_points():
                 self.points.append(point)
         else:
@@ -342,10 +354,10 @@ class Shape:
             line_path = QtGui.QPainterPath()
             vertex_path = QtGui.QPainterPath()
 
-            if self.shape_type == ShapeType.RECTANGLE or self.shape_type == ShapeType.ROTATION:
+            if self._shape_type == ShapeType.RECTANGLE or self._shape_type == ShapeType.ROTATION:
                 if len(self.points) not in [1, 2, 4]:
-                    logger.error(f"Invalid points length (points = {self.points}) for {self.shape_type}")
-                    raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self.shape_type}")
+                    logger.error(f"Invalid points length (points = {self.points}) for {self._shape_type}")
+                    raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self._shape_type}")
                 if len(self.points) == 2:
                     rectangle = get_rect_from_line(*self.points)
                     line_path.addRect(rectangle)
@@ -357,26 +369,26 @@ class Shape:
                             self.draw_vertex(vertex_path, i)
                     if self.is_closed or self.label is not None:
                         line_path.lineTo(self.points[0])
-            elif self.shape_type == ShapeType.CIRCLE:
+            elif self._shape_type == ShapeType.CIRCLE:
                 if len(self.points) not in [1, 2]:
-                    logger.error(f"Invalid points length (points = {self.points}) for {self.shape_type}")
-                    raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self.shape_type}")
+                    logger.error(f"Invalid points length (points = {self.points}) for {self._shape_type}")
+                    raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self._shape_type}")
                 if len(self.points) == 2:
                     rectangle = get_circle_rect_from_line(self.points)
                     line_path.addEllipse(rectangle)
                 if self.is_selected:
                     for i in range(len(self.points)):
                         self.draw_vertex(vertex_path, i)
-            elif self.shape_type == ShapeType.LINE_STRIP:
+            elif self._shape_type == ShapeType.LINE_STRIP:
                 line_path.moveTo(self.points[0])
                 for i, p in enumerate(self.points):
                     line_path.lineTo(p)
                     if self.is_selected:
                         self.draw_vertex(vertex_path, i)
-            elif self.shape_type == ShapeType.POINT:
+            elif self._shape_type == ShapeType.POINT:
                 if len(self.points) != 1:
-                    logger.error(f"Invalid points length (points = {self.points}) for {self.shape_type}")
-                    raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self.shape_type}")
+                    logger.error(f"Invalid points length (points = {self.points}) for {self._shape_type}")
+                    raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self._shape_type}")
                 self.draw_vertex(vertex_path, 0)
             else:
                 line_path.moveTo(self.points[0])

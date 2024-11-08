@@ -61,7 +61,7 @@ def save_labels(filename):
             "group_id": s.group_id,
             "description": s.description,
             "is_difficult": s.is_difficult,
-            "shape_type": s.shape_type,
+            "shape_type": s.shape_type.name,
             "flags": s.flags,
             "attributes": s.attributes,
             "kie_linking": s.kie_linking,
@@ -77,7 +77,7 @@ def save_labels(filename):
     shapes = [
         format_shape(item.shape())
         for item in CORE.Object.label_list_widget
-        if item.shape().label not in [AutoLabelEditMode.OBJECT, AutoLabelEditMode.ADD, AutoLabelEditMode.REMOVE]
+        if item.shape().label not in [AutoLabelEditMode.OBJECT.value, AutoLabelEditMode.ADD.value, AutoLabelEditMode.REMOVE.value]
     ]
     flags = {}
     for i in range(CORE.Object.flag_widget.count()):
@@ -86,8 +86,8 @@ def save_labels(filename):
         flag = item.checkState() == Qt.Checked
         flags[key] = flag
     try:
-        image_path = os.path.relpath(CORE.Variable.label_file.image_path, os.path.dirname(filename))
-        image_data = CORE.Variable.label_file.image_data if CORE.Variable.settings.get("store_data", False) else None
+        image_path = os.path.relpath(CORE.Variable.image_path, os.path.dirname(filename))
+        image_data = CORE.Variable.image_data if CORE.Variable.settings.get("store_data", False) else None
         if os.path.dirname(filename) and not os.path.exists(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
         label_file.save(
@@ -97,11 +97,11 @@ def save_labels(filename):
             image_data=image_data,
             image_height=CORE.Variable.image.height(),
             image_width=CORE.Variable.image.width(),
-            other_data=CORE.Variable.label_file.other_data,
+            other_data=CORE.Variable.other_data,
             flags=flags,
         )
         CORE.Variable.label_file = label_file
-        items = CORE.Object.file_list_widget.findItems(CORE.Variable.label_file.image_path, Qt.MatchExactly)
+        items = CORE.Object.info_file_list_widget.findItems(CORE.Variable.image_path, Qt.MatchExactly)
         if len(items) > 0:
             if len(items) != 1:
                 logger.error("There are duplicate files.")
@@ -129,7 +129,7 @@ def save_file():
         )
         logger.error(f"Cannot save empty image: {CORE.Variable.current_file_full_path}")
         return
-    if not CORE.Variable.label_file.image_data.isNull():
+    if CORE.Variable.label_file:
         save_label_file(CORE.Variable.label_file.filename)
     else:
         save_label_file(SaveFileDialog().get_save_file_name())
@@ -195,15 +195,19 @@ def load_file(filename: str = None):
             logger.error(f"Error reading {label_file}")
             CORE.Object.status_bar.showMessage(f"Error reading {label_file}")
             return False
+        CORE.Variable.image_data = CORE.Variable.label_file.image_data
+        CORE.Variable.image_path = os.path.join(os.path.dirname(label_file), CORE.Variable.label_file.image_path)
+        CORE.Variable.other_data = CORE.Variable.label_file.other_data
+
         CORE.Object.item_description.textChanged.disconnect()
-        CORE.Object.item_description.setPlainText(CORE.Variable.label_file.other_data.get("image_description", ""))
+        CORE.Object.item_description.setPlainText(CORE.Variable.other_data.get("image_description", ""))
         CORE.Object.item_description.textChanged.connect(on_item_description_change)
     else:
         CORE.Variable.label_file = LabelFile()
-        CORE.Variable.label_file.load_image_file(filename)
-        if CORE.Variable.label_file.image_data:
-            CORE.Variable.label_file.image_path = filename
-    handling_image = QtGui.QImage.fromData(CORE.Variable.label_file.image_data)
+        CORE.Variable.image_data = CORE.Variable.label_file.load_image_file(filename)
+        if CORE.Variable.image_data:
+            CORE.Variable.image_path = filename
+    handling_image = QtGui.QImage.fromData(CORE.Variable.image_data)
 
     if handling_image.isNull():
         formats = [f"*.{fmt.data().decode()}" for fmt in QtGui.QImageReader.supportedImageFormats()]
@@ -240,8 +244,9 @@ def load_file(filename: str = None):
     # set zoom values
     is_initial_load = not CORE.Object.canvas.zoom_history
     if CORE.Variable.current_file_full_path in CORE.Object.canvas.zoom_history:
-        CORE.Object.canvas.zoom_mode = CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path][0]
-        set_zoom(CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path][1])
+        zoom_mode = CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path]
+        CORE.Object.canvas.zoom_mode = zoom_mode[0]
+        set_zoom(zoom_mode[1])
     elif is_initial_load or not CORE.Variable.settings.get("keep_prev_scale", False):
         adjust_scale(initial=True)
 
@@ -251,7 +256,7 @@ def load_file(filename: str = None):
             set_scroll_value(orientation, CORE.Object.canvas.scroll_values[orientation][CORE.Variable.current_file_full_path])
 
     # set brightness contrast values
-    dialog = BrightnessContrastDialog(img_data_to_pil(CORE.Variable.label_file.image_data))
+    dialog = BrightnessContrastDialog(img_data_to_pil(CORE.Variable.image_data))
     brightness, contrast = CORE.Variable.brightness_contrast_map.get(CORE.Variable.current_file_full_path, (None, None))
     if CORE.Variable.settings.get("keep_prev_brightness", False) and CORE.Variable.recent_files:
         brightness, _ = CORE.Variable.brightness_contrast_map.get(CORE.Variable.recent_files[0], (None, None))
@@ -440,7 +445,6 @@ def update_file_menu():
         icon = utils.qt_utils.new_icon("labels")
         action = QtWidgets.QAction(icon, "&%d %s" % (i + 1, QtCore.QFileInfo(f).fileName()), CORE.Action.open_recent)
         action.triggered.connect(functools.partial(lambda x: load_file(x) if utils.qt_utils.may_continue() else None, f))
-        logger.info(action)
         CORE.Action.open_recent.addAction(action)
 
 
@@ -484,7 +488,7 @@ def get_image_file():
     if not CORE.Variable.current_file_full_path.lower().endswith(".json"):
         image_file = CORE.Variable.current_file_full_path
     else:
-        image_file = CORE.Variable.label_file.image_path
+        image_file = CORE.Variable.image_path
     return image_file
 
 

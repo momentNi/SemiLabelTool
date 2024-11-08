@@ -8,7 +8,7 @@ from utils.image import img_data_to_pil
 
 
 def set_brightness_contrast():
-    dialog = BrightnessContrastDialog(img_data_to_pil(CORE.Variable.label_file.image_data))
+    dialog = BrightnessContrastDialog(img_data_to_pil(CORE.Variable.image_data))
     brightness, contrast = CORE.Variable.brightness_contrast_map.get(CORE.Variable.current_file_full_path, (None, None))
     if brightness is not None:
         dialog.slider_brightness.setValue(brightness)
@@ -34,10 +34,10 @@ def set_cross_line():
 
 def hide_selected_polygons():
     for index, item in enumerate(CORE.Object.label_list_widget):
-        if item.shape().selected:
+        if item.shape().is_selected:
             item.setCheckState(Qt.Unchecked)
             CORE.Variable.selected_polygon_stack.append(index)
-            CORE.Object.label_list_widget[index].shape().visible = False
+            CORE.Object.label_list_widget[index].shape().is_visible = False
 
 
 def show_hidden_polygons():
@@ -45,4 +45,4 @@ def show_hidden_polygons():
         index = CORE.Variable.selected_polygon_stack.pop()
         item = CORE.Object.label_list_widget.item_at_index(index)
         item.setCheckState(Qt.Checked)
-        CORE.Object.label_list_widget[index].shape().visible = True
+        CORE.Object.label_list_widget[index].shape().is_visible = True

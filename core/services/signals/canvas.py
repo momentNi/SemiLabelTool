@@ -1,7 +1,6 @@
 import os
 
 from PyQt5.QtCore import QPointF, Qt
-from PyQt5.QtWidgets import QMessageBox
 
 from core.configs.core import CORE
 from core.dto.enums import AutoLabelEditMode, ShapeType
@@ -50,19 +49,10 @@ def handle_new_shape():
         if CORE.Variable.settings.get("auto_use_last_label", False) and last_label:
             text = last_label
         else:
-            previous_text = CORE.Object.label_dialog.edit.text()
+            previous_text = CORE.Object.label_dialog.line_edit.text()
             text, flags, group_id, description, is_difficult, kie_linking = CORE.Object.label_dialog.pop_up(text)
             if not text:
-                CORE.Object.label_dialog.edit.setText(previous_text)
-
-    if text and not system.validate_label(text):
-        QMessageBox.critical(
-            CORE.Object.main_window,
-            "Invalid label",
-            f"Invalid label '{text}' with validation type '{CORE.Variable.settings.get('validate_label', None)}'",
-            QMessageBox.Ok
-        )
-        return
+                CORE.Object.label_dialog.line_edit.setText(previous_text)
 
     if CORE.Variable.attributes and text:
         text = system.reset_attribute(text)
@@ -76,7 +66,7 @@ def handle_new_shape():
         shape.is_difficult = is_difficult
         shape.kie_linking = kie_linking
         add_label(shape)
-        CORE.Action.edit_mode.setEnabled(True)
+        CORE.Action.edit_object.setEnabled(True)
         CORE.Action.undo_last_point.setEnabled(False)
         CORE.Action.undo.setEnabled(True)
         system.set_dirty()
@@ -98,19 +88,13 @@ def handle_show_shape(shape_height: float, shape_width: float, pos: QPointF):
     if shape_height > 0 and shape_width > 0:
         if num_images and CORE.Variable.current_file_full_path in CORE.Variable.image_list:
             current_index = CORE.Variable.image_list.index(CORE.Variable.current_file_full_path) + 1
-            CORE.Object.status_bar.showMessage(
-                f"X: {int(pos.x())}, Y: {int(pos.y())} | H: {shape_height}, W: {shape_width} [{basename}: {current_index}/{num_images}]"
-            )
+            CORE.Object.status_bar.showMessage(f"X: {int(pos.x())}, Y: {int(pos.y())} | H: {shape_height}, W: {shape_width} [{basename}: {current_index}/{num_images}]")
         else:
-            CORE.Object.status_bar.showMessage(
-                f"X: {int(pos.x())}, Y: {int(pos.y())} | H: {shape_height}, W: {shape_width}"
-            )
-    elif CORE.Variable.label_file.image_path:
+            CORE.Object.status_bar.showMessage(f"X: {int(pos.x())}, Y: {int(pos.y())} | H: {shape_height}, W: {shape_width}")
+    elif CORE.Variable.image_path:
         if num_images and CORE.Variable.current_file_full_path in CORE.Variable.image_list:
             current_index = CORE.Variable.image_list.index(CORE.Variable.current_file_full_path) + 1
-            CORE.Object.status_bar.showMessage(
-                f"X: {int(pos.x())}, Y: {int(pos.y())} [{basename}: {current_index}/{num_images}]"
-            )
+            CORE.Object.status_bar.showMessage(f"X: {int(pos.x())}, Y: {int(pos.y())} [{basename}: {current_index}/{num_images}]")
         else:
             CORE.Object.status_bar.showMessage(f"X: {int(pos.x())}, Y: {int(pos.y())}")
 
@@ -118,12 +102,12 @@ def handle_show_shape(shape_height: float, shape_width: float, pos: QPointF):
 def handle_selection_changed(selected_shapes):
     CORE.Variable.has_selection_slot = False
     for shape in CORE.Object.canvas.selected_shapes:
-        shape.selected = False
+        shape.is_selected = False
     CORE.Object.label_list_widget.clearSelection()
     CORE.Object.canvas.selected_shapes = selected_shapes
     can_merge = True
     for shape in CORE.Object.canvas.selected_shapes:
-        shape.selected = True
+        shape.is_selected = True
         if shape.shape_type != ShapeType.RECTANGLE:
             can_merge = False
         item = CORE.Object.label_list_widget.find_item_by_shape(shape)
@@ -140,6 +124,6 @@ def handle_selection_changed(selected_shapes):
     system.set_item_description(True)
     if CORE.Variable.attributes:
         for i in range(len(CORE.Object.canvas.shapes)):
-            if CORE.Object.canvas.shapes[i].selected:
+            if CORE.Object.canvas.shapes[i].is_selected:
                 update_attributes(i)
                 break
