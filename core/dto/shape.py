@@ -4,6 +4,7 @@ from typing import List, Self, Optional
 from PyQt5 import QtGui, QtCore
 
 from core.configs.constants import Constants
+from core.configs.core import CORE
 from core.dto.enums import ShapeType, PointType, ShapeHighlightMode
 from core.dto.exceptions import WrongShapeError
 from utils.calculator import get_rect_from_line, get_circle_rect_from_line, distance, distance_to_line
@@ -16,7 +17,6 @@ class Shape:
         self.label: str = label
         self.cache_label: Optional[str] = None
         self.score: float = score
-        self.line_color: QtGui.QColor = line_color if line_color is not None else Constants.DEFAULT_LINE_COLOR
         self._shape_type: 'ShapeType' = shape_type if shape_type is not None else ShapeType.POLYGON
         self.flags: dict = flags
         self.group_id: int = group_id
@@ -28,12 +28,22 @@ class Shape:
         self.other_data: dict = {}
 
         self.point_type: 'PointType' = PointType.ROUND
+        self.point_size: float = 1.5
+        self.line_width: float = 2.0
         self.points: List[QtCore.QPointF] = []
         self.center: Optional[QtCore.QPointF] = None
 
         self.highlight_vertex_index: Optional[int] = None
         self.highlight_mode: 'ShapeHighlightMode' = ShapeHighlightMode.NEAR_VERTEX
-        self.highlight_vertex_fill_color: Optional[QtGui.QColor] = None
+
+        # Color related
+        self.line_color: QtGui.QColor = line_color if line_color is not None else Constants.DEFAULT_LINE_COLOR
+        self.fill_color: QtGui.QColor = Constants.DEFAULT_FILL_COLOR
+        self.select_line_color: QtGui.QColor = Constants.DEFAULT_SELECT_LINE_COLOR
+        self.select_fill_color: QtGui.QColor = Constants.DEFAULT_SELECT_FILL_COLOR
+        self.vertex_fill_color: QtGui.QColor = Constants.DEFAULT_VERTEX_FILL_COLOR
+        self._vertex_fill_color: Optional[QtGui.QColor] = None
+        self.highlight_vertex_fill_color: QtGui.QColor = Constants.DEFAULT_HIGHLIGHT_VERTEX_FILL_COLOR
 
         self.is_visible: bool = True
         self.is_fill: bool = False
@@ -317,16 +327,16 @@ class Shape:
         Raises:
             WrongShapeError: If the vertex shape is unsupported.
         """
-        d = Constants.SHAPE_POINT_SIZE / Constants.SHAPE_SCALE
+        d = self.point_size / CORE.Variable.shape_scale
         shape = self.point_type
         point = self.points[i]
         if i == self.highlight_vertex_index:
             size, shape = self.highlight_mode.value
             d *= size
         if self.highlight_vertex_index is not None:
-            self.highlight_vertex_fill_color = Constants.DEFAULT_HOVER_VERTEX_FILL_COLOR
+            self._vertex_fill_color = self.highlight_vertex_fill_color
         else:
-            self.highlight_vertex_fill_color = Constants.DEFAULT_VERTEX_FILL_COLOR
+            self._vertex_fill_color = self.vertex_fill_color
         if shape == PointType.SQUARE:
             path.addRect(point.x() - d / 2, point.y() - d / 2, d, d)
         elif shape == PointType.ROUND:
@@ -346,18 +356,18 @@ class Shape:
             painter (QtGui.QPainter): The painter object used for drawing.
         """
         if self.points:
-            color = Constants.DEFAULT_SELECT_LINE_COLOR if self.is_selected else Constants.DEFAULT_LINE_COLOR
+            color = self.select_line_color if self.is_selected else self.line_color
             pen = QtGui.QPen(color)
-            pen.setWidth(max(1, int(round(Constants.SHAPE_LINE_WIDTH / Constants.SHAPE_SCALE))))
+            pen.setWidth(max(1, int(round(self.line_width / CORE.Variable.shape_scale))))
             painter.setPen(pen)
 
             line_path = QtGui.QPainterPath()
             vertex_path = QtGui.QPainterPath()
 
-            if self._shape_type == ShapeType.RECTANGLE or self._shape_type == ShapeType.ROTATION:
-                if len(self.points) not in [1, 2, 4]:
-                    logger.error(f"Invalid points length (points = {self.points}) for {self._shape_type}")
-                    raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self._shape_type}")
+            if self.shape_type == ShapeType.RECTANGLE or self.shape_type == ShapeType.ROTATION:
+                if len(self.points) not in (1, 2, 4):
+                    logger.error(f"Invalid points length (points = {self.points}) for {self.shape_type}")
+                    raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self.shape_type}")
                 if len(self.points) == 2:
                     rectangle = get_rect_from_line(*self.points)
                     line_path.addRect(rectangle)
@@ -402,8 +412,8 @@ class Shape:
 
             painter.drawPath(line_path)
             painter.drawPath(vertex_path)
-            if self.highlight_vertex_fill_color is not None:
-                painter.fillPath(vertex_path, self.highlight_vertex_fill_color)
+            if self._vertex_fill_color is not None:
+                painter.fillPath(vertex_path, self._vertex_fill_color)
             if self.is_fill:
-                color = Constants.DEFAULT_SELECT_FILL_COLOR if self.is_selected else Constants.DEFAULT_FILL_COLOR
+                color = self.select_fill_color if self.is_selected else self.fill_color
                 painter.fillPath(line_path, color)

@@ -1486,7 +1486,7 @@ class Canvas(QWidget):
         p.translate(self.get_image_offset_to_center())
 
         p.drawPixmap(0, 0, self.pixmap)
-        Constants.SHAPE_SCALE = self.scale
+        CORE.Variable.shape_scale = self.scale
 
         # Draw loading/waiting screen
         if self.is_loading:
@@ -1549,14 +1549,14 @@ class Canvas(QWidget):
                         max_y = max(max_y, rect.y() + rect.height())
                     group_color = Constants.LABEL_COLOR_MAP[int(group_id) % len(Constants.LABEL_COLOR_MAP)]
                     pen.setStyle(Qt.SolidLine)
-                    pen.setWidth(max(1, int(round(4.0 / Constants.SHAPE_SCALE))))
+                    pen.setWidth(max(1, int(round(4.0 / CORE.Variable.shape_scale))))
                     pen.setColor(QtGui.QColor(*group_color))
                     p.setPen(pen)
 
                     # Calculate the center point of the bounding rectangle
                     cx = rect.x() + rect.width() / 2
                     cy = rect.y() + rect.height() / 2
-                    triangle_radius = max(1, int(round(3.0 / Constants.SHAPE_SCALE)))
+                    triangle_radius = max(1, int(round(3.0 / CORE.Variable.shape_scale)))
 
                     # Define the points of the triangle
                     triangle_points = [
@@ -1569,7 +1569,7 @@ class Canvas(QWidget):
                     p.drawPolygon(QtGui.QPolygon(triangle_points))
 
                 pen.setStyle(Qt.DashLine)
-                pen.setWidth(max(1, int(round(1.0 / Constants.SHAPE_SCALE))))
+                pen.setWidth(max(1, int(round(1.0 / CORE.Variable.shape_scale))))
                 pen.setColor(QtGui.QColor("#EEEEEE"))
                 p.setPen(pen)
                 wrap_rect = QtCore.QRectF(min_x, min_y, max_x - min_x, max_y - min_y)
@@ -1597,7 +1597,7 @@ class Canvas(QWidget):
 
             for linking in linking_pairs:
                 pen.setStyle(Qt.SolidLine)
-                pen.setWidth(max(1, int(round(4.0 / Constants.SHAPE_SCALE))))
+                pen.setWidth(max(1, int(round(4.0 / CORE.Variable.shape_scale))))
                 pen.setColor(QtGui.QColor(*group_color))
                 p.setPen(pen)
                 key, value = linking
@@ -1608,7 +1608,7 @@ class Canvas(QWidget):
                 # Draw a link from key point to value point
                 p.drawLine(QtCore.QPointF(*kp), QtCore.QPointF(*vp))
                 # Draw the triangle arrowhead
-                arrow_size = max(1, int(round(10.0 / Constants.SHAPE_SCALE)))
+                arrow_size = max(1, int(round(10.0 / CORE.Variable.shape_scale)))
                 angle = math.atan2(vp[1] - kp[1], vp[0] - kp[0])
                 arrow_points = [
                     QtCore.QPointF(vp[0], vp[1]),
@@ -1626,11 +1626,11 @@ class Canvas(QWidget):
                     logger.info(self.highlight_shape)
                 shape.paint(p)
             if shape.shape_type == ShapeType.ROTATION and len(shape.points) == 4 and self.visible_shapes.get(shape, True):
-                d = Constants.SHAPE_POINT_SIZE / Constants.SHAPE_SCALE
+                d = Constants.SHAPE_POINT_SIZE / CORE.Variable.shape_scale
                 center = QtCore.QPointF((shape.points[0].x() + shape.points[2].x()) / 2, (shape.points[0].y() + shape.points[2].y()) / 2)
                 if self.need_show_degrees:
                     degrees = f"{int(math.degrees(shape.direction))}°"
-                    p.setFont(QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / Constants.SHAPE_SCALE))))))
+                    p.setFont(QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / CORE.Variable.shape_scale))))))
                     pen = QtGui.QPen(QtGui.QColor("#FF9900"), 8, QtCore.Qt.SolidLine)
                     p.setPen(pen)
                     fm = QtGui.QFontMetrics(p.font())
@@ -1668,7 +1668,7 @@ class Canvas(QWidget):
         if self.need_show_texts:
             text_color = "#FFFFFF"
             background_color = "#007BFF"
-            p.setFont(QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / Constants.SHAPE_SCALE))))))
+            p.setFont(QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / CORE.Variable.shape_scale))))))
             pen = QtGui.QPen(QtGui.QColor(background_color), 8, Qt.SolidLine)
             p.setPen(pen)
             for shape in self.shapes:
@@ -1695,10 +1695,10 @@ class Canvas(QWidget):
 
         # Draw labels
         if self.need_show_labels:
-            p.setFont(QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / Constants.SHAPE_SCALE))))))
+            p.setFont(QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / CORE.Variable.shape_scale))))))
             labels = []
             for shape in self.shapes:
-                d_react = Constants.SHAPE_POINT_SIZE / Constants.SHAPE_SCALE
+                d_react = Constants.SHAPE_POINT_SIZE / CORE.Variable.shape_scale
                 d_text = 1.5
                 if not shape.is_visible:
                     continue
@@ -1750,7 +1750,7 @@ class Canvas(QWidget):
 
         # Draw mouse coordinates
         if self.need_show_cross_line:
-            pen = QtGui.QPen(QtGui.QColor(self.cross_line.color), max(1, int(round(self.cross_line.width / Constants.SHAPE_SCALE))), Qt.DashLine)
+            pen = QtGui.QPen(QtGui.QColor(self.cross_line.color), max(1, int(round(self.cross_line.width / CORE.Variable.shape_scale))), Qt.DashLine)
             p.setPen(pen)
             p.setOpacity(self.cross_line.opacity)
             p.drawLine(QtCore.QPointF(self.prev_move_point.x(), 0), QtCore.QPointF(self.prev_move_point.x(), self.pixmap.height()))

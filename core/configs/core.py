@@ -49,6 +49,7 @@ class Core(object):
         attributes: dict = {}
         copied_shapes: List['Shape'] = []
         selected_polygon_stack: List[int] = []
+        shape_scale: float = 1.5
 
         # 当前文件夹下的图片列表
         @classmethod
