@@ -14,8 +14,11 @@ from utils.logger import logger
 
 
 def get_instruction_label():
-    return (f"<b>Mode:</b> {CORE.Object.canvas.get_canvas_mode() if CORE.Object.canvas is not None else 'Editing'} | "
-            "<b>Shortcuts:</b> Previous(<b>A</b>), Next(<b>D</b>), Rectangle(<b>R</b>), Polygon(<b>P</b>), Rotation(<b>O</b>)")
+    shortcuts = "<b>Shortcuts:</b> Previous(<b>A</b>), Next(<b>D</b>), Rectangle(<b>R</b>), Polygon(<b>P</b>), Rotation(<b>O</b>)"
+    if CORE.Object.canvas is not None:
+        return f"<b>Mode:</b> {CORE.Object.canvas.get_canvas_mode()} | {shortcuts}"
+    else:
+        return shortcuts
 
 
 def set_dirty():
