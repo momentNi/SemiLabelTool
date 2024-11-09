@@ -360,7 +360,7 @@ def save_attributes(_shapes):
             "group_id": s.group_id,
             "description": s.description,
             "is_difficult": s.is_difficult,
-            "shape_type": s.shape_type,
+            "shape_type": s.shape_type.name if isinstance(s.shape_type, ShapeType) else s.shape_type,
             "flags": s.flags,
             "attributes": s.attributes,
             "kie_linking": s.kie_linking,
