@@ -76,8 +76,6 @@ class Canvas(QWidget):
         self.is_rotating_shape: bool = False
         # Whether cursor need to attract to the points or shapes
         self.is_snapping: bool = True
-        # Set hide background - hide other shapes when some shapes are selected
-        self.is_hide_background: bool = False
         # Whether the highlighting shape is selected
         self.is_highlight_shape_selected: bool = False
         # Whether the highlighting shape is hovered
@@ -91,6 +89,8 @@ class Canvas(QWidget):
         self.need_show_scores: bool = True
         self.need_show_degrees: bool = False
         self.need_show_linking: bool = True
+        self.need_hide_background = False
+        self._need_hide_background = False
 
         # Status Variables for point, edge and shape
         self.highlight_shape: Optional['Shape'] = None
@@ -410,6 +410,9 @@ class Canvas(QWidget):
             self.clear_highlight()
             self.deselect_shape()
 
+    def set_hiding(self, enable=True):
+        self._need_hide_background = self.need_hide_background if enable else False
+
     # ==================================================
     # ================ Shapes Methods ==================
     # ==================================================
@@ -519,10 +522,11 @@ class Canvas(QWidget):
         Args:
             value: The value of hiding background
         """
-        self.is_hide_background = value
+        self.need_hide_background = value
         if self.selected_shapes:
             # Only hide other shapes if there is a current selection.
             # Otherwise, the user will not be able to select a shape.
+            self.set_hiding(True)
             self.update()
 
     def select_shapes(self, shapes: List[Shape]) -> None:
@@ -532,7 +536,7 @@ class Canvas(QWidget):
         Args:
             shapes: Target shapes
         """
-        self.is_hide_background = True
+        self.set_hiding()
         self.selection_changed_signal.emit(shapes)
         self.update()
 
@@ -541,7 +545,7 @@ class Canvas(QWidget):
         Clear the selection status of selected shapes
         """
         if self.selected_shapes:
-            self.is_hide_background = False
+            self.set_hiding(False)
             self.selection_changed_signal.emit([])
             self.is_highlight_shape_selected = False
             self.update()
@@ -558,7 +562,7 @@ class Canvas(QWidget):
             vertex, shape = self.highlight_vertex, self.highlight_shape
             shape.highlight_vertex(vertex, ShapeHighlightMode.MOVE_VERTEX)
             if shape.shape_type == ShapeType.ROTATION:
-                self.is_hide_background = True
+                self.set_hiding()
                 if shape not in self.selected_shapes:
                     if multiple_selection_mode:
                         self.selection_changed_signal.emit(self.selected_shapes + [shape])
@@ -572,7 +576,7 @@ class Canvas(QWidget):
         else:
             for shape in reversed(self.shapes):
                 if self.visible_shapes.get(shape, True) and len(shape.points) > 1 and shape.contains_point(point):
-                    self.is_hide_background = True
+                    self.set_hiding()
                     if shape not in self.selected_shapes:
                         if multiple_selection_mode:
                             self.selection_changed_signal.emit(self.selected_shapes + [shape])
@@ -794,7 +798,7 @@ class Canvas(QWidget):
         self.shapes.append(self.current)
         self.store_history_shapes()
         self.current = None
-        self.is_hide_background = False
+        self.set_hiding(False)
         self.new_shape_signal.emit()
         self.update()
         if self.is_auto_labeling:
@@ -1360,7 +1364,7 @@ class Canvas(QWidget):
                         if self.create_mode == ShapeType.CIRCLE:
                             self.current.shape_type = ShapeType.CIRCLE
                         self.line.points = [pos, pos]
-                        self.is_hide_background = True
+                        self.set_hiding()
                         self.drawing_polygon_signal.emit(True)
                         self.update()
                 elif self.is_out_of_pixmap(pos) and self.create_mode == ShapeType.ROTATION:
@@ -1368,7 +1372,7 @@ class Canvas(QWidget):
                     self.current = Shape(shape_type=self.create_mode)
                     self.current.add_point(pos)
                     self.line.points = [pos, pos]
-                    self.is_hide_background = True
+                    self.set_hiding()
                     self.drawing_polygon_signal.emit(True)
                     self.update()
             elif self.canvas_mode == CanvasMode.EDIT:
@@ -1619,7 +1623,7 @@ class Canvas(QWidget):
 
         # Draw degrees
         for shape in self.shapes:
-            if (shape.is_selected or not self.is_hide_background) and self.visible_shapes.get(shape, True):
+            if (shape.is_selected or not self._need_hide_background) and self.visible_shapes.get(shape, True):
                 shape.is_fill = self.is_fill_box and (shape.is_selected or shape == self.highlight_shape)
                 if shape.is_fill:
                     logger.info(shape)
