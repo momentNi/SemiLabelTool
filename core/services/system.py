@@ -9,6 +9,7 @@ from core.dto.enums import ZoomMode, CanvasMode, ShapeType, AutoLabelEditMode
 from core.dto.exceptions import LabelFileError
 from core.dto.label_file import LabelFile
 from core.services.actions import files
+from core.services.actions.edit import add_label
 from utils.function import find_most_similar_label
 from utils.logger import logger
 
@@ -64,7 +65,10 @@ def set_clean():
 def reset_state():
     CORE.Object.label_list_widget.clear()
     CORE.Variable.current_file_full_path = None
+    CORE.Variable.image_path = None
+    CORE.Variable.image_data = None
     CORE.Variable.label_file = None
+    CORE.Variable.other_data = {}
     CORE.Object.canvas.reset_canvas()
     CORE.Object.label_filter_combo_box.combo_box.clear()
 
@@ -136,6 +140,15 @@ def scale_fit_width():
     # The epsilon does not seem to work too well here.
     w = CORE.Object.scroll_area.width() - 2.0
     return w / CORE.Object.canvas.pixmap.width()
+
+
+def load_shapes(shapes, replace=True):
+    CORE.Variable.has_selection_slot = False
+    for shape in shapes:
+        add_label(shape)
+    CORE.Object.label_list_widget.clearSelection()
+    CORE.Variable.has_selection_slot = True
+    CORE.Object.canvas.load_shapes(shapes, replace=replace)
 
 
 def load_flags(flags: dict):

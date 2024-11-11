@@ -955,7 +955,7 @@ class Canvas(QWidget):
 
             s.append(shape)
         update_combo_box()
-        self.load_shapes(s)
+        system.load_shapes(s)
 
     # ==================================================
     # ================= Group Methods ==================

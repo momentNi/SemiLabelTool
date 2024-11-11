@@ -10,6 +10,7 @@ from core.configs.core import CORE
 from core.dto.enums import ShapeType, AutoLabelEditMode
 from core.dto.exceptions import LabelFileError
 from core.dto.label_file import LabelFile
+from core.services import system
 from core.services.actions.canvas import paint_canvas, set_scroll_value
 from core.services.system import set_clean, reset_state, load_flags, set_dirty, set_zoom, adjust_scale, on_item_description_change, toggle_zoom_related_action, toggle_load_related_action
 from core.views.dialogs.brightness_contrast_dialog import BrightnessContrastDialog
@@ -203,10 +204,10 @@ def load_file(filename: str = None):
         CORE.Object.item_description.setPlainText(CORE.Variable.other_data.get("image_description", ""))
         CORE.Object.item_description.textChanged.connect(on_item_description_change)
     else:
-        CORE.Variable.label_file = LabelFile()
         CORE.Variable.image_data = CORE.Variable.label_file.load_image_file(filename)
         if CORE.Variable.image_data:
             CORE.Variable.image_path = filename
+        CORE.Variable.label_file = None
     handling_image = QtGui.QImage.fromData(CORE.Variable.image_data)
 
     if handling_image.isNull():
@@ -234,7 +235,7 @@ def load_file(filename: str = None):
     load_flags(flags)
 
     if CORE.Variable.settings.get("keep_prev", False) and CORE.Object.canvas.is_no_shape:
-        CORE.Object.canvas.load_shapes(prev_shapes, replace=False)
+        system.load_shapes(prev_shapes, replace=False)
         set_dirty()
     else:
         set_clean()

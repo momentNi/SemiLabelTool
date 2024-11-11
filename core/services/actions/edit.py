@@ -112,7 +112,7 @@ def remove_labels(shapes: List[Shape]):
 
 
 def paste_selected_shape():
-    CORE.Object.canvas.load_shapes(CORE.Variable.copied_shapes, replace=False)
+    system.load_shapes(CORE.Variable.copied_shapes, replace=False)
     system.set_dirty()
 
 
@@ -135,7 +135,7 @@ def remove_selected_point():
 def undo_shape_edit():
     CORE.Object.canvas.restore_shape()
     CORE.Object.label_list_widget.clear()
-    CORE.Object.canvas.load_shapes(CORE.Object.canvas.shapes)
+    system.load_shapes(CORE.Object.canvas.shapes)
     CORE.Action.undo.setEnabled(CORE.Object.canvas.is_shape_restorable)
 
 
