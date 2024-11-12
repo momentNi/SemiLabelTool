@@ -28,8 +28,8 @@ class Shape:
         self.other_data: dict = {}
 
         self.point_type: 'PointType' = PointType.ROUND
-        self.point_size: float = 1.5
-        self.line_width: float = 2.0
+        self.point_size: float = 8
+        self.line_width: float = 4
         self.points: List[QtCore.QPointF] = []
         self.center: Optional[QtCore.QPointF] = None
 

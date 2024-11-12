@@ -20,8 +20,6 @@ class Constants:
     DEFAULT_VERTEX_FILL_COLOR = QtGui.QColor(0, 255, 0, 255)
     DEFAULT_HIGHLIGHT_VERTEX_FILL_COLOR = QtGui.QColor(255, 255, 255, 255)
 
-    SHAPE_POINT_SIZE = 4
-
     FORMAT = "$asctime - $levelname - $filename[line:$lineno]: $message"
     COLORS = {
         logging.DEBUG: "\x1b[;11m",  # GREY

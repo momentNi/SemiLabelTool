@@ -94,6 +94,6 @@ class ShapeHighlightMode(Enum):
     Highlight mode for shape
     """
     # Flag for the handles we would move if dragging
-    MOVE_VERTEX = (4, PointType.ROUND)
+    MOVE_VERTEX = (1.5, PointType.SQUARE)
     # Flag for all other handles on the current shape
-    NEAR_VERTEX = (1.5, PointType.SQUARE)
+    NEAR_VERTEX = (4, PointType.ROUND)

@@ -1627,7 +1627,7 @@ class Canvas(QWidget):
                 shape.is_fill = self.is_fill_box and (shape.is_selected or shape == self.highlight_shape)
                 shape.paint(p)
             if shape.shape_type == ShapeType.ROTATION and len(shape.points) == 4 and self.visible_shapes.get(shape, True):
-                d = Constants.SHAPE_POINT_SIZE / CORE.Variable.shape_scale
+                d = shape.point_size / CORE.Variable.shape_scale
                 center = QtCore.QPointF((shape.points[0].x() + shape.points[2].x()) / 2, (shape.points[0].y() + shape.points[2].y()) / 2)
                 if self.need_show_degrees:
                     degrees = f"{int(math.degrees(shape.direction))}°"
@@ -1693,7 +1693,7 @@ class Canvas(QWidget):
             p.setFont(QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / CORE.Variable.shape_scale))))))
             labels = []
             for shape in self.shapes:
-                d_react = Constants.SHAPE_POINT_SIZE / CORE.Variable.shape_scale
+                d_react = shape.point_size / CORE.Variable.shape_scale
                 d_text = 1.5
                 if not shape.is_visible:
                     continue
