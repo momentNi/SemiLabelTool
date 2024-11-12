@@ -1,10 +1,9 @@
 import os
 
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtWidgets import QAction
 
 from core.configs.core import CORE
-from core.services.actions import file_actions
+from core.services.actions import files as files_action
 
 
 def may_continue() -> bool:
@@ -17,14 +16,14 @@ def may_continue() -> bool:
     if not CORE.Variable.is_dirty:
         return True
     answer = QtWidgets.QMessageBox.question(
-        CORE.main_window,
+        CORE.Object.main_window,
         "Save annotations?",
         f'Save annotations to "{CORE.Variable.current_file_full_path!r}" before closing?',
         QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel,
         QtWidgets.QMessageBox.Save,
     )
     if answer == QtWidgets.QMessageBox.Save:
-        file_actions.save_file()
+        files_action.save_file()
         return True
     elif answer == QtWidgets.QMessageBox.Discard:
         return True
@@ -37,8 +36,7 @@ def new_icon(icon):
     return QtGui.QIcon(os.path.join(f":/images/images/{icon}.png"))
 
 
-def create_new_action(parent, text, slot=None, shortcut=None, icon=None, tip=None, checkable=False, enabled=True,
-                      checked=False, auto_trigger=False) -> QAction:
+def create_new_action(parent, text, slot=None, shortcut=None, icon=None, tip=None, checkable=False, enabled=True, checked=False, auto_trigger=False) -> QtWidgets.QAction:
     action = QtWidgets.QAction(text, parent)
     if icon is not None:
         action.setIconText(text.replace(" ", "\n"))

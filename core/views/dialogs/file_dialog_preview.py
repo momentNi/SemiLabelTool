@@ -28,12 +28,8 @@ class FileDialogPreview(QFileDialog):
         if path.lower().endswith(".json"):
             with open(path, "r") as f:
                 data = json.load(f)
-                self.label_preview.set_text(
-                    json.dumps(data, indent=4, sort_keys=False)
-                )
-            self.label_preview.label.setAlignment(
-                Qt.AlignLeft | Qt.AlignTop
-            )
+                self.label_preview.set_text(json.dumps(data, indent=4, sort_keys=False))
+            self.label_preview.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
             self.label_preview.setHidden(False)
         else:
             pixmap = QtGui.QPixmap(path)

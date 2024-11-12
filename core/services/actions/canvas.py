@@ -1,53 +1,51 @@
-def get_mode():
-    return "Editing"
+import math
+
+from core.configs.core import CORE
+from core.dto.enums import ZoomMode
+from core.services import system
+from utils.logger import logger
 
 
-def load_labels(shapes):
-    s = []
-    for shape in shapes:
-        label = shape["label"]
-        score = shape.get("score", None)
-        points = shape["points"]
-        shape_type = shape["shape_type"]
-        flags = shape["flags"]
-        group_id = shape["group_id"]
-        description = shape.get("description", "")
-        difficult = shape.get("difficult", False)
-        attributes = shape.get("attributes", {})
-        direction = shape.get("direction", 0)
-        kie_linking = shape.get("kie_linking", [])
-        other_data = shape["other_data"]
+def paint_canvas():
+    if CORE.Variable.image.isNull():
+        logger.error(f"Paint image is null: {CORE.Variable.image}")
+        return
+    CORE.Object.canvas.scale = 0.01 * CORE.Object.zoom_widget.value()
+    CORE.Object.canvas.adjustSize()
+    CORE.Object.canvas.update()
 
-        if label in self.hidden_cls or not points:
-            # skip point-empty shape
-            continue
 
-        shape = Shape(
-            label=label,
-            score=score,
-            shape_type=shape_type,
-            group_id=group_id,
-            description=description,
-            difficult=difficult,
-            direction=direction,
-            attributes=attributes,
-            kie_linking=kie_linking,
-        )
-        for x, y in points:
-            shape.add_point(QtCore.QPointF(x, y))
-        shape.close()
+def add_zoom_value(increment):
+    new_zoom_value = CORE.Object.zoom_widget.value() * increment
+    if increment > 1:
+        new_zoom_value = math.ceil(new_zoom_value)
+    else:
+        new_zoom_value = math.floor(new_zoom_value)
+    set_zoom_value(new_zoom_value)
 
-        default_flags = {}
-        if self.label_flags:
-            for pattern, keys in self.label_flags.items():
-                if re.match(pattern, label):
-                    for key in keys:
-                        default_flags[key] = False
-        shape.flags = default_flags
-        if flags:
-            shape.flags.update(flags)
-        shape.other_data = other_data
 
-        s.append(shape)
-    self.update_combo_box()
-    self.load_shapes(s)
+def set_zoom_value(value):
+    CORE.Action.fit_width.setChecked(False)
+    CORE.Action.fit_window.setChecked(False)
+    CORE.Object.zoom_widget.setValue(value)
+    CORE.Object.canvas.zoom_mode = ZoomMode.MANUAL_ZOOM
+    CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path] = (CORE.Object.canvas.zoom_mode, value)
+
+
+def set_scroll_value(orientation, value):
+    CORE.Object.canvas.scroll_bars[orientation].setValue(round(value))
+    CORE.Object.canvas.scroll_values[orientation][CORE.Variable.current_file_full_path] = value
+
+
+def set_fit_window(value=True):
+    if value:
+        CORE.Action.fit_width.setChecked(False)
+    CORE.Object.canvas.zoom_mode = ZoomMode.FIT_WINDOW if value else ZoomMode.MANUAL_ZOOM
+    system.adjust_scale()
+
+
+def set_fit_width(value=True):
+    if value:
+        CORE.Action.fit_window.setChecked(False)
+    CORE.Object.canvas.zoom_mode = ZoomMode.FIT_WIDTH if value else ZoomMode.MANUAL_ZOOM
+    system.adjust_scale()

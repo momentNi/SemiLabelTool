@@ -6,6 +6,10 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication
 
 from core.configs.constants import Constants
+from core.configs.core import CORE
+from core.resources import resources
+from utils.logger import logger
+from utils.qt_utils import new_icon
 from views.main_window import MainWindow
 
 sys.path.append('.')
@@ -55,7 +59,11 @@ def main():
     app = QApplication(sys.argv)
     app.processEvents()
     app.setApplicationName(Constants.APP_NAME)
-    # app.setWindowIcon(new_icon("icon"))
+    # Resources package must be imported, but no need to use directly.
+    # Print here to simply avoid optimize import.
+    logger.debug(resources)
+    logger.debug(CORE)
+    app.setWindowIcon(new_icon("icon"))
     win = MainWindow(app, config=args)
     win.showMaximized()
     win.raise_()
