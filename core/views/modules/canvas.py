@@ -1429,10 +1429,13 @@ class Canvas(QWidget):
         modifiers = ev.modifiers()
         key = ev.key()
         if self.canvas_mode == CanvasMode.CREATE:
-            if key == QtCore.Qt.Key_Escape and self.current:
-                self.current = None
-                self.drawing_polygon_signal.emit(False)
-                self.update()
+            if key == QtCore.Qt.Key_Escape:
+                if self.current:
+                    self.current = None
+                    self.drawing_polygon_signal.emit(False)
+                    self.update()
+                else:
+                    self.canvas_mode_changed_signal.emit()
             elif key == QtCore.Qt.Key_Return and self.can_close_shape:
                 self.finalise_shape()
             elif modifiers == QtCore.Qt.AltModifier:
