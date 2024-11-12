@@ -4,4 +4,5 @@ keep_prev_scale: false
 keep_prev_brightness: true
 
 image_flags: null
-pre_defined_labels: [ "person" ]
+pre_defined_labels: null
+fill_box: true
