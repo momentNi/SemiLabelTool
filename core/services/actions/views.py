@@ -41,7 +41,7 @@ def hide_selected_polygons():
 
 
 def show_hidden_polygons():
-    if CORE.Variable.selected_polygon_stack:
+    while len(CORE.Variable.selected_polygon_stack) > 0:
         index = CORE.Variable.selected_polygon_stack.pop()
         item = CORE.Object.label_list_widget.item_at_index(index)
         item.setCheckState(Qt.Checked)

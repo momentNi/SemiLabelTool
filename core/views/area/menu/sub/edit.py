@@ -175,6 +175,6 @@ class EditMenu(BaseMenu):
                 None,
                 'Toggle "Shapes Visibility" mode',
                 checkable=True,
-                checked=CORE.Variable.settings.get("show_shapes", False),
+                checked=CORE.Variable.settings.get("show_shapes", True),
             )
         }

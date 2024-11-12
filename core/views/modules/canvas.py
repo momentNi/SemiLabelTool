@@ -1026,6 +1026,7 @@ class Canvas(QWidget):
                     shape.group_id = new_group_id
 
         self.update()
+        system.set_dirty()
 
     def ungroup_selected_shapes(self):
         """Ungroup selected shapes"""
@@ -1044,6 +1045,7 @@ class Canvas(QWidget):
                     shape.group_id = None
 
         self.update()
+        system.set_dirty()
 
     # ==================================================
     # =============== Auto Label Methods ===============
@@ -1542,7 +1544,7 @@ class Canvas(QWidget):
                 max_x = 0
                 max_y = 0
                 for shape in shapes:
-                    rect = shape.bounding_rect()
+                    rect = shape.get_bounding_rect()
                     if shape.shape_type == ShapeType.POINT:
                         points = shape.points[0]
                         min_x = min(min_x, points.x())
@@ -1573,7 +1575,7 @@ class Canvas(QWidget):
                     ]
 
                     # Draw the triangle
-                    p.drawPolygon(QtGui.QPolygon(triangle_points))
+                    p.drawPolygon(QtGui.QPolygonF(triangle_points))
 
                 pen.setStyle(Qt.DashLine)
                 pen.setWidth(max(1, int(round(1.0 / CORE.Variable.shape_scale))))
@@ -1698,7 +1700,7 @@ class Canvas(QWidget):
                     continue
                 if shape.label in [AutoLabelEditMode.OBJECT.value, AutoLabelEditMode.ADD.value, AutoLabelEditMode.REMOVE.value]:
                     continue
-                label_text = f"id: {shape.group_id}" if shape.group_id is not None else ''
+                label_text = f"id: {shape.group_id} " if shape.group_id is not None else ''
                 label_text += shape.label
                 if shape.score is not None and self.need_show_scores:
                     label_text += f" {round(float(shape.score), 2)}"
