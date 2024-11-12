@@ -1669,34 +1669,30 @@ class Canvas(QWidget):
         if self.need_show_description:
             text_color = "#FFFFFF"
             background_color = "#007BFF"
-            p.setFont(QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / CORE.Variable.shape_scale))))))
-            pen = QtGui.QPen(QtGui.QColor(background_color), 8, Qt.SolidLine)
-            p.setPen(pen)
+            font_size = int(max(6.0, int(round(8.0 / CORE.Variable.shape_scale))))
+            p.setFont(QtGui.QFont("Arial", font_size))
+            pen_bg = QtGui.QPen(QtGui.QColor(background_color), 8, Qt.SolidLine)
+            pen_text = QtGui.QPen(QtGui.QColor(text_color), 8, Qt.SolidLine)
+
             for shape in self.shapes:
                 description = shape.description
                 if description:
                     bbox = shape.get_bounding_rect()
                     fm = QtGui.QFontMetrics(p.font())
                     rect = fm.boundingRect(description)
-                    p.fillRect(
-                        QtCore.QRectF(rect.x() + bbox.x(), rect.y() + bbox.y(), rect.width(), rect.height()),
-                        QtGui.QColor(background_color),
-                    )
-                    p.drawText(int(bbox.x()), int(bbox.y()), description)
-            pen = QtGui.QPen(QtGui.QColor(text_color), 8, Qt.SolidLine)
-            p.setPen(pen)
-            for shape in self.shapes:
-                description = shape.description
-                if description:
-                    bbox = shape.get_bounding_rect()
-                    p.drawText(int(bbox.x()), int(bbox.y()), description)
+                    rect_f = QtCore.QRectF(rect.x() + bbox.x(), rect.y() + bbox.y() + bbox.height() + font_size + shape.line_width, rect.width(), rect.height())
+                    p.setPen(pen_bg)
+                    p.fillRect(rect_f, QtGui.QColor(background_color))
+                    p.setPen(pen_text)
+                    p.drawText(rect_f, description)
 
         # Draw labels
         if self.need_show_labels:
-            p.setFont(QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / CORE.Variable.shape_scale))))))
+            font_size = int(max(6.0, int(round(8.0 / CORE.Variable.shape_scale))))
+            p.setFont(QtGui.QFont("Arial", font_size))
             labels = []
             for shape in self.shapes:
-                d_react = shape.point_size / CORE.Variable.shape_scale
+                d_react = 1.2
                 d_text = 1.5
                 if not shape.is_visible:
                     continue
@@ -1715,35 +1711,23 @@ class Canvas(QWidget):
                         bbox = shape.get_bounding_rect()
                     except IndexError:
                         continue
-                    rect = QtCore.QRect(
-                        int(bbox.x()),
-                        int(bbox.y()),
-                        int(bound_rect.width()),
-                        int(bound_rect.height()),
-                    )
-                    text_pos = QtCore.QPoint(int(bbox.x()), int(bbox.y() + bound_rect.height() - d_text))
+                    rect = QtCore.QRectF(bbox.x(), bbox.y() - bound_rect.height(), bound_rect.width() * d_react, bound_rect.height())
+                    text_pos = QtCore.QPointF(bbox.x() + d_text, bbox.y() - font_size * 0.5)
                 elif shape.shape_type in (ShapeType.CIRCLE.name, ShapeType.LINE.name, ShapeType.LINE_STRIP.name, ShapeType.POINT.name):
                     points = shape.points
                     point = points[0]
-                    rect = QtCore.QRect(
-                        int(point.x() + d_react),
-                        int(point.y() - 15),
-                        int(bound_rect.width()),
-                        int(bound_rect.height()),
-                    )
-                    text_pos = QtCore.QPoint(int(point.x()), int(point.y() - 15 + bound_rect.height() - d_text))
+                    rect = QtCore.QRectF(point.x(), point.y() - bound_rect.height(), bound_rect.width() * d_react, bound_rect.height())
+                    text_pos = QtCore.QPointF(point.x() + d_text, point.y() - font_size * 0.5)
                 else:
                     continue
                 labels.append((shape, rect, text_pos, label_text))
 
-            pen = QtGui.QPen(QtGui.QColor("#FFA500"), 8, Qt.SolidLine)
-            p.setPen(pen)
-            for shape, rect, _, _ in labels:
+            pen_bg = QtGui.QPen(QtGui.QColor("#FFA500"), 8, Qt.SolidLine)
+            pen_text = QtGui.QPen(QtGui.QColor("#FFFFFF"), 8, Qt.SolidLine)
+            for shape, rect, text_pos, label_text in labels:
+                p.setPen(pen_bg)
                 p.fillRect(rect, shape.line_color)
-
-            pen = QtGui.QPen(QtGui.QColor("#FFFFFF"), 8, Qt.SolidLine)
-            p.setPen(pen)
-            for _, _, text_pos, label_text in labels:
+                p.setPen(pen_text)
                 p.drawText(text_pos, label_text)
 
         # Draw mouse coordinates

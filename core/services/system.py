@@ -97,7 +97,6 @@ def toggle_drawing_sensitive(drawing=True):
 
 def on_item_description_change():
     description = CORE.Object.item_description.toPlainText()
-    logger.info(f"description: {description}")
     if CORE.Object.canvas.current is not None:
         CORE.Object.canvas.current.description = description
     elif CORE.Object.canvas.canvas_mode == CanvasMode.EDIT and len(CORE.Object.canvas.selected_shapes) == 1:
