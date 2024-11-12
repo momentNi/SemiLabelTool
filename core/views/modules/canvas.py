@@ -84,7 +84,7 @@ class Canvas(QWidget):
         # Whether some attributes are needed to show
         self.need_show_cross_line: bool = True
         self.need_show_groups: bool = False
-        self.need_show_texts: bool = True
+        self.need_show_description: bool = True
         self.need_show_labels: bool = True
         self.need_show_scores: bool = True
         self.need_show_degrees: bool = False
@@ -561,7 +561,7 @@ class Canvas(QWidget):
         if self.highlight_vertex is not None:
             vertex, shape = self.highlight_vertex, self.highlight_shape
             shape.highlight_vertex(vertex, ShapeHighlightMode.MOVE_VERTEX)
-            if shape.shape_type == ShapeType.ROTATION:
+            if ShapeType.ROTATION == shape.shape_type:
                 self.set_hiding()
                 if shape not in self.selected_shapes:
                     if multiple_selection_mode:
@@ -651,7 +651,7 @@ class Canvas(QWidget):
         """
         if self.selected_shapes:
             for i, shape in enumerate(self.selected_shapes):
-                if shape.shape_type == ShapeType.ROTATION:
+                if ShapeType.ROTATION == shape.shape_type:
                     self.bounded_rotate_shapes(i, shape, theta)
                     self.repaint()
                     self.is_rotating_shape = True
@@ -667,10 +667,10 @@ class Canvas(QWidget):
         """
         operating_vertex_index, operating_shape = self.highlight_vertex, self.highlight_shape
         operating_point = operating_shape[operating_vertex_index]
-        if self.is_out_of_pixmap(pos) and operating_shape.shape_type != ShapeType.ROTATION:
+        if self.is_out_of_pixmap(pos) and ShapeType.ROTATION != operating_shape.shape_type:
             pos = intersection_point_with_box(operating_point, pos, self.pixmap.width(), self.pixmap.height())
 
-        if operating_shape.shape_type == ShapeType.ROTATION:
+        if ShapeType.ROTATION == operating_shape.shape_type:
             opposite_vertex_index = (operating_vertex_index + 2) % 4
             # Get the other 3 points after transformed
             p2, p3, p4 = get_adjacent_points(operating_shape.direction, operating_shape[opposite_vertex_index], pos, operating_vertex_index)
@@ -681,7 +681,7 @@ class Canvas(QWidget):
             operating_shape[left_vertex_index] = p2
             operating_shape[right_vertex_index] = p4
             operating_shape.close_shape()
-        elif operating_shape.shape_type == ShapeType.RECTANGLE:
+        elif ShapeType.RECTANGLE == operating_shape.shape_type:
             shift_pos = pos - operating_point
             operating_shape.move_point(operating_vertex_index, shift_pos)
             left_index = (operating_vertex_index + 1) % 4
@@ -710,7 +710,7 @@ class Canvas(QWidget):
         Returns:
             bool: Whether the movement operation is success.
         """
-        rotation_shapes = [shape.shape_type for shape in shapes if shape.shape_type == ShapeType.ROTATION]
+        rotation_shapes = [shape.shape_type for shape in shapes if ShapeType.ROTATION == shape.shape_type]
 
         # Forbid movement if selected shapes are not in the same shape type
         if (self.is_out_of_pixmap(pos) and len(rotation_shapes) == 0) or (0 < len(rotation_shapes) != len(shapes)):
@@ -859,7 +859,7 @@ class Canvas(QWidget):
             self.line.points = [self.current[-1], self.current[0]]
         elif self.create_mode in (ShapeType.RECTANGLE, ShapeType.LINE, ShapeType.CIRCLE, ShapeType.ROTATION):
             self.current.points = self.current.points[0:1]
-        elif self.create_mode == ShapeType.POINT:
+        elif ShapeType.POINT == self.create_mode:
             self.current = None
         self.drawing_polygon_signal.emit(True)
 
@@ -1153,22 +1153,22 @@ class Canvas(QWidget):
             if not self.current:
                 return
 
-            if self.create_mode == ShapeType.RECTANGLE:
+            if ShapeType.RECTANGLE == self.create_mode:
                 shape_width = abs(self.current[0].x() - pos.x())
                 shape_height = abs(self.current[0].y() - pos.y())
                 self.show_shape_signal.emit(shape_width, shape_height, pos)
 
             color = QtGui.QColor(0, 0, 255)
-            if self.is_out_of_pixmap(pos) and self.create_mode != ShapeType.ROTATION:
+            if self.is_out_of_pixmap(pos) and ShapeType.ROTATION != self.create_mode:
                 # Don't allow the user to draw outside the pixmap, except for rotation.
                 # Project the point to the pixmap's edges.
                 pos = intersection_point_with_box(self.current[-1], pos, self.pixmap.width(), self.pixmap.height())
-            elif self.is_snapping and len(self.current) > 1 and self.create_mode == ShapeType.POLYGON and self.is_close_enough(pos, self.current[0]):
+            elif self.is_snapping and len(self.current) > 1 and ShapeType.POLYGON == self.create_mode and self.is_close_enough(pos, self.current[0]):
                 # Attract line to starting point and colorise to alert the user.
                 pos = self.current[0]
                 self.override_cursor(QtCore.Qt.PointingHandCursor)
                 self.current.highlight_vertex(0, ShapeHighlightMode.NEAR_VERTEX)
-            elif self.create_mode == ShapeType.ROTATION and len(self.current) > 0 and self.is_close_enough(pos, self.current[0]):
+            elif ShapeType.ROTATION == self.create_mode and len(self.current) > 0 and self.is_close_enough(pos, self.current[0]):
                 pos = self.current[0]
                 color = self.current.line_color
                 self.override_cursor(QtCore.Qt.PointingHandCursor)
@@ -1177,19 +1177,19 @@ class Canvas(QWidget):
             if self.create_mode in (ShapeType.POLYGON, ShapeType.LINE_STRIP):
                 self.line[0] = self.current[-1]
                 self.line[1] = pos
-            elif self.create_mode == ShapeType.RECTANGLE:
+            elif ShapeType.RECTANGLE == self.create_mode:
                 self.line.points = [self.current[0], pos]
                 self.line.close_shape()
-            elif self.create_mode == ShapeType.ROTATION:
+            elif ShapeType.ROTATION == self.create_mode:
                 self.line[1] = pos
                 self.line.line_color = color
-            elif self.create_mode == ShapeType.CIRCLE:
+            elif ShapeType.CIRCLE == self.create_mode:
                 self.line.points = [self.current[0], pos]
                 self.line.shape_type = ShapeType.CIRCLE
-            elif self.create_mode == ShapeType.LINE:
+            elif ShapeType.LINE == self.create_mode:
                 self.line.points = [self.current[0], pos]
                 self.line.close_shape()
-            elif self.create_mode == ShapeType.POINT:
+            elif ShapeType.POINT == self.create_mode:
                 self.line.points = [self.current[0]]
                 self.line.close_shape()
 
@@ -1210,14 +1210,14 @@ class Canvas(QWidget):
 
         # Polygon/Vertex moving.
         if QtCore.Qt.LeftButton & ev.buttons():
-            if self.highlight_vertex:
+            if self.highlight_vertex is not None:
                 try:
                     self.bounded_move_vertex(pos)
                     self.repaint()
                     self.is_moving_shape = True
                 except IndexError:
                     return
-                if self.highlight_shape.shape_type == ShapeType.RECTANGLE:
+                if ShapeType.RECTANGLE == self.highlight_shape.shape_type:
                     p1 = self.highlight_shape[0]
                     p2 = self.highlight_shape[2]
                     shape_width = abs(p2.x() - p1.x())
@@ -1228,7 +1228,7 @@ class Canvas(QWidget):
                 self.bounded_move_shapes(self.selected_shapes, pos)
                 self.repaint()
                 self.is_moving_shape = True
-                if self.selected_shapes[-1].shape_type == ShapeType.RECTANGLE:
+                if ShapeType.RECTANGLE == self.selected_shapes[-1].shape_type:
                     p1 = self.selected_shapes[-1][0]
                     p2 = self.selected_shapes[-1][2]
                     shape_width = abs(p2.x() - p1.x())
@@ -1279,7 +1279,7 @@ class Canvas(QWidget):
                 self.prev_highlight_shape = self.highlight_shape = shape
                 self.prev_highlight_edge = self.highlight_edge
                 self.highlight_edge = None
-                if shape.group_id and shape.shape_type == ShapeType.RECTANGLE:
+                if shape.group_id and ShapeType.RECTANGLE == shape.shape_type:
                     self.setToolTip(f"Click & drag to move shape '{shape.label} {shape.group_id}'")
                 else:
                     self.setToolTip(f"Click & drag to move shape '{shape.label}'")
@@ -1625,9 +1625,6 @@ class Canvas(QWidget):
         for shape in self.shapes:
             if (shape.is_selected or not self._need_hide_background) and self.visible_shapes.get(shape, True):
                 shape.is_fill = self.is_fill_box and (shape.is_selected or shape == self.highlight_shape)
-                if shape.is_fill:
-                    logger.info(shape)
-                    logger.info(self.highlight_shape)
                 shape.paint(p)
             if shape.shape_type == ShapeType.ROTATION and len(shape.points) == 4 and self.visible_shapes.get(shape, True):
                 d = Constants.SHAPE_POINT_SIZE / CORE.Variable.shape_scale
@@ -1640,15 +1637,12 @@ class Canvas(QWidget):
                     fm = QtGui.QFontMetrics(p.font())
                     rect = fm.boundingRect(degrees)
                     p.fillRect(
-                        rect.x() + center.x() - d,
-                        rect.y() + center.y() + d,
-                        rect.width(),
-                        rect.height(),
+                        QtCore.QRectF(rect.x() + center.x() - d, rect.y() + center.y() + d, rect.width(), rect.height()),
                         QtGui.QColor("#FF9900")
                     )
                     pen = QtGui.QPen(QtGui.QColor("#FFFFFF"), 7, QtCore.Qt.SolidLine)
                     p.setPen(pen)
-                    p.drawText(center.x() - d, center.y() + d, degrees)
+                    p.drawText(int(center.x() - d), int(center.y() + d), degrees)
                 else:
                     cp = QtGui.QPainterPath()
                     cp.addRect(center.x() - d / 2, center.y() - d / 2, d, d)
@@ -1669,7 +1663,7 @@ class Canvas(QWidget):
             drawing_shape.paint(p)
 
         # Draw texts
-        if self.need_show_texts:
+        if self.need_show_description:
             text_color = "#FFFFFF"
             background_color = "#007BFF"
             p.setFont(QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / CORE.Variable.shape_scale))))))
@@ -1682,10 +1676,7 @@ class Canvas(QWidget):
                     fm = QtGui.QFontMetrics(p.font())
                     rect = fm.boundingRect(description)
                     p.fillRect(
-                        int(rect.x() + bbox.x()),
-                        int(rect.y() + bbox.y()),
-                        int(rect.width()),
-                        int(rect.height()),
+                        QtCore.QRectF(rect.x() + bbox.x(), rect.y() + bbox.y(), rect.width(), rect.height()),
                         QtGui.QColor(background_color),
                     )
                     p.drawText(int(bbox.x()), int(bbox.y()), description)
@@ -1757,7 +1748,8 @@ class Canvas(QWidget):
             pen = QtGui.QPen(QtGui.QColor(self.cross_line.color), max(1, int(round(self.cross_line.width / CORE.Variable.shape_scale))), Qt.DashLine)
             p.setPen(pen)
             p.setOpacity(self.cross_line.opacity)
-            p.drawLine(QtCore.QPointF(self.prev_move_point.x(), 0), QtCore.QPointF(self.prev_move_point.x(), self.pixmap.height()))
-            p.drawLine(QtCore.QPointF(0, self.prev_move_point.y()), QtCore.QPointF(self.pixmap.width(), self.prev_move_point.y()))
+            if self.prev_move_point:
+                p.drawLine(QtCore.QPointF(self.prev_move_point.x(), 0), QtCore.QPointF(self.prev_move_point.x(), self.pixmap.height()))
+                p.drawLine(QtCore.QPointF(0, self.prev_move_point.y()), QtCore.QPointF(self.pixmap.width(), self.prev_move_point.y()))
 
         p.end()

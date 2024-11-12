@@ -39,14 +39,14 @@ class LabelFile:
             image_width = img_arr.shape[1]
         return image_height, image_width
 
-    def load_image_file(self, filename, default=None):
+    @staticmethod
+    def load_image_file(filename, default=None):
         try:
             with open(filename, "rb") as f:
-                self.image_data = f.read()
+                return f.read()
         except IOError:
             logger.error(f"Failed opening image file: {filename}")
-            self.image_data = default
-        return self.image_data
+        return default
 
     def load(self, filename):
         keys = ["version", "imageData", "imagePath", "shapes", "flags", "imageHeight", "imageWidth"]
@@ -66,7 +66,7 @@ class LabelFile:
                     image_path = os.path.join(self.image_dir, data["imagePath"])
                 else:
                     image_path = os.path.join(os.path.dirname(filename), data["imagePath"])
-                self.load_image_file(image_path)
+                self.image_data = self.load_image_file(image_path)
             flags = data.get("flags") or {}
             image_path = data["imagePath"]
             self._check_image_height_and_width(
@@ -91,7 +91,7 @@ class LabelFile:
                 for shape in data["shapes"]
             ]
             for i, s in enumerate(data["shapes"]):
-                if s.get("shape_type", ShapeType.POLYGON.name) == ShapeType.ROTATION.name:
+                if ShapeType.ROTATION == s.get("shape_type", ShapeType.POLYGON.name):
                     shapes[i]["direction"] = s.get("direction", 0)
         except Exception as e:
             logger.error(e)
@@ -122,7 +122,7 @@ class LabelFile:
         if flags is None:
             flags = {}
         for i, shape in enumerate(shapes):
-            if shape["shape_type"] == ShapeType.RECTANGLE.name:
+            if ShapeType.RECTANGLE == shape["shape_type"]:
                 sorted_box = LabelConverter.calculate_bounding_box(shape["points"])
                 x_min, y_min, x_max, y_max = sorted_box
                 shape["points"] = [
@@ -147,7 +147,6 @@ class LabelFile:
                 logger.error(f"Not expected key in other_data: {key}")
                 continue
             data[key] = value
-        logger.info(data)
         try:
             with open(filename, "w") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)

@@ -67,7 +67,7 @@ def save_labels(filename):
             "attributes": s.attributes,
             "kie_linking": s.kie_linking,
         }
-        if s.shape_type == ShapeType.ROTATION:
+        if ShapeType.ROTATION == s.shape_type:
             info["direction"] = s.direction
         data.update(info)
 
@@ -204,7 +204,7 @@ def load_file(filename: str = None):
         CORE.Object.item_description.setPlainText(CORE.Variable.other_data.get("image_description", ""))
         CORE.Object.item_description.textChanged.connect(on_item_description_change)
     else:
-        CORE.Variable.image_data = CORE.Variable.label_file.load_image_file(filename)
+        CORE.Variable.image_data = LabelFile.load_image_file(filename)
         if CORE.Variable.image_data:
             CORE.Variable.image_path = filename
         CORE.Variable.label_file = None

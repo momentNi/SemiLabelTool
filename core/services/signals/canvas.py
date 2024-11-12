@@ -108,7 +108,7 @@ def handle_selection_changed(selected_shapes):
     can_merge = True
     for shape in CORE.Object.canvas.selected_shapes:
         shape.is_selected = True
-        if shape.shape_type != ShapeType.RECTANGLE:
+        if ShapeType.RECTANGLE != shape.shape_type:
             can_merge = False
         item = CORE.Object.label_list_widget.find_item_by_shape(shape)
         if item is not None:

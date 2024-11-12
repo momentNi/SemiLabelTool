@@ -38,6 +38,16 @@ class ShapeType(Enum):
     def __str__(self):
         return self.name
 
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.name.upper() == other
+        elif isinstance(other, ShapeType):
+            return self.value == other.value
+        elif isinstance(other, int):
+            return self.value == other
+        else:
+            return False
+
 
 @unique
 class CanvasMode(Enum):

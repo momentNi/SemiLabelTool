@@ -119,14 +119,14 @@ class ViewMenu(BaseMenu):
                 "cartesian",
                 "Set cross line for mouse position"
             ),
-            "show_texts": self.menu_action(
-                "Show Texts",
-                lambda x: setattr(CORE.Object.canvas, "need_show_texts", x),
+            "show_description": self.menu_action(
+                "Show Description",
+                lambda x: setattr(CORE.Object.canvas, "need_show_description", x),
                 "Ctrl+T",
                 None,
-                "Show text above shapes",
+                "Show description above shapes",
                 checkable=True,
-                checked=CORE.Variable.settings.get("need_show_texts", True),
+                checked=CORE.Variable.settings.get("need_show_description", True),
                 enabled=True,
                 auto_trigger=True,
             ),

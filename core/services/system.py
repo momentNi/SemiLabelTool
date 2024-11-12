@@ -24,7 +24,6 @@ def get_instruction_label():
 
 def set_dirty():
     CORE.Action.undo.setEnabled(CORE.Object.canvas.is_shape_restorable)
-    logger.info(CORE.Variable.label_file)
     if CORE.Variable.settings.get("auto_save", True):
         label_file = f"{os.path.splitext(CORE.Variable.image_path)[0]}.json"
         if CORE.Variable.output_dir:
@@ -210,7 +209,7 @@ def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, d
         CORE.Action.create_line_strip_mode.setEnabled(True)
     else:
         CORE.Action.union_selection.setEnabled(False)
-        if create_mode == ShapeType.POLYGON:
+        if ShapeType.POLYGON == create_mode:
             CORE.Action.create_mode.setEnabled(False)
             CORE.Action.create_rectangle_mode.setEnabled(True)
             CORE.Action.create_rotation_mode.setEnabled(True)
@@ -218,7 +217,7 @@ def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, d
             CORE.Action.create_line_mode.setEnabled(True)
             CORE.Action.create_point_mode.setEnabled(True)
             CORE.Action.create_line_strip_mode.setEnabled(True)
-        elif create_mode == ShapeType.RECTANGLE:
+        elif ShapeType.RECTANGLE == create_mode:
             CORE.Action.create_mode.setEnabled(True)
             CORE.Action.create_rectangle_mode.setEnabled(False)
             CORE.Action.create_rotation_mode.setEnabled(True)
@@ -226,7 +225,7 @@ def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, d
             CORE.Action.create_line_mode.setEnabled(True)
             CORE.Action.create_point_mode.setEnabled(True)
             CORE.Action.create_line_strip_mode.setEnabled(True)
-        elif create_mode == ShapeType.LINE:
+        elif ShapeType.LINE == create_mode:
             CORE.Action.create_mode.setEnabled(True)
             CORE.Action.create_rectangle_mode.setEnabled(True)
             CORE.Action.create_rotation_mode.setEnabled(True)
@@ -234,7 +233,7 @@ def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, d
             CORE.Action.create_line_mode.setEnabled(False)
             CORE.Action.create_point_mode.setEnabled(True)
             CORE.Action.create_line_strip_mode.setEnabled(True)
-        elif create_mode == ShapeType.POINT:
+        elif ShapeType.POINT == create_mode:
             CORE.Action.create_mode.setEnabled(True)
             CORE.Action.create_rectangle_mode.setEnabled(True)
             CORE.Action.create_rotation_mode.setEnabled(True)
@@ -242,7 +241,7 @@ def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, d
             CORE.Action.create_line_mode.setEnabled(True)
             CORE.Action.create_point_mode.setEnabled(False)
             CORE.Action.create_line_strip_mode.setEnabled(True)
-        elif create_mode == ShapeType.CIRCLE:
+        elif ShapeType.CIRCLE == create_mode:
             CORE.Action.create_mode.setEnabled(True)
             CORE.Action.create_rectangle_mode.setEnabled(True)
             CORE.Action.create_rotation_mode.setEnabled(True)
@@ -250,7 +249,7 @@ def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, d
             CORE.Action.create_line_mode.setEnabled(True)
             CORE.Action.create_point_mode.setEnabled(True)
             CORE.Action.create_line_strip_mode.setEnabled(True)
-        elif create_mode == ShapeType.LINE_STRIP:
+        elif ShapeType.LINE_STRIP == create_mode:
             CORE.Action.create_mode.setEnabled(True)
             CORE.Action.create_rectangle_mode.setEnabled(True)
             CORE.Action.create_rotation_mode.setEnabled(True)
@@ -258,7 +257,7 @@ def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, d
             CORE.Action.create_line_mode.setEnabled(True)
             CORE.Action.create_point_mode.setEnabled(True)
             CORE.Action.create_line_strip_mode.setEnabled(False)
-        elif create_mode == ShapeType.ROTATION:
+        elif ShapeType.ROTATION == create_mode:
             CORE.Action.create_mode.setEnabled(True)
             CORE.Action.create_rectangle_mode.setEnabled(True)
             CORE.Action.create_rotation_mode.setEnabled(False)
@@ -381,7 +380,7 @@ def save_attributes(_shapes):
             "attributes": s.attributes,
             "kie_linking": s.kie_linking,
         }
-        if s.shape_type == ShapeType.ROTATION.name:
+        if ShapeType.ROTATION == s.shape_type:
             info["direction"] = s.direction
         data.update(info)
 
