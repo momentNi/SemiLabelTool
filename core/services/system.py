@@ -119,7 +119,7 @@ def adjust_scale(initial=False):
     value = CORE.Object.canvas.scaler[ZoomMode.FIT_WINDOW if initial else CORE.Object.canvas.zoom_mode]()
     value = int(100 * value)
     CORE.Object.zoom_widget.setValue(value)
-    CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path] = (CORE.Object.canvas.zoom_mode, 100)
+    CORE.Object.canvas.zoom_history[CORE.Variable.current_file_full_path] = (CORE.Object.canvas.zoom_mode, value)
 
 
 def scale_fit_window():
