@@ -19,6 +19,14 @@ class StatusMenu(BaseMenu):
                 "Show overview statistics of all label annotations",
                 enabled=True
             ),
+            "shape_overview": self.menu_action(
+                "Shape Overview",
+                show_shape_overview,
+                None,
+                "overview",
+                "Show overview statistics of all label shapes",
+                enabled=True
+            ),
             "label_manager": self.menu_action(
                 "Label Manager",
                 show_label_manager,
