@@ -88,6 +88,27 @@ def get_label_file():
     return label_file
 
 
+def get_label_file_list():
+    label_file_list = []
+    if not CORE.Variable.image_list and CORE.Variable.current_file_full_path:
+        dir_path, filename = os.path.split(CORE.Variable.current_file_full_path)
+        label_file = os.path.join(dir_path, os.path.splitext(filename)[0] + ".json")
+        if os.path.exists(label_file):
+            label_file_list = [label_file]
+    elif CORE.Variable.image_list and not CORE.Variable.output_dir and CORE.Variable.current_file_full_path:
+        file_list = os.listdir(os.path.dirname(CORE.Variable.current_file_full_path))
+        for file_name in file_list:
+            if not file_name.endswith(".json"):
+                continue
+            label_file_list.append(os.path.join(os.path.dirname(CORE.Variable.current_file_full_path), file_name))
+    if CORE.Variable.output_dir:
+        for file_name in os.listdir(CORE.Variable.output_dir):
+            if not file_name.endswith(".json"):
+                continue
+            label_file_list.append(os.path.join(CORE.Variable.output_dir, file_name))
+    return label_file_list
+
+
 def toggle_drawing_sensitive(drawing=True):
     CORE.Action.edit_object.setEnabled(not drawing)
     CORE.Action.undo_last_point.setEnabled(drawing)
