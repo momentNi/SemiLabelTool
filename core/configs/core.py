@@ -3,10 +3,10 @@ from typing import List, TYPE_CHECKING, Optional
 from PyQt5 import QtWidgets
 
 from core.configs.settings import Settings
-from core.dto.label_file import LabelFile
 from utils.logger import logger
 
 if TYPE_CHECKING:
+    from core.dto.label_file import LabelFile
     from PyQt5.QtGui import QImage
     from core.dto.shape import Shape
     from core.views.dialogs.label_dialog import LabelDialog
@@ -41,7 +41,7 @@ class Core(object):
         image_data: str = None
         image_flags: dict = {}
         other_data: dict = {}
-        # 每个图片的亮度对比度记录
+        label_info: dict = {}
         brightness_contrast_map: dict[str, tuple[float, float]] = {}
         # 近期打开的文件
         recent_files: List[str] = settings.get("recent_files", [])

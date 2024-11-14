@@ -1,4 +1,4 @@
-from core.services.actions.status import show_label_overview, show_label_manager
+from core.services.actions.status import show_label_overview, show_box_settings, show_shape_overview
 from core.views.area.menu.sub import BaseMenu
 from utils.logger import logger
 
@@ -27,12 +27,12 @@ class StatusMenu(BaseMenu):
                 "Show overview statistics of all label shapes",
                 enabled=True
             ),
-            "label_manager": self.menu_action(
-                "Label Manager",
-                show_label_manager,
+            "box_settings": self.menu_action(
+                "Annotation box settings",
+                show_box_settings,
                 None,
                 "edit",
-                "Manage attributes of all labels",
+                "Manage attributes of different annotation boxes",
                 enabled=True
             ),
             "d1": None,

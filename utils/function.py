@@ -8,6 +8,8 @@ from typing import Tuple
 from PyQt5 import QtGui
 from natsort import natsort
 
+from core.configs.core import CORE
+
 
 def has_chinese(s):
     return bool(re.search('[\u4e00-\u9fff]', str(s)))
@@ -35,6 +37,8 @@ def hex_to_rgb(hex_color):
 
 
 def get_rgb_by_label(label: str) -> Tuple[int, int, int]:
+    if label in CORE.Variable.label_info:
+        return CORE.Variable.label_info[label]["color"]
     m = hashlib.blake2s()
     m.update(label.encode('utf-8'))
     hash_result = m.hexdigest()
