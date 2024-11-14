@@ -201,20 +201,4 @@ class ViewMenu(BaseMenu):
                 "Show hidden polygons",
                 enabled=True,
             ),
-            "group_selected_shapes": self.menu_action(
-                "Group Selected Shapes",
-                CORE.Object.canvas.group_selected_shapes,
-                "G",
-                None,
-                "Group shapes by assigning a same group id",
-                enabled=True,
-            ),
-            "ungroup_selected_shapes": self.menu_action(
-                "Ungroup Selected Shapes",
-                CORE.Object.canvas.ungroup_selected_shapes,
-                "U",
-                None,
-                "Ungroup shapes",
-                enabled=True,
-            )
         }
