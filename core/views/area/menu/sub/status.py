@@ -1,6 +1,5 @@
-from core.services.actions.status import show_label_overview, show_box_settings, show_shape_overview
+from core.services.actions.status import show_label_overview, show_box_settings, show_shape_overview, show_auto_label_overview
 from core.views.area.menu.sub import BaseMenu
-from utils.logger import logger
 
 
 class StatusMenu(BaseMenu):
@@ -35,29 +34,12 @@ class StatusMenu(BaseMenu):
                 "Manage attributes of different annotation boxes",
                 enabled=True
             ),
-            "d1": None,
-            "object_detection_settings": self.menu_action(
-                "Object Detection",
-                lambda: logger.info("object_detection_settings"),
+            "auto_label_overview": self.menu_action(
+                "Auto Labeling Overview",
+                show_auto_label_overview,
                 None,
-                "edit",
-                "Object Detection Auto Labeling Settings",
-                enabled=True
-            ),
-            "segmentation_settings": self.menu_action(
-                "Semantic Segmentation",
-                lambda: logger.info("segmentation_settings"),
-                None,
-                "edit",
-                "Semantic Segmentation Auto Labeling Settings",
-                enabled=True
-            ),
-            "gpt_settings": self.menu_action(
-                "Natural Language",
-                lambda: logger.info("gpt_settings"),
-                None,
-                "edit",
-                "Natural Language Auto Labeling Settings",
+                "overview",
+                "Show current status of auto labeling usage",
                 enabled=True
             ),
         }

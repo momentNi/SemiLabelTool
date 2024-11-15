@@ -18,10 +18,6 @@ if TYPE_CHECKING:
 
 
 class Core(object):
-    """
-    记录系统当前全局状态
-    """
-
     class Variable:
         settings: 'Settings' = Settings()
         is_dirty: bool = False
@@ -44,6 +40,10 @@ class Core(object):
         selected_polygon_stack: List[int] = []
         shape_scale: float = 1.5
 
+        use_object_detection: bool = False
+        use_segmentation: bool = False
+        use_nlp: bool = False
+
         @classmethod
         @property
         def image_list(self):
@@ -54,26 +54,23 @@ class Core(object):
             return lst
 
     class Object:
-        # 主窗口对象
         main_window: QtWidgets.QMainWindow = None
         instruction_part: QtWidgets.QLabel = None
-        # 状态栏
         status_bar: QtWidgets.QStatusBar = None
-        # 中心滚动区域
         scroll_area: QtWidgets.QScrollArea = None
-        # 画布对象
         canvas: 'Canvas' = None
-        # 对象描述信息
         item_description: QtWidgets.QPlainTextEdit = None
-        # Information区域
+
         tab_widget: QtWidgets.QTabWidget = None
         file_tab_widget: QtWidgets.QWidget = None
         label_tab_widget: QtWidgets.QWidget = None
         image_tab_widget: QtWidgets.QWidget = None
+        object_detection_tab_widget: QtWidgets.QWidget = None
+        segmentation_tab_widget: QtWidgets.QWidget = None
+        nlp_tab_widget: QtWidgets.QWidget = None
 
         attribute_content_area: QtWidgets.QScrollArea = None
         flag_widget: QtWidgets.QListWidget = None
-        # 文件列表
         info_file_search_widget: QtWidgets.QLineEdit = None
         info_file_list_widget: QtWidgets.QListWidget = None
 
@@ -83,8 +80,11 @@ class Core(object):
 
         label_dialog: 'LabelDialog' = None
 
-        # ToolBar 缩放组件
         zoom_widget: 'ZoomWidget' = None
+
+        object_detection_button: QtWidgets.QToolButton = None
+        segmentation_button: QtWidgets.QToolButton = None
+        nlp_button: QtWidgets.QToolButton = None
 
     class Action:
         def __init__(self):

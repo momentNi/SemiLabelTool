@@ -22,3 +22,8 @@ def show_box_settings():
     result = modify_label_dialog.exec_()
     if result == QtWidgets.QDialog.Accepted:
         load_file(CORE.Variable.current_file_full_path)
+
+
+def show_auto_label_overview():
+    if CORE.Variable.current_file_full_path:
+        LabelOverviewDialog()

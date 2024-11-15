@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QToolBar
 
 from core.configs.core import CORE
 from core.services.actions.canvas import paint_canvas
+from core.services.actions.tools import toggle_object_detection, toggle_segmentation, toggle_nlp
 from core.views.modules.zoom_widget import ZoomWidget
 from utils.qt_utils import create_new_action
 
@@ -51,8 +52,17 @@ class ToolBar(QToolBar):
         self.__add_action(None)
         self.__add_action(CORE.Object.zoom_widget_action)
         self.__add_action(CORE.Action.fit_width)
+        self.__add_action(None)
         # TODO
-        # toggle_auto_labeling_widget, run_all_images
+        self.__init_auto_buttons()
+        # self.__add_action(CORE.Action.object_detection_settings)
+        # self.__add_action(CORE.Action.segmentation_settings)
+        # self.__add_action(CORE.Action.gpt_settings)
+        # self.__add_action(CORE.Action.run_all_images)
+
+        for i in range(self.layout().count()):
+            if isinstance(self.layout().itemAt(i).widget(), QtWidgets.QToolButton):
+                self.layout().itemAt(i).setAlignment(QtCore.Qt.AlignCenter)
 
     def generate_zoom_widget(self):
         self.zoom_widget = ZoomWidget()
@@ -74,8 +84,42 @@ class ToolBar(QToolBar):
         btn.setToolButtonStyle(self.toolButtonStyle())
         self.addWidget(btn)
 
-        for i in range(self.layout().count()):
-            if isinstance(self.layout().itemAt(i).widget(), QtWidgets.QToolButton):
-                self.layout().itemAt(i).setAlignment(QtCore.Qt.AlignCenter)
+    def __init_auto_buttons(self):
+        od_btn = QtWidgets.QToolButton()
+        od_action = self.menu_action(
+            "Object Detection Settings",
+            toggle_object_detection,
+            None,
+            "brain",
+            "Object Detection Auto Labeling Settings"
+        )
+        od_btn.setDefaultAction(od_action)
+        od_btn.setToolButtonStyle(self.toolButtonStyle())
+        CORE.Object.object_detection_button = od_btn
+        self.addWidget(od_btn)
 
-        return True
+        segment_btn = QtWidgets.QToolButton()
+        segment_action = self.menu_action(
+            "Segmentation Settings",
+            toggle_segmentation,
+            None,
+            "brain",
+            "Segmentation Auto Labeling Settings"
+        )
+        segment_btn.setDefaultAction(segment_action)
+        segment_btn.setToolButtonStyle(self.toolButtonStyle())
+        CORE.Object.segmentation_button = segment_btn
+        self.addWidget(segment_btn)
+
+        nlp_btn = QtWidgets.QToolButton()
+        nlp_action = self.menu_action(
+            "NLP Settings",
+            toggle_nlp,
+            None,
+            "brain",
+            "NLP Auto Labeling Settings"
+        )
+        nlp_btn.setDefaultAction(nlp_action)
+        nlp_btn.setToolButtonStyle(self.toolButtonStyle())
+        CORE.Object.nlp_button = nlp_btn
+        self.addWidget(nlp_btn)

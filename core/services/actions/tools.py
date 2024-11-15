@@ -128,3 +128,45 @@ def save_crop_image():
             QtWidgets.QMessageBox.Ok
         )
         logger.error(traceback.print_exc())
+
+
+def toggle_object_detection():
+    if CORE.Variable.use_object_detection:
+        # 关闭
+        CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.object_detection_tab_widget))
+        CORE.Object.object_detection_button.setDown(False)
+        CORE.Variable.use_object_detection = False
+    else:
+        # 开启
+        CORE.Object.tab_widget.addTab(CORE.Object.object_detection_tab_widget, "Object Detection")
+        CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
+        CORE.Object.object_detection_button.setDown(True)
+        CORE.Variable.use_object_detection = True
+
+
+def toggle_segmentation():
+    if CORE.Variable.use_segmentation:
+        # 关闭
+        CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.segmentation_tab_widget))
+        CORE.Object.segmentation_button.setDown(False)
+        CORE.Variable.use_segmentation = False
+    else:
+        # 开启
+        CORE.Object.tab_widget.addTab(CORE.Object.segmentation_tab_widget, "Segmentation")
+        CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
+        CORE.Object.segmentation_button.setDown(True)
+        CORE.Variable.use_segmentation = True
+
+
+def toggle_nlp():
+    if CORE.Variable.use_nlp:
+        # 关闭
+        CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.nlp_tab_widget))
+        CORE.Object.nlp_button.setDown(False)
+        CORE.Variable.use_nlp = False
+    else:
+        # 开启
+        CORE.Object.tab_widget.addTab(CORE.Object.nlp_tab_widget, "GPT")
+        CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
+        CORE.Object.nlp_button.setDown(True)
+        CORE.Variable.use_nlp = True
