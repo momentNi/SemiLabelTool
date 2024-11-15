@@ -16,173 +16,173 @@ class InformationArea(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__()
         self.parent = parent
+
         self.layout = QtWidgets.QVBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
 
-        self.generate_attribute_dock()
-        self.generate_description_dock()
-        self.generate_flag_dock()
-        self.generate_label_dock()
-        self.generate_shape_dock()
-        self.generate_file_dock()
+        self.tab_widget = QtWidgets.QTabWidget()
+        self.tab_widget.setTabsClosable(True)
+        self.tab_widget.setMovable(True)
+        self.tab_widget.setTabPosition(QtWidgets.QTabWidget.East)
+        self.tab_widget.tabCloseRequested.connect(self.close_tab)
+        CORE.Object.tab_widget = self.tab_widget
 
+        self.generate_file_tab()
+        self.generate_label_tab()
+        self.generate_image_tab()
+
+        self.layout.addWidget(self.tab_widget)
         self.setLayout(self.layout)
 
-    def generate_attribute_dock(self):
-        attribute_dock = QtWidgets.QDockWidget("Attributes", self)
-        attribute_dock.setObjectName("Attributes")
-        attribute_dock.setStyleSheet(
-            "QDockWidget::title {"
-            "text-align: center;"
-            "padding: 0px;"
-            "background-color: #f0f0f0;"
-            "}"
-        )
-
-        attribute_dock_layout = QtWidgets.QGridLayout()
-        attribute_dock_layout.setContentsMargins(0, 0, 0, 0)
-        attribute_dock_layout.setSpacing(0)
-        attribute_content_area = QtWidgets.QScrollArea()
-        attribute_content_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        attribute_content_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        attribute_content_area.setWidgetResizable(True)
-        attribute_dock_layout_container = QtWidgets.QWidget()
-        attribute_dock_layout_container.setLayout(attribute_dock_layout)
-        attribute_content_area.setWidget(attribute_dock_layout_container)
-
-        CORE.Object.attribute_dock = attribute_dock
-        CORE.Object.attribute_content_area = attribute_content_area
-        # TODO attribute_dock.setHidden(True)
-        self.layout.addWidget(attribute_dock)
-
-    def generate_description_dock(self):
-        description_dock = QtWidgets.QDockWidget("Description", self)
-        description_dock.setObjectName("Description")
-        description_dock.setStyleSheet(
-            "QDockWidget::title {"
-            "text-align: center;"
-            "padding: 0px;"
-            "background-color: #f0f0f0;"
-            "}"
-        )
-        item_description = QtWidgets.QPlainTextEdit()
-        item_description.setPlaceholderText("Customize description about selected Object.")
-        item_description.textChanged.connect(system.on_item_description_change)
-        description_dock.setWidget(item_description)
-        CORE.Object.item_description = item_description
-        self.layout.addWidget(description_dock)
-
-    def generate_flag_dock(self):
-        flag_dock = QtWidgets.QDockWidget("Flags", self)
-        flag_dock.setObjectName("FlagDock")
-        if CORE.Variable.settings["image_flags"]:
-            system.load_flags({k: False for k in CORE.Variable.settings["image_flags"]})
+    def generate_file_tab(self):
+        if CORE.Object.file_tab_widget is not None:
+            self.tab_widget.addTab(CORE.Object.file_tab_widget, "Files")
         else:
-            flag_dock.hide()
-        CORE.Object.flag_widget = QtWidgets.QListWidget()
-        flag_dock.setWidget(CORE.Object.flag_widget)
-        CORE.Object.flag_widget.itemChanged.connect(system.set_dirty)
-        flag_dock.setStyleSheet(
-            "QDockWidget::title {"
-            "text-align: center;"
-            "padding: 0px;"
-            "background-color: #f0f0f0;"
-            "}"
-        )
-        CORE.Object.flag_dock = flag_dock
-        self.layout.addWidget(flag_dock)
+            if CORE.Object.info_file_search_widget is None:
+                file_search = QtWidgets.QLineEdit()
+                file_search.setClearButtonEnabled(True)
+                file_search.setObjectName("FileSearch")
+                file_search.setPlaceholderText("Search Filename")
+                file_search.textChanged.connect(file_search_changed)
+                CORE.Object.info_file_search_widget = file_search
+            else:
+                file_search = CORE.Object.info_file_search_widget
 
-    def generate_label_dock(self):
-        label_dock = QtWidgets.QDockWidget("Labels", self)
-        label_dock.setObjectName("LabelDock")
-        label_dock.setStyleSheet("""
-            QDockWidget::title {
-                text-align: center;
-                padding: 0px;
-                background-color: #f0f0f0;
-            }
-        """)
-        CORE.Object.label_dock = label_dock
+            if CORE.Object.info_file_list_widget is None:
+                file_list_widget = QtWidgets.QListWidget()
+                file_list_widget.setObjectName("FileList")
+                file_list_widget.itemSelectionChanged.connect(files_signal.file_selection_changed)
+                CORE.Object.info_file_list_widget = file_list_widget
+            else:
+                file_list_widget = CORE.Object.info_file_list_widget
 
-        label_filter_combo_box = LabelFilterComboBox(self)
-        CORE.Object.label_filter_combo_box = label_filter_combo_box
+            file_tab_layout = QtWidgets.QVBoxLayout()
+            file_tab_layout.addWidget(file_search)
+            file_tab_layout.addWidget(file_list_widget)
+            file_tab_widget = QtWidgets.QWidget()
+            file_tab_widget.setLayout(file_tab_layout)
 
-        unique_label_list = UniqueLabelListWidget()
-        unique_label_list.setObjectName("UniqueLabelListWidget")
-        unique_label_list.setToolTip("Select label to start annotating for it. Press 'Esc' to deselect.")
-        CORE.Object.unique_label_list_widget = unique_label_list
+            CORE.Object.file_tab_widget = file_tab_widget
 
-        if CORE.Variable.settings["pre_defined_labels"]:
-            for label in CORE.Variable.settings["pre_defined_labels"]:
-                item = unique_label_list.create_item_from_label(label)
-                unique_label_list.addItem(item)
-                rgb = get_rgb_by_label(label)
-                unique_label_list.set_item_label(item, label, rgb, Constants.LABEL_OPACITY)
+            self.tab_widget.addTab(file_tab_widget, "Files")
 
-        label_dock_layout = QtWidgets.QVBoxLayout()
-        label_dock_layout.setContentsMargins(0, 0, 0, 0)
-        label_dock_layout.setSpacing(0)
-        label_dock_layout.addWidget(label_filter_combo_box)
-        label_dock_layout.addWidget(unique_label_list)
-        label_dock_widget = QtWidgets.QWidget()
-        label_dock_widget.setLayout(label_dock_layout)
-        label_dock.setWidget(label_dock_widget)
+    def generate_label_tab(self):
+        if CORE.Object.label_tab_widget is not None:
+            self.tab_widget.addTab(CORE.Object.label_tab_widget, "Labels")
+        else:
+            if CORE.Object.label_filter_combo_box is None:
+                label_filter_combo_box = LabelFilterComboBox(self)
+                CORE.Object.label_filter_combo_box = label_filter_combo_box
+            else:
+                label_filter_combo_box = CORE.Object.label_filter_combo_box
 
-        self.layout.addWidget(label_dock)
+            if CORE.Object.unique_label_list_widget is None:
+                unique_label_list = UniqueLabelListWidget()
+                unique_label_list.setObjectName("UniqueLabelListWidget")
+                unique_label_list.setToolTip("Select label to start annotating for it. Press 'Esc' to deselect.")
+                CORE.Object.unique_label_list_widget = unique_label_list
 
-    def generate_shape_dock(self):
-        shape_dock = QtWidgets.QDockWidget("Objects", self)
-        shape_dock.setObjectName("ShapeDock")
-        shape_dock.setStyleSheet("""
-            QDockWidget::title {
-                text-align: center;
-                padding: 0px;
-                background-color: #f0f0f0;
-            }
-        """)
-        CORE.Object.shape_dock = shape_dock
+                if CORE.Variable.settings["pre_defined_labels"]:
+                    for label in CORE.Variable.settings["pre_defined_labels"]:
+                        item = unique_label_list.create_item_from_label(label)
+                        unique_label_list.addItem(item)
+                        rgb = get_rgb_by_label(label)
+                        unique_label_list.set_item_label(item, label, rgb, Constants.LABEL_OPACITY)
+            else:
+                unique_label_list = CORE.Object.unique_label_list_widget
 
-        label_list_widget = LabelListWidget()
-        CORE.Object.label_list_widget = label_list_widget
-        label_list_widget.item_selection_changed_signal.connect(label_selection_changed)
-        label_list_widget.item_double_clicked_signal.connect(edit_label)
-        label_list_widget.item_changed.connect(label_item_changed)
-        label_list_widget.item_dropped.connect(label_order_changed)
+            if CORE.Object.label_list_widget is None:
+                label_list_widget = LabelListWidget()
+                label_list_widget.item_selection_changed_signal.connect(label_selection_changed)
+                label_list_widget.item_double_clicked_signal.connect(edit_label)
+                label_list_widget.item_changed.connect(label_item_changed)
+                label_list_widget.item_dropped.connect(label_order_changed)
+                CORE.Object.label_list_widget = label_list_widget
+            else:
+                label_list_widget = CORE.Object.label_list_widget
 
-        shape_dock.setWidget(label_list_widget)
+            label_box = QtWidgets.QGroupBox()
+            label_box.setTitle("Labels")
+            label_box_layout = QtWidgets.QVBoxLayout()
+            label_box_layout.addWidget(label_filter_combo_box)
+            label_box_layout.addWidget(unique_label_list)
+            label_box.setLayout(label_box_layout)
 
-        self.layout.addWidget(shape_dock)
+            shape_box = QtWidgets.QGroupBox()
+            shape_box.setTitle("Shapes")
+            shape_box_layout = QtWidgets.QVBoxLayout()
+            shape_box_layout.addWidget(label_list_widget)
+            shape_box.setLayout(shape_box_layout)
 
-    def generate_file_dock(self):
-        file_search = QtWidgets.QLineEdit()
-        file_search.setObjectName("FileSearch")
-        file_search.setPlaceholderText(self.tr("Search Filename"))
-        file_search.textChanged.connect(file_search_changed)
-        CORE.Object.info_file_search_widget = file_search
+            label_tab_layout = QtWidgets.QVBoxLayout()
+            label_tab_layout.addWidget(label_box)
+            label_tab_layout.addWidget(shape_box)
+            label_tab_widget = QtWidgets.QWidget()
+            label_tab_widget.setLayout(label_tab_layout)
 
-        file_list_widget = QtWidgets.QListWidget()
-        file_list_widget.setObjectName("FileList")
-        file_list_widget.itemSelectionChanged.connect(files_signal.file_selection_changed)
-        CORE.Object.info_file_list_widget = file_list_widget
+            CORE.Object.label_tab_widget = label_tab_widget
+            self.tab_widget.addTab(label_tab_widget, "Labels")
 
-        file_list_layout = QtWidgets.QVBoxLayout()
-        file_list_layout.setContentsMargins(0, 0, 0, 0)
-        file_list_layout.setSpacing(0)
-        file_list_layout.addWidget(file_search)
-        file_list_layout.addWidget(file_list_widget)
+    def generate_image_tab(self):
+        if CORE.Object.image_tab_widget is not None:
+            self.tab_widget.addTab(CORE.Object.image_tab_widget, "Image")
+        else:
+            description_box = QtWidgets.QGroupBox()
+            description_box.setTitle("Description")
+            description_box_layout = QtWidgets.QVBoxLayout()
+            if CORE.Object.item_description is None:
+                item_description = QtWidgets.QPlainTextEdit()
+                item_description.setPlaceholderText("Customize description about selected Object.")
+                item_description.textChanged.connect(system.on_item_description_change)
+                CORE.Object.item_description = item_description
+            description_box_layout.addWidget(CORE.Object.item_description)
+            description_box.setLayout(description_box_layout)
 
-        file_dock = QtWidgets.QDockWidget("Files", self)
-        file_dock.setObjectName("FileDock")
-        file_list_widget = QtWidgets.QWidget()
-        file_list_widget.setLayout(file_list_layout)
-        file_dock.setWidget(file_list_widget)
-        file_dock.setStyleSheet("""
-            QDockWidget::title {
-                text-align: center;
-                padding: 0px;
-                background-color: #f0f0f0;
-            }
-        """)
+            flag_box = QtWidgets.QGroupBox()
+            flag_box.setTitle("Flags")
+            flag_box_layout = QtWidgets.QVBoxLayout()
+            if CORE.Object.flag_widget is None:
+                CORE.Object.flag_widget = QtWidgets.QListWidget()
+                if CORE.Variable.settings["image_flags"]:
+                    system.load_flags({k: False for k in CORE.Variable.settings["image_flags"]})
+                CORE.Object.flag_widget.itemChanged.connect(system.set_dirty)
+            flag_box_layout.addWidget(CORE.Object.flag_widget)
+            flag_box.setLayout(flag_box_layout)
 
-        CORE.Object.file_dock = file_dock
-        self.layout.addWidget(file_dock)
+            attributes_box = QtWidgets.QGroupBox()
+            attributes_box.setTitle("Attributes")
+            attributes_box_layout = QtWidgets.QVBoxLayout()
+            if CORE.Object.attribute_content_area is None:
+                attribute_dock_layout = QtWidgets.QGridLayout()
+                attribute_dock_layout.setSpacing(0)
+                attribute_content_area = QtWidgets.QScrollArea()
+                attribute_content_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+                attribute_content_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+                attribute_content_area.setWidgetResizable(True)
+                attribute_dock_layout_container = QtWidgets.QWidget()
+                attribute_dock_layout_container.setLayout(attribute_dock_layout)
+                attribute_content_area.setWidget(attribute_dock_layout_container)
+                CORE.Object.attribute_content_area = attribute_content_area
+            attributes_box_layout.addWidget(CORE.Object.attribute_content_area)
+            attributes_box.setLayout(attributes_box_layout)
+
+            image_tab_layout = QtWidgets.QVBoxLayout()
+            image_tab_layout.addWidget(description_box)
+            if flag_box is not None:
+                image_tab_layout.addWidget(flag_box)
+            image_tab_layout.addWidget(attributes_box)
+            image_tab_widget = QtWidgets.QWidget()
+            image_tab_widget.setLayout(image_tab_layout)
+
+            CORE.Object.image_tab_widget = image_tab_widget
+            self.tab_widget.addTab(image_tab_widget, "Images")
+
+    def close_tab(self, index):
+        tab_name = self.tab_widget.tabText(index)
+        if tab_name == "Files":
+            CORE.Action.file_tab_toggle.setChecked(False)
+        elif tab_name == "Labels":
+            CORE.Action.label_tab_toggle.setChecked(False)
+        elif tab_name == "Images":
+            CORE.Action.image_tab_toggle.setChecked(False)
+
+        self.tab_widget.removeTab(index)

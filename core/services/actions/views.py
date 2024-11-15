@@ -46,3 +46,27 @@ def show_hidden_polygons():
         item = CORE.Object.label_list_widget.item_at_index(index)
         item.setCheckState(Qt.Checked)
         CORE.Object.label_list_widget[index].shape().is_visible = True
+
+
+def toggle_file_tab(show):
+    if show:
+        CORE.Object.tab_widget.addTab(CORE.Object.file_tab_widget, "Files")
+        CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
+    else:
+        CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.file_tab_widget))
+
+
+def toggle_label_tab(show):
+    if show:
+        CORE.Object.tab_widget.addTab(CORE.Object.label_tab_widget, "Labels")
+        CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
+    else:
+        CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.label_tab_widget))
+
+
+def toggle_image_tab(show):
+    if show:
+        CORE.Object.tab_widget.addTab(CORE.Object.image_tab_widget, "Images")
+        CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
+    else:
+        CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.image_tab_widget))

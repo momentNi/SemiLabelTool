@@ -24,18 +24,12 @@ class Core(object):
 
     class Variable:
         settings: 'Settings' = Settings()
-        # 是否有修改待保存
         is_dirty: bool = False
         has_selection_slot = True
-        # 当前正在处理的文件名
         current_file_full_path: str = None
-        # 上一个打开的文件名
         last_open_dir_path: str = None
-        # 输出目录
         output_dir: str = None
-        # 当前正在标注的文件对象 LabelFile
         label_file: Optional['LabelFile'] = None
-        # 当前正在处理的QImage对象
         image: 'QImage' = None
         image_path: str = None
         image_data: str = None
@@ -43,7 +37,6 @@ class Core(object):
         other_data: dict = {}
         label_info: dict = {}
         brightness_contrast_map: dict[str, tuple[float, float]] = {}
-        # 近期打开的文件
         recent_files: List[str] = settings.get("recent_files", [])
         hidden_class_list = []
         attributes: dict = {}
@@ -51,7 +44,6 @@ class Core(object):
         selected_polygon_stack: List[int] = []
         shape_scale: float = 1.5
 
-        # 当前文件夹下的图片列表
         @classmethod
         @property
         def image_list(self):
@@ -74,11 +66,10 @@ class Core(object):
         # 对象描述信息
         item_description: QtWidgets.QPlainTextEdit = None
         # Information区域
-        attribute_dock: QtWidgets.QDockWidget = None
-        flag_dock: QtWidgets.QDockWidget = None
-        label_dock: QtWidgets.QDockWidget = None
-        shape_dock: QtWidgets.QDockWidget = None
-        file_dock: QtWidgets.QDockWidget = None
+        tab_widget: QtWidgets.QTabWidget = None
+        file_tab_widget: QtWidgets.QWidget = None
+        label_tab_widget: QtWidgets.QWidget = None
+        image_tab_widget: QtWidgets.QWidget = None
 
         attribute_content_area: QtWidgets.QScrollArea = None
         flag_widget: QtWidgets.QListWidget = None

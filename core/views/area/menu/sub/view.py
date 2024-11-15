@@ -2,7 +2,7 @@ import functools
 
 from core.configs.core import CORE
 from core.services.actions.canvas import add_zoom_value, set_zoom_value, set_fit_window, set_fit_width
-from core.services.actions.views import set_brightness_contrast, set_cross_line, hide_selected_polygons, show_hidden_polygons
+from core.services.actions.views import set_brightness_contrast, set_cross_line, hide_selected_polygons, show_hidden_polygons, toggle_file_tab, toggle_label_tab, toggle_image_tab
 from core.views.area.menu.sub import BaseMenu
 
 
@@ -14,10 +14,36 @@ class ViewMenu(BaseMenu):
 
     def add_action_list_item(self):
         self.action_dict = {
-            "flag_dock_toggle": CORE.Object.flag_dock.toggleViewAction(),
-            "label_dock_toggle": CORE.Object.label_dock.toggleViewAction(),
-            "shape_dock_toggle": CORE.Object.shape_dock.toggleViewAction(),
-            "file_dock_toggle": CORE.Object.file_dock.toggleViewAction(),
+            "file_tab_toggle": self.menu_action(
+                "Show files tab",
+                toggle_file_tab,
+                None,
+                None,
+                "Show tab about files in current directory",
+                checkable=True,
+                checked=True,
+                enabled=True
+            ),
+            "label_tab_toggle": self.menu_action(
+                "Show label tab",
+                toggle_label_tab,
+                None,
+                None,
+                "Show tab about the labels of current handling file",
+                checkable=True,
+                checked=True,
+                enabled=True
+            ),
+            "image_tab_toggle": self.menu_action(
+                "Show image tab",
+                toggle_image_tab,
+                None,
+                None,
+                "Show tab about description, flags and attributes",
+                checkable=True,
+                checked=True,
+                enabled=True
+            ),
             "d1": None,
             "fill_drawing_polygon": self.menu_action(
                 "Fill Drawing Polygon",
