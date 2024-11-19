@@ -3,6 +3,7 @@ from typing import List, TYPE_CHECKING, Optional
 from PyQt5 import QtWidgets
 
 from core.configs.settings import Settings
+from core.dto.async_job_pool import AsyncJobPool
 from utils.logger import logger
 
 if TYPE_CHECKING:
@@ -15,6 +16,7 @@ if TYPE_CHECKING:
     from core.views.modules.label_filter_combo_box import LabelFilterComboBox
     from core.views.modules.unique_label_list_widget import UniqueLabelListWidget
     from core.views.modules.zoom_widget import ZoomWidget
+    from core.views.modules.chat_tab import ChatTab
 
 
 class Core(object):
@@ -42,7 +44,9 @@ class Core(object):
 
         use_object_detection: bool = False
         use_segmentation: bool = False
-        use_nlp: bool = False
+        use_chat: bool = False
+
+        async_job_pool = AsyncJobPool()
 
         @classmethod
         @property
@@ -67,7 +71,7 @@ class Core(object):
         image_tab_widget: QtWidgets.QWidget = None
         object_detection_tab_widget: QtWidgets.QWidget = None
         segmentation_tab_widget: QtWidgets.QWidget = None
-        nlp_tab_widget: QtWidgets.QWidget = None
+        chat_tab_widget: 'ChatTab' = None
 
         attribute_content_area: QtWidgets.QScrollArea = None
         flag_widget: QtWidgets.QListWidget = None

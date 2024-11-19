@@ -38,14 +38,14 @@ class MainWindow(QMainWindow):
         self.main_widget = LabelArea(self)
         main_layout.addWidget(self.main_widget)
         base_layout.addItem(main_layout)
-        base_layout.setStretch(1, 6)
+        base_layout.setStretch(1, 5)
 
         self.right_widget = InformationArea(self)
         right_layout = QVBoxLayout()
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.addWidget(self.right_widget)
         base_layout.addItem(right_layout)
-        base_layout.setStretch(2, 1)
+        base_layout.setStretch(2, 2)
 
         widget = QWidget()
         widget.setLayout(base_layout)

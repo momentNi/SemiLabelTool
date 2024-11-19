@@ -100,3 +100,18 @@ class ShapeHighlightMode(Enum):
     MOVE_VERTEX = (1.5, PointType.SQUARE)
     # Flag for all other handles on the current shape
     NEAR_VERTEX = (4, PointType.ROUND)
+
+
+@unique
+class MessageType(Enum):
+    """
+    Type enum for chatting
+    """
+    # Show current time if the time between two messages is more than 1 minute
+    TIME = 0
+    # Message from system
+    SYSTEM = 1
+    # Message from user
+    USER = 2
+    # Message from robot
+    ROBOT = 3

@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QToolBar
 
 from core.configs.core import CORE
 from core.services.actions.canvas import paint_canvas
-from core.services.actions.tools import toggle_object_detection, toggle_segmentation, toggle_nlp
+from core.services.actions.tools import toggle_object_detection, toggle_segmentation, toggle_chat
 from core.views.modules.zoom_widget import ZoomWidget
 from utils.qt_utils import create_new_action
 
@@ -114,7 +114,7 @@ class ToolBar(QToolBar):
         nlp_btn = QtWidgets.QToolButton()
         nlp_action = self.menu_action(
             "NLP Settings",
-            toggle_nlp,
+            toggle_chat,
             None,
             "brain",
             "NLP Auto Labeling Settings"

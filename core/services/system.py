@@ -483,3 +483,7 @@ def toggle_load_related_action(value: bool):
     CORE.Action.create_line_strip_mode.setEnabled(value)
     CORE.Action.edit_object.setEnabled(value)
     CORE.Action.set_brightness_contrast.setEnabled(value)
+
+
+def launch_async_job(target, args, callback):
+    CORE.Variable.async_job_pool.add_job(target, args, callback)

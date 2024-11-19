@@ -68,5 +68,9 @@
         <file>images/zoom-in.png</file>
         <file>images/zoom-out.png</file>
         <file>images/zoom.png</file>
+        <file>images/user.png</file>
+        <file>images/robot.png</file>
+        <file>images/search.png</file>
+        <file>images/loading.gif</file>
     </qresource>
 </RCC>

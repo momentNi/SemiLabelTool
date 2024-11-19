@@ -9,6 +9,8 @@ from PyQt5 import QtWidgets, QtCore
 
 from core.configs.core import CORE
 from core.dto.enums import ShapeType
+from core.views.modules.chat_tab import ChatTab
+from core.views.modules.object_detection_tab import ObjectDetectionTab
 from utils.logger import logger
 
 
@@ -138,6 +140,8 @@ def toggle_object_detection():
         CORE.Variable.use_object_detection = False
     else:
         # 开启
+        if CORE.Object.object_detection_tab_widget is None:
+            CORE.Object.object_detection_tab_widget = ObjectDetectionTab()
         CORE.Object.tab_widget.addTab(CORE.Object.object_detection_tab_widget, "Object Detection")
         CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
         CORE.Object.object_detection_button.setDown(True)
@@ -158,15 +162,17 @@ def toggle_segmentation():
         CORE.Variable.use_segmentation = True
 
 
-def toggle_nlp():
-    if CORE.Variable.use_nlp:
+def toggle_chat():
+    if CORE.Variable.use_chat:
         # 关闭
-        CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.nlp_tab_widget))
+        CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.chat_tab_widget))
         CORE.Object.nlp_button.setDown(False)
-        CORE.Variable.use_nlp = False
+        CORE.Variable.use_chat = False
     else:
         # 开启
-        CORE.Object.tab_widget.addTab(CORE.Object.nlp_tab_widget, "GPT")
+        if CORE.Object.chat_tab_widget is None:
+            CORE.Object.chat_tab_widget = ChatTab()
+        CORE.Object.tab_widget.addTab(CORE.Object.chat_tab_widget, "Labeling Chat")
         CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
         CORE.Object.nlp_button.setDown(True)
-        CORE.Variable.use_nlp = True
+        CORE.Variable.use_chat = True
