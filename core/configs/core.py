@@ -3,7 +3,7 @@ from typing import List, TYPE_CHECKING, Optional
 from PyQt5 import QtWidgets
 
 from core.configs.settings import Settings
-from core.dto.async_job_pool import AsyncJobPool
+from utils.async_job_pool import AsyncJobPool
 from utils.logger import logger
 
 if TYPE_CHECKING:
