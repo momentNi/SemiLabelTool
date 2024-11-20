@@ -11,6 +11,7 @@ from core.configs.core import CORE
 from core.dto.enums import ShapeType
 from core.views.modules.chat_tab import ChatTab
 from core.views.modules.object_detection_tab import ObjectDetectionTab
+from core.views.modules.segmentation_tab import SegmentationTab
 from utils.logger import logger
 
 
@@ -156,6 +157,8 @@ def toggle_segmentation():
         CORE.Variable.use_segmentation = False
     else:
         # 开启
+        if CORE.Object.segmentation_tab_widget is None:
+            CORE.Object.segmentation_tab_widget = SegmentationTab()
         CORE.Object.tab_widget.addTab(CORE.Object.segmentation_tab_widget, "Segmentation")
         CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
         CORE.Object.segmentation_button.setDown(True)
