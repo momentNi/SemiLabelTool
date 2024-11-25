@@ -145,6 +145,7 @@ def toggle_object_detection():
             CORE.Object.object_detection_tab_widget = ObjectDetectionTab()
         CORE.Object.tab_widget.addTab(CORE.Object.object_detection_tab_widget, "Object Detection")
         CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
+        CORE.Object.tab_widget.tabBar().setTabButton(CORE.Object.tab_widget.count() - 1, QtWidgets.QTabBar.RightSide, None)
         CORE.Object.object_detection_button.setDown(True)
         CORE.Variable.use_object_detection = True
 
@@ -161,6 +162,7 @@ def toggle_segmentation():
             CORE.Object.segmentation_tab_widget = SegmentationTab()
         CORE.Object.tab_widget.addTab(CORE.Object.segmentation_tab_widget, "Segmentation")
         CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
+        CORE.Object.tab_widget.tabBar().setTabButton(CORE.Object.tab_widget.count() - 1, QtWidgets.QTabBar.RightSide, None)
         CORE.Object.segmentation_button.setDown(True)
         CORE.Variable.use_segmentation = True
 
@@ -177,5 +179,6 @@ def toggle_chat():
             CORE.Object.chat_tab_widget = ChatTab()
         CORE.Object.tab_widget.addTab(CORE.Object.chat_tab_widget, "Labeling Chat")
         CORE.Object.tab_widget.setCurrentIndex(CORE.Object.tab_widget.count() - 1)
+        CORE.Object.tab_widget.tabBar().setTabButton(CORE.Object.tab_widget.count() - 1, QtWidgets.QTabBar.RightSide, None)
         CORE.Object.nlp_button.setDown(True)
         CORE.Variable.use_chat = True
