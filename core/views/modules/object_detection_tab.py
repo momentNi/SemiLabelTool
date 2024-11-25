@@ -125,11 +125,11 @@ class ObjectDetectionTab(QtWidgets.QWidget):
         self.total_weight = 0.0
         for name, box in self.model_weight_value_spinbox:
             self.total_weight += box.value()
-        self.total_label.setText(f"Total: {self.total_weight}")
-        self.total_label.setStyleSheet(f"color: {'black' if self.total_weight == 1 else 'red'}")
+        self.total_label.setText(f"Total: {round(self.total_weight, 2)}")
+        self.total_label.setStyleSheet(f"color: {'black' if round(self.total_weight, 2) == 1 else 'red'}")
 
     def is_total_weight_valid(self):
-        return self.total_weight == 1
+        return round(self.total_weight, 2) == 1
 
     def save_settings(self):
         if not self.is_total_weight_valid():
