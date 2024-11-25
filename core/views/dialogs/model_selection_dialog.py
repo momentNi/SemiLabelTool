@@ -78,10 +78,10 @@ class ModelSelectionDialog(QtWidgets.QDialog):
         main_layout.addLayout(right_layout)
 
         bottom_layout = QtWidgets.QHBoxLayout()
-        confirm_button = QtWidgets.QPushButton("Confirm")
-        confirm_button.clicked.connect(self.confirm_models)
+        self.confirm_button = QtWidgets.QPushButton("Confirm")
+        self.confirm_button.clicked.connect(lambda: self.accept())
 
-        bottom_layout.addWidget(confirm_button, 0, QtCore.Qt.AlignRight)
+        bottom_layout.addWidget(self.confirm_button, 0, QtCore.Qt.AlignRight)
 
         layout.addLayout(main_layout)
         layout.addLayout(bottom_layout)
@@ -89,20 +89,16 @@ class ModelSelectionDialog(QtWidgets.QDialog):
 
     def update_label(self):
         self.left_selected_count = len(self.left_list_widget.selectedItems())
-        if self.left_selected_count == 0:
-            self.add_button.setEnabled(False)
-        elif self.left_selected_count > 0:
-            self.add_button.setEnabled(True)
+        self.add_button.setEnabled(self.left_selected_count != 0)
         self.left_selected_label.setText(f"{self.left_selected_count} Selected")
         self.left_total_label.setText(f"{self.left_list_widget.count()} Total")
 
         self.right_selected_count = len(self.right_list_widget.selectedItems())
-        if self.right_selected_count == 0:
-            self.remove_button.setEnabled(False)
-        elif self.right_selected_count > 0:
-            self.remove_button.setEnabled(True)
         self.right_selected_label.setText(f"{self.right_selected_count} Selected")
         self.right_total_label.setText(f"{self.right_list_widget.count()} Total")
+
+        self.remove_button.setEnabled(self.right_selected_count != 0)
+        self.confirm_button.setEnabled(self.right_list_widget.count() != 0)
 
     def update_left_list(self):
         if self.left_search_input.text():
@@ -159,6 +155,3 @@ class ModelSelectionDialog(QtWidgets.QDialog):
         self.update_left_list()
         self.update_right_list()
         self.update_label()
-
-    def confirm_models(self):
-        self.close()
