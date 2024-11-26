@@ -40,6 +40,7 @@ def save_crop_image():
         0,
         len(image_file_list),
     )
+    progress_dialog.setMinimumDuration(0)
     progress_dialog.setWindowModality(QtCore.Qt.WindowModal)
     progress_dialog.setWindowTitle("Progress")
     progress_dialog.setStyleSheet(

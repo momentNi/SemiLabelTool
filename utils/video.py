@@ -65,6 +65,7 @@ def extract_frames_from_video(source_video_path):
         0,
         total_frames // interval
     )
+    progress_dialog.setMinimumDuration(0)
     progress_dialog.setWindowModality(Qt.WindowModal)
     progress_dialog.setWindowTitle("Progress")
     progress_dialog.setStyleSheet(

@@ -10,8 +10,8 @@ class ObjectDetectionTab(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.output_shape_type = QtWidgets.QComboBox()
-        self.output_shape_type.addItem(ShapeType.POINT.name, ShapeType.POINT.value)
         self.output_shape_type.addItem(ShapeType.RECTANGLE.name, ShapeType.RECTANGLE.value)
+        self.output_shape_type.addItem(ShapeType.POINT.name, ShapeType.POINT.value)
         self.output_shape_type.addItem(ShapeType.POLYGON.name, ShapeType.POLYGON.value)
         self.conf_threshold = QtWidgets.QDoubleSpinBox()
         self.conf_threshold.setSingleStep(0.01)
