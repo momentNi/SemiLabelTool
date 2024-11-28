@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
@@ -440,13 +441,7 @@ def save_attributes(_shapes):
             items[0].setCheckState(Qt.Checked)
         return True
     except LabelFileError as e:
-        QtWidgets.QMessageBox.critical(
-            CORE.Object.main_window,
-            "Error saving label data",
-            f"<b>{e}</b>",
-            QtWidgets.QMessageBox.Ok
-        )
-        logger.error(f"Error saving label data: {e}")
+        show_critical_message("Error saving label data", f"<b>{e}</b>")
         return False
 
 
@@ -454,11 +449,7 @@ def reset_attribute(text):
     valid_labels = list(CORE.Variable.attributes.keys())
     if text not in valid_labels:
         most_similar_label = find_most_similar_label(text, valid_labels)
-        QtWidgets.QMessageBox.critical(
-            CORE.Object.main_window,
-            "Invalid label",
-            f"<p><b>Invalid label '{text}' with validation type: {valid_labels}!\nReset the label as {most_similar_label}.</b></p>"
-        )
+        show_critical_message("Invalid label", f"<p><b>Invalid label '{text}' with validation type: {valid_labels}!\nReset the label as {most_similar_label}.</b></p>", trace=False)
         text = most_similar_label
     return text
 
@@ -487,3 +478,14 @@ def toggle_load_related_action(value: bool):
 
 def launch_async_job(target, args, callback):
     CORE.Variable.async_job_pool.add_job(target, args, callback)
+
+
+def show_critical_message(title, content, trace=True):
+    QtWidgets.QMessageBox.critical(
+        CORE.Object.main_window,
+        title,
+        f"{content}\nPlease see logs for detail.",
+        QtWidgets.QMessageBox.Ok
+    )
+    if trace:
+        logger.error(traceback.print_exc())

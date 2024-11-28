@@ -12,7 +12,8 @@ from core.dto.exceptions import LabelFileError
 from core.dto.label_file import LabelFile
 from core.services import system
 from core.services.actions.canvas import paint_canvas, set_scroll_value
-from core.services.system import set_clean, reset_state, load_flags, set_dirty, set_zoom, adjust_scale, on_item_description_change, toggle_zoom_related_action, toggle_load_related_action
+from core.services.system import set_clean, reset_state, load_flags, set_dirty, set_zoom, adjust_scale, on_item_description_change, toggle_zoom_related_action, toggle_load_related_action, \
+    show_critical_message
 from core.views.dialogs.brightness_contrast_dialog import BrightnessContrastDialog
 from core.views.dialogs.file_dialog_preview import FileDialogPreview
 from core.views.dialogs.save_file_dialog import SaveFileDialog
@@ -110,25 +111,13 @@ def save_labels(filename):
             items[0].setCheckState(Qt.Checked)
         return True
     except LabelFileError as e:
-        QtWidgets.QMessageBox.critical(
-            CORE.Object.main_window,
-            "Error",
-            f"Error saving label data: <b>{e}</b>",
-            QtWidgets.QMessageBox.Ok
-        )
-        logger.error(f"Error saving label data: {e}")
+        show_critical_message("Error", f"Error saving label data: <b>{e}</b>")
         return False
 
 
 def save_file():
     if not CORE.Variable.image or CORE.Variable.image.isNull():
-        QtWidgets.QMessageBox.critical(
-            CORE.Object.main_window,
-            "Error",
-            "Cannot save empty image",
-            QtWidgets.QMessageBox.Ok
-        )
-        logger.error(f"Cannot save empty image: {CORE.Variable.current_file_full_path}")
+        show_critical_message("Error", "Cannot save empty image", trace=False)
         return
     if CORE.Variable.label_file:
         save_label_file(CORE.Variable.label_file.filename)
@@ -138,13 +127,7 @@ def save_file():
 
 def save_file_as():
     if not CORE.Variable.image or CORE.Variable.image.isNull():
-        QtWidgets.QMessageBox.critical(
-            CORE.Object.main_window,
-            "Error",
-            "Cannot save empty image",
-            QtWidgets.QMessageBox.Ok
-        )
-        return
+        show_critical_message("Error", "Cannot save empty image", trace=False)
     save_label_file(SaveFileDialog().get_save_file_name())
 
 
@@ -167,13 +150,7 @@ def load_file(filename: str = None):
         filename = CORE.Variable.settings.get("filename", "")
     filename = str(filename)
     if not QtCore.QFile.exists(filename):
-        QtWidgets.QMessageBox.critical(
-            CORE.Object.main_window,
-            "Error opening file",
-            f"No such file: <b>{filename}</b>",
-            QtWidgets.QMessageBox.Ok
-        )
-        logger.error(f"Error opening file: No such file: {filename}")
+        show_critical_message("Error opening file", f"No such file: <b>{filename}</b>", trace=False)
         return False
 
     # assumes same name, but json extension
@@ -187,13 +164,7 @@ def load_file(filename: str = None):
         try:
             CORE.Variable.label_file = LabelFile(label_file, image_dir)
         except LabelFileError as e:
-            QtWidgets.QMessageBox.critical(
-                CORE.Object.main_window,
-                "Error opening file",
-                f"<p><b>{e}</b></p><p>Make sure <i>{label_file}</i> is a valid label file.",
-                QtWidgets.QMessageBox.Ok
-            )
-            logger.error(f"Error reading {label_file}")
+            show_critical_message("Error opening file", f"<p><b>{e}</b></p><p>Make sure <i>{label_file}</i> is a valid label file.", trace=False)
             CORE.Object.status_bar.showMessage(f"Error reading {label_file}")
             return False
         CORE.Variable.image_data = CORE.Variable.label_file.image_data
@@ -212,13 +183,7 @@ def load_file(filename: str = None):
 
     if handling_image.isNull():
         formats = [f"*.{fmt.data().decode()}" for fmt in QtGui.QImageReader.supportedImageFormats()]
-        QtWidgets.QMessageBox.critical(
-            CORE.Object.main_window,
-            "Error opening file",
-            f"<p>Make sure <i>{filename}</i> is a valid image file.<br/>Supported image formats: {','.join(formats)}</p>",
-            QtWidgets.QMessageBox.Ok
-        )
-        logger.error(f"Error reading {filename}")
+        show_critical_message("Error opening file", f"<p>Make sure <i>{filename}</i> is a valid image file.<br/>Supported image formats: {','.join(formats)}</p>", trace=False)
         CORE.Object.status_bar.showMessage(f"Error reading {filename}")
         return False
     CORE.Variable.image = handling_image

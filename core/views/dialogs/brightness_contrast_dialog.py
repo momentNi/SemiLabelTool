@@ -2,10 +2,10 @@ import PIL.Image
 import PIL.ImageEnhance
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QDialog, QWidget, QLabel, QHBoxLayout, QPushButton, QVBoxLayout, QSlider, QMessageBox
+from PyQt5.QtWidgets import QDialog, QWidget, QLabel, QHBoxLayout, QPushButton, QVBoxLayout, QSlider
 
 from core.configs.core import CORE
-from utils.logger import logger
+from core.services.system import show_critical_message
 
 
 class BrightnessContrastDialog(QDialog):
@@ -15,13 +15,7 @@ class BrightnessContrastDialog(QDialog):
         self.setWindowTitle("Brightness/Contrast")
 
         if not isinstance(img, PIL.Image.Image):
-            logger.error("Image must be PIL.Image")
-            QMessageBox.critical(
-                CORE.Object.main_window,
-                "Error opening file",
-                "Image must be PIL.Image",
-                QMessageBox.Ok
-            )
+            show_critical_message("Error opening file", "Image must be PIL.Image", trace=False)
             return
 
         self.img = img

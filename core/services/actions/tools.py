@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-import traceback
 
 import cv2
 import numpy as np
@@ -9,10 +8,10 @@ from PyQt5 import QtWidgets, QtCore
 
 from core.configs.core import CORE
 from core.dto.enums import ShapeType
+from core.services.system import show_critical_message
 from core.views.modules.chat_tab import ChatTab
 from core.views.modules.object_detection_tab import ObjectDetectionTab
 from core.views.modules.segmentation_tab import SegmentationTab
-from utils.logger import logger
 
 
 def save_crop_image():
@@ -75,12 +74,7 @@ def save_crop_image():
                     continue
                 elif (ShapeType.POLYGON == shape_type and len(points) < 3) or (ShapeType.ROTATION == shape_type and len(points) != 4) or (ShapeType.RECTANGLE == shape_type and len(points) != 4):
                     progress_dialog.close()
-                    QtWidgets.QMessageBox.critical(
-                        CORE.Object.main_window,
-                        "Error",
-                        f"Existing invalid shape in {label_file}",
-                        QtWidgets.QMessageBox.Ok
-                    )
+                    show_critical_message("Error", f"Existing invalid shape in {label_file}", trace=False)
                     return
 
                 points = np.array(points).astype(np.int32)
@@ -125,13 +119,7 @@ def save_crop_image():
 
     except Exception:
         progress_dialog.close()
-        QtWidgets.QMessageBox.critical(
-            CORE.Object.main_window,
-            "Error",
-            f"Error occurred while saving cropped image. Please check log.",
-            QtWidgets.QMessageBox.Ok
-        )
-        logger.error(traceback.print_exc())
+        show_critical_message("Error", "Error occurred while saving cropped image.")
 
 
 def toggle_object_detection():

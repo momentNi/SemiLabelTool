@@ -1,13 +1,12 @@
 import csv
 import json
 import os
-import traceback
 
 from PyQt5 import QtWidgets, QtCore
 
 from core.configs.core import CORE
 from core.dto.enums import ShapeType
-from utils.logger import logger
+from core.services.system import show_critical_message
 
 
 class ShapeOverviewDialog(QtWidgets.QDialog):
@@ -222,9 +221,4 @@ class ShapeOverviewDialog(QtWidgets.QDialog):
                 f"Exporting successfully!\nResults have been saved to: {shape_infos_path}"
             )
         except Exception as e:
-            QtWidgets.QMessageBox.critical(
-                CORE.Object.main_window,
-                "Error",
-                f"Error occurred while exporting: {e}.\nPlease check the log file for more details."
-            )
-            logger.error(traceback.print_exc())
+            show_critical_message("Error", f"Error occurred while exporting: {e}.")

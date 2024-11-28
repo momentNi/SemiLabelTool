@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets, QtCore
 
 from core.configs.core import CORE
 from core.dto.enums import ShapeType
+from core.services.system import show_critical_message
 
 
 class LabelOverviewDialog(QtWidgets.QDialog):
@@ -202,8 +203,4 @@ class LabelOverviewDialog(QtWidgets.QDialog):
                 f"Exporting successfully!\nResults have been saved to: {label_infos_path}"
             )
         except Exception as e:
-            QtWidgets.QMessageBox.critical(
-                CORE.Object.main_window,
-                "Error",
-                f"Error occurred while exporting: {e}.\nPlease check the log file for more details."
-            )
+            show_critical_message("Error", f"Error occurred while exporting: {e}.")

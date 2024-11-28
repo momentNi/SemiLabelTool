@@ -3,6 +3,7 @@ from PyQt5 import QtWidgets, QtCore
 from core.configs.core import CORE
 from core.dto.enums import ShapeType
 from core.models.model_manager import ModelManager
+from core.services.system import show_critical_message
 from core.views.dialogs.model_selection_dialog import ModelSelectionDialog
 
 
@@ -129,12 +130,7 @@ class SegmentationTab(QtWidgets.QWidget):
 
     def save_settings(self):
         if not self.is_total_weight_valid():
-            QtWidgets.QMessageBox.critical(
-                CORE.Object.main_window,
-                "Error",
-                "Total weight must be 1.0",
-                QtWidgets.QMessageBox.Ok
-            )
+            show_critical_message("Error", "Total weight must be 1.0", trace=False)
             return
         # TODO
         print({

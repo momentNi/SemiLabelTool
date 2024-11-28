@@ -1,10 +1,9 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QMessageBox
 
 import utils
 from core.configs.core import CORE
 from core.services.actions import files as files_action
-from utils.logger import logger
+from core.services.system import show_critical_message
 
 
 def file_selection_changed():
@@ -19,13 +18,7 @@ def file_selection_changed():
     try:
         current_index = CORE.Variable.image_list.index(str(item.text()))
     except ValueError:
-        logger.error(f"File not found: {str(item.text())}")
-        QMessageBox.critical(
-            CORE.Object.main_window,
-            "Error",
-            f"File not found: {str(item.text())}",
-            QMessageBox.Ok
-        )
+        show_critical_message("Error", f"File not found: {str(item.text())}")
         return
     if current_index < len(CORE.Variable.image_list):
         filename = CORE.Variable.image_list[current_index]
