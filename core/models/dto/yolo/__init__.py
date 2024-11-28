@@ -11,6 +11,7 @@ from core.dto.enums import ShapeType
 from core.dto.shape import Shape
 from core.models.dto.base import Model, AutoLabelingResult
 from core.models.utils.base import letterbox
+from core.services.system import show_critical_message
 from utils.image import qt_img_to_rgb_cv_img
 from utils.logger import logger
 
@@ -21,7 +22,7 @@ class YOLO(Model):
 
         model_abs_path = self.fetch_model("model_path")
         if not model_abs_path or not os.path.isfile(model_abs_path):
-            raise FileNotFoundError(f"Could not download or initialize {self.model_type} model.")
+            show_critical_message("Error", f"Could not download or initialize {self.model_type} model.")
 
         self.engine = self.configs.get("engine", "ort")
         if self.engine.lower() == "dnn":
@@ -145,7 +146,7 @@ class YOLO(Model):
             shape.shape_type = ShapeType.RECTANGLE
             shape.closed = True
             shape.label = str(self.classes[int(class_id)])
-            Shape.update_shape_color(shape)
+            shape.update_shape_color()
             shape.score = float(score)
             shape.selected = False
             shapes.append(shape)

@@ -1,10 +1,11 @@
 from PyQt5 import QtWidgets, QtCore
 
 from core.configs.core import CORE
-from core.dto.enums import ShapeType
+from core.dto.enums import ShapeType, AutoLabelEditMode, AutoLabelShapeType
 from core.models.model_manager import ModelManager
 from core.services.system import show_critical_message
 from core.views.dialogs.model_selection_dialog import ModelSelectionDialog
+from utils.logger import logger
 
 
 class SegmentationTab(QtWidgets.QWidget):
@@ -16,7 +17,7 @@ class SegmentationTab(QtWidgets.QWidget):
         self.output_shape_type.addItem(ShapeType.POLYGON.name, ShapeType.POLYGON.value)
         self.output_shape_type.addItem(ShapeType.RECTANGLE.name, ShapeType.RECTANGLE.value)
         self.output_shape_type.addItem(ShapeType.ROTATION.name, ShapeType.ROTATION.value)
-        self.output_shape_type.currentIndexChanged.connect(lambda: setattr(self, "is_modified", True) or self.change_buttons())
+        self.output_shape_type.currentIndexChanged.connect(lambda: self.changed_value(True))
 
         self.container = QtWidgets.QScrollArea()
         self.container.setMaximumHeight(400)
@@ -34,23 +35,33 @@ class SegmentationTab(QtWidgets.QWidget):
 
         self.op_widget = QtWidgets.QWidget()
         op_layout = QtWidgets.QGridLayout()
-        add_point_button = QtWidgets.QPushButton("+ Point")
-        remove_point_button = QtWidgets.QPushButton("- Point")
-        add_rect_button = QtWidgets.QPushButton("+ Rect")
-        remove_rect_button = QtWidgets.QPushButton("- Rect")
-        clear_button = QtWidgets.QPushButton("Clear")
-        finish_button = QtWidgets.QPushButton("Finish Object")
-        op_layout.addWidget(add_point_button, 0, 0, 1, 1)
-        op_layout.addWidget(remove_point_button, 1, 0, 1, 1)
-        op_layout.addWidget(add_rect_button, 0, 1, 1, 1)
-        op_layout.addWidget(remove_rect_button, 1, 1, 1, 1)
-        op_layout.addWidget(clear_button, 2, 0, 1, 2)
-        op_layout.addWidget(finish_button, 3, 0, 1, 2)
+        self.add_point_button = QtWidgets.QPushButton("+ Point")
+        self.add_point_button.setCheckable(True)
+        self.remove_point_button = QtWidgets.QPushButton("- Point")
+        self.remove_point_button.setCheckable(True)
+        self.add_rect_button = QtWidgets.QPushButton("+ Rect")
+        self.add_rect_button.setCheckable(True)
+        self.remove_rect_button = QtWidgets.QPushButton("- Rect")
+        self.remove_rect_button.setCheckable(True)
+        self.add_point_button.clicked.connect(lambda: self.change_output_mode(1))
+        self.remove_point_button.clicked.connect(lambda: self.change_output_mode(2))
+        self.add_rect_button.clicked.connect(lambda: self.change_output_mode(3))
+        self.remove_rect_button.clicked.connect(lambda: self.change_output_mode(4))
+
+        self.clear_button = QtWidgets.QPushButton("Clear")
+        self.clear_button.clicked.connect(lambda: self.change_output_mode(5))
+        self.finish_button = QtWidgets.QPushButton("Finish Object")
+        self.finish_button.clicked.connect(lambda: self.change_output_mode(6))
+        op_layout.addWidget(self.add_point_button, 0, 0, 1, 1)
+        op_layout.addWidget(self.remove_point_button, 1, 0, 1, 1)
+        op_layout.addWidget(self.add_rect_button, 0, 1, 1, 1)
+        op_layout.addWidget(self.remove_rect_button, 1, 1, 1, 1)
+        op_layout.addWidget(self.clear_button, 2, 0, 1, 2)
+        op_layout.addWidget(self.finish_button, 3, 0, 1, 2)
         self.op_widget.setLayout(op_layout)
         self.op_widget.setHidden(True)
 
         self.is_first_load = True
-        self.is_modified = True
 
         layout = QtWidgets.QVBoxLayout()
         self.model_layout = QtWidgets.QFormLayout()
@@ -86,8 +97,6 @@ class SegmentationTab(QtWidgets.QWidget):
             self.layout().addWidget(self.op_widget)
         else:
             self.update_weight_container(selected_models)
-        self.is_modified = True
-        self.change_buttons()
 
     def update_weight_container(self, selected_models):
         weight_box_widget = QtWidgets.QWidget()
@@ -111,6 +120,7 @@ class SegmentationTab(QtWidgets.QWidget):
             for i in range(len(selected_models)):
                 weight_box_layout.addRow(selected_models[i], self.model_weight_value_spinbox[i][1])
         weight_box_widget.setLayout(weight_box_layout)
+        self.changed_value(True)
 
     def update_total_weight(self):
         self.total_weight = 0.0
@@ -118,22 +128,26 @@ class SegmentationTab(QtWidgets.QWidget):
             self.total_weight += box.value()
         self.total_label.setText(f"Total: {round(self.total_weight, 2)}")
         self.total_label.setStyleSheet(f"color: {'black' if round(self.total_weight, 2) == 1 else 'red'}")
-        self.is_modified = True
-        self.change_buttons()
+        self.changed_value(True)
 
     def is_total_weight_valid(self):
         return round(self.total_weight, 2) == 1
 
-    def change_buttons(self):
-        self.save_button.setHidden(not self.is_modified)
-        self.op_widget.setHidden(self.is_modified)
+    def changed_value(self, is_dirty: bool = True):
+        self.save_button.setHidden(not is_dirty)
+        self.op_widget.setHidden(is_dirty)
 
     def save_settings(self):
         if not self.is_total_weight_valid():
             show_critical_message("Error", "Total weight must be 1.0", trace=False)
             return
-        # TODO
-        print({
+
+        for name, box in self.model_weight_value_spinbox:
+            CORE.Object.model_manager.active_models("seg", [name])
+            # TODO set weight of each model
+            logger.info(CORE.Object.model_manager.model_dict[name])
+
+        logger.info({
             "output_shape_type": self.output_shape_type.currentData(),
             "model_weight": [
                 {
@@ -142,5 +156,48 @@ class SegmentationTab(QtWidgets.QWidget):
                 } for name, box in self.model_weight_value_spinbox
             ]
         })
-        self.is_modified = False
-        self.change_buttons()
+        self.changed_value(False)
+
+    def change_output_mode(self, button_index: int):
+        if button_index == 1:
+            # + Point
+            if self.add_point_button.isChecked():
+                self.remove_point_button.setChecked(False)
+                self.add_rect_button.setChecked(False)
+                self.remove_rect_button.setChecked(False)
+                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.ADD, AutoLabelShapeType.POINT)
+            else:
+                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
+        elif button_index == 2:
+            # - Point
+            if self.remove_point_button.isChecked():
+                self.add_point_button.setChecked(False)
+                self.add_rect_button.setChecked(False)
+                self.remove_rect_button.setChecked(False)
+                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.REMOVE, AutoLabelShapeType.POINT)
+            else:
+                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
+        elif button_index == 3:
+            # + Rect
+            if self.add_rect_button.isChecked():
+                self.add_point_button.setChecked(False)
+                self.remove_point_button.setChecked(False)
+                self.remove_rect_button.setChecked(False)
+                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.ADD, AutoLabelShapeType.RECTANGLE)
+            else:
+                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
+        elif button_index == 4:
+            # - Rect
+            if self.remove_rect_button.isChecked():
+                self.add_point_button.setChecked(False)
+                self.remove_point_button.setChecked(False)
+                self.add_rect_button.setChecked(False)
+                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.REMOVE, AutoLabelShapeType.RECTANGLE)
+            else:
+                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
+        elif button_index == 5:
+            # Clear
+            CORE.Object.canvas.clear_auto_labeling_marks()
+        elif button_index == 6:
+            # finish
+            CORE.Object.canvas.finish_auto_labeling_object()

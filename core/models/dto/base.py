@@ -44,6 +44,7 @@ class Model:
         self.configs = {}
         # Core model weight file for prediction.
         self.model = None
+        self.output_mode = None
 
         self.download_progress_dialog = None
 

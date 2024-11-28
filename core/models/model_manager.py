@@ -7,7 +7,9 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 from core.models import configs
 from core.models.dto.base import Model
+from core.models.dto.sam import SegmentAnything
 from core.models.dto.yolo.yolo_v10 import YOLOv10
+from core.services.system import show_critical_message
 from utils.logger import logger
 
 
@@ -77,7 +79,13 @@ class ModelManager(QObject):
             try:
                 model_dto.model = YOLOv10(name=name, label=model_dto.label, platform=model_dto.platform, model_type=model_dto.model_type, config_path=model_dto.config_path, task="det")
             except Exception as e:
-                logger.error(f"Error loading model: {e}")
+                show_critical_message("Error", f"Error loading model: {e}")
+                return False
+        elif model_dto.model_type == "sam":
+            try:
+                model_dto.model = SegmentAnything(name=name, label=model_dto.label, platform=model_dto.platform, model_type=model_dto.model_type, config_path=model_dto.config_path)
+            except Exception as e:
+                show_critical_message("Error", f"Error loading model: {e}")
                 return False
         else:
             raise Exception(f"Unknown model type: {model_dto.model_type}")
