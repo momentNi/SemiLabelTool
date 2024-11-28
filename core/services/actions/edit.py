@@ -52,7 +52,7 @@ def edit_label(item: 'LabelListWidgetItem'):
         rgb = get_rgb_by_label(shape.label)
         CORE.Object.unique_label_list_widget.set_item_label(unique_label_item, shape.label, rgb, 128)
 
-    Shape.update_shape_color(shape)
+    shape.update_shape_color()
     if shape.group_id is None:
         color = shape.fill_color.getRgb()[:3]
         item.setText("{}".format(html.escape(shape.label)))
@@ -82,7 +82,7 @@ def add_label(shape: Shape):
 
     CORE.Action.save_as.setEnabled(True)
 
-    Shape.update_shape_color(shape)
+    shape.update_shape_color()
     color = shape.fill_color.getRgb()[:3]
     label_list_item.setText("{}".format(html.escape(text)))
     label_list_item.setBackground(QtGui.QColor(*color, 128))

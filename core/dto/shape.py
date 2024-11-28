@@ -76,15 +76,14 @@ class Shape:
             logger.error(f"Unexpected shape_type: {value}")
             raise ValueError(f"Unexpected shape_type: {value}")
 
-    @staticmethod
-    def update_shape_color(shape):
-        r, g, b = get_rgb_by_label(shape.label)
-        shape.line_color = QtGui.QColor(r, g, b)
-        shape.vertex_fill_color = QtGui.QColor(r, g, b)
-        shape.highlight_vertex_fill_color = QtGui.QColor(255, 255, 255)
-        shape.fill_color = QtGui.QColor(r, g, b, 128)
-        shape.select_line_color = QtGui.QColor(255, 255, 255)
-        shape.select_fill_color = QtGui.QColor(r, g, b, 155)
+    def update_shape_color(self):
+        r, g, b = get_rgb_by_label(self.label)
+        self.line_color = QtGui.QColor(r, g, b)
+        self.vertex_fill_color = QtGui.QColor(r, g, b)
+        self.highlight_vertex_fill_color = QtGui.QColor(255, 255, 255)
+        self.fill_color = QtGui.QColor(r, g, b, 128)
+        self.select_line_color = QtGui.QColor(255, 255, 255)
+        self.select_fill_color = QtGui.QColor(r, g, b, 155)
 
     def copy(self) -> Self:
         return copy.deepcopy(self)
