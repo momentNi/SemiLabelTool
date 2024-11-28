@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from core.views.modules.unique_label_list_widget import UniqueLabelListWidget
     from core.views.modules.zoom_widget import ZoomWidget
     from core.views.modules.chat_tab import ChatTab
+    from core.models.model_manager import ModelManager
 
 
 class Core(object):
@@ -89,6 +90,8 @@ class Core(object):
         object_detection_button: QtWidgets.QToolButton = None
         segmentation_button: QtWidgets.QToolButton = None
         nlp_button: QtWidgets.QToolButton = None
+
+        model_manager: 'ModelManager' = None
 
     class Action:
         def __init__(self):

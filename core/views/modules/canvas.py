@@ -1100,6 +1100,22 @@ class Canvas(QWidget):
                     })
         self.auto_labeling_marks_updated_signal.emit(marks)
 
+    @staticmethod
+    def new_shapes_from_auto_labeling(auto_labeling_result):
+        if not CORE.Variable.image or not CORE.Variable.image_path:
+            return
+        if auto_labeling_result.replace:
+            system.load_shapes([], replace=True)
+            CORE.Object.label_list_widget.clear()
+            system.load_shapes(auto_labeling_result.shapes, replace=True)
+        else:
+            for shape in CORE.Object.canvas.shapes:
+                if shape.label == AutoLabelEditMode.OBJECT.value:
+                    item = CORE.Object.label_list_widget.find_item_by_shape(shape)
+                    CORE.Object.label_list_widget.remove_item(item)
+            system.load_shapes(auto_labeling_result.shapes, replace=False)
+        system.set_dirty()
+
     # ==================================================
     # ================ Override Methods ================
     # ==================================================

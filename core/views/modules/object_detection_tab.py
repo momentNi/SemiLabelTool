@@ -4,6 +4,7 @@ from core.configs.core import CORE
 from core.dto.enums import ShapeType
 from core.models.model_manager import ModelManager
 from core.views.dialogs.model_selection_dialog import ModelSelectionDialog
+from utils.logger import logger
 
 
 class ObjectDetectionTab(QtWidgets.QWidget):
@@ -13,14 +14,17 @@ class ObjectDetectionTab(QtWidgets.QWidget):
         self.output_shape_type.addItem(ShapeType.RECTANGLE.name, ShapeType.RECTANGLE.value)
         self.output_shape_type.addItem(ShapeType.POINT.name, ShapeType.POINT.value)
         self.output_shape_type.addItem(ShapeType.POLYGON.name, ShapeType.POLYGON.value)
+        self.output_shape_type.currentIndexChanged.connect(lambda: self.changed_value(True))
         self.conf_threshold = QtWidgets.QDoubleSpinBox()
         self.conf_threshold.setSingleStep(0.01)
         self.conf_threshold.setMaximum(1)
         self.conf_threshold.setMinimum(0)
+        self.conf_threshold.valueChanged.connect(lambda: self.changed_value(True))
         self.iou_threshold = QtWidgets.QDoubleSpinBox()
         self.iou_threshold.setSingleStep(0.01)
         self.iou_threshold.setMaximum(1)
         self.iou_threshold.setMinimum(0)
+        self.iou_threshold.valueChanged.connect(lambda: self.changed_value(True))
         self.container = QtWidgets.QScrollArea()
         self.container.setMaximumHeight(400)
         self.container.setWidgetResizable(True)
@@ -28,6 +32,9 @@ class ObjectDetectionTab(QtWidgets.QWidget):
         self.container.setStyleSheet("border:none")
         self.total_label = QtWidgets.QLabel()
         self.total_label.setAlignment(QtCore.Qt.AlignRight)
+        self.save_button = QtWidgets.QPushButton("Save")
+        self.apply_current_button = QtWidgets.QPushButton("Apply Current")
+        self.apply_all_button = QtWidgets.QPushButton("Apply All")
         self.model_weight_value_spinbox = []
         self.total_weight = 1.00
         self.is_preserve = True
@@ -64,10 +71,10 @@ class ObjectDetectionTab(QtWidgets.QWidget):
             preserve_on_radio = QtWidgets.QRadioButton("ON")
             preserve_on_radio.setAutoExclusive(True)
             preserve_on_radio.setChecked(True)
-            preserve_on_radio.toggled.connect(lambda: setattr(self, "is_preserve", True))
+            preserve_on_radio.toggled.connect(lambda: setattr(self, "is_preserve", True) or self.changed_value(True))
             preserve_off_radio = QtWidgets.QRadioButton("OFF")
             preserve_off_radio.setAutoExclusive(True)
-            preserve_on_radio.toggled.connect(lambda: setattr(self, "is_preserve", False))
+            preserve_on_radio.toggled.connect(lambda: setattr(self, "is_preserve", False) or self.changed_value(True))
             preserve_radio_layout.addWidget(preserve_on_radio)
             preserve_radio_layout.addWidget(preserve_off_radio)
             self.model_layout.addRow("Output Shape Type", self.output_shape_type)
@@ -82,15 +89,12 @@ class ObjectDetectionTab(QtWidgets.QWidget):
 
             button_widget = QtWidgets.QWidget()
             button_layout = QtWidgets.QHBoxLayout()
-            save_button = QtWidgets.QPushButton("Save")
-            save_button.clicked.connect(self.save_settings)
-            apply_current_button = QtWidgets.QPushButton("Apply Current")
-            apply_current_button.clicked.connect(self.apply_current)
-            apply_all_button = QtWidgets.QPushButton("Apply All")
-            apply_all_button.clicked.connect(self.apply_all)
-            button_layout.addWidget(save_button)
-            button_layout.addWidget(apply_current_button)
-            button_layout.addWidget(apply_all_button)
+            self.save_button.clicked.connect(self.save_settings)
+            self.apply_current_button.clicked.connect(self.apply_current)
+            self.apply_all_button.clicked.connect(self.apply_all)
+            button_layout.addWidget(self.save_button)
+            button_layout.addWidget(self.apply_current_button)
+            button_layout.addWidget(self.apply_all_button)
             button_widget.setLayout(button_layout)
             self.layout().addWidget(button_widget)
         else:
@@ -120,6 +124,7 @@ class ObjectDetectionTab(QtWidgets.QWidget):
                 weight_box_layout.addRow(selected_models[i], self.model_weight_value_spinbox[i][1])
 
         weight_box_widget.setLayout(weight_box_layout)
+        self.changed_value(True)
 
     def update_total_weight(self):
         self.total_weight = 0.0
@@ -127,9 +132,15 @@ class ObjectDetectionTab(QtWidgets.QWidget):
             self.total_weight += box.value()
         self.total_label.setText(f"Total: {round(self.total_weight, 2)}")
         self.total_label.setStyleSheet(f"color: {'black' if round(self.total_weight, 2) == 1 else 'red'}")
+        self.changed_value(True)
 
     def is_total_weight_valid(self):
         return round(self.total_weight, 2) == 1
+
+    def changed_value(self, is_dirty: bool = True):
+        self.save_button.setHidden(not is_dirty)
+        self.apply_current_button.setHidden(is_dirty)
+        self.apply_all_button.setHidden(is_dirty)
 
     def save_settings(self):
         if not self.is_total_weight_valid():
@@ -140,8 +151,16 @@ class ObjectDetectionTab(QtWidgets.QWidget):
                 QtWidgets.QMessageBox.Ok
             )
             return
-        # TODO
-        print({
+
+        for name, box in self.model_weight_value_spinbox:
+            CORE.Object.model_manager.active_models("od", [name])
+            CORE.Object.model_manager.model_dict[name].model.set_conf_threshold(self.conf_threshold.value())
+            CORE.Object.model_manager.model_dict[name].model.set_iou_threshold(self.iou_threshold.value())
+            CORE.Object.model_manager.model_dict[name].model.set_is_preserve(self.is_preserve)
+            # TODO set weight of each model
+            logger.info(CORE.Object.model_manager.model_dict[name])
+
+        logger.info({
             "output_shape_type": self.output_shape_type.currentData(),
             "conf_threshold": self.conf_threshold.value(),
             "iou_threshold": self.iou_threshold.value(),
@@ -154,9 +173,13 @@ class ObjectDetectionTab(QtWidgets.QWidget):
             ]
         })
 
-    def apply_current(self):
-        # TODO
-        pass
+        self.changed_value(False)
+
+    @staticmethod
+    def apply_current():
+        result = CORE.Object.model_manager.label_image("od", CORE.Variable.image, CORE.Variable.current_file_full_path)
+        logger.info(result.shapes)
+        CORE.Object.canvas.new_shapes_from_auto_labeling(result)
 
     def apply_all(self):
         # TODO

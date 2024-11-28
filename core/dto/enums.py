@@ -2,6 +2,12 @@ from enum import Enum, unique
 
 
 @unique
+class Device(Enum):
+    GPU = "GPU"
+    CPU = "CPU"
+
+
+@unique
 class ZoomMode(Enum):
     """
     Canvas Zooming mode

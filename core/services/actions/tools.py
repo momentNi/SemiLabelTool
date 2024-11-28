@@ -136,12 +136,12 @@ def save_crop_image():
 
 def toggle_object_detection():
     if CORE.Variable.use_object_detection:
-        # 关闭
         CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.object_detection_tab_widget))
         CORE.Object.object_detection_button.setDown(False)
         CORE.Variable.use_object_detection = False
+        for name in CORE.Object.model_manager.active_od_models:
+            CORE.Object.model_manager.model_dict[name].model.unload()
     else:
-        # 开启
         if CORE.Object.object_detection_tab_widget is None:
             CORE.Object.object_detection_tab_widget = ObjectDetectionTab()
         CORE.Object.tab_widget.addTab(CORE.Object.object_detection_tab_widget, "Object Detection")
@@ -153,12 +153,12 @@ def toggle_object_detection():
 
 def toggle_segmentation():
     if CORE.Variable.use_segmentation:
-        # 关闭
         CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.segmentation_tab_widget))
         CORE.Object.segmentation_button.setDown(False)
         CORE.Variable.use_segmentation = False
+        for name in CORE.Object.model_manager.active_seg_models:
+            CORE.Object.model_manager.model_dict[name].model.unload()
     else:
-        # 开启
         if CORE.Object.segmentation_tab_widget is None:
             CORE.Object.segmentation_tab_widget = SegmentationTab()
         CORE.Object.tab_widget.addTab(CORE.Object.segmentation_tab_widget, "Segmentation")
@@ -170,12 +170,10 @@ def toggle_segmentation():
 
 def toggle_chat():
     if CORE.Variable.use_chat:
-        # 关闭
         CORE.Object.tab_widget.removeTab(CORE.Object.tab_widget.indexOf(CORE.Object.chat_tab_widget))
         CORE.Object.nlp_button.setDown(False)
         CORE.Variable.use_chat = False
     else:
-        # 开启
         if CORE.Object.chat_tab_widget is None:
             CORE.Object.chat_tab_widget = ChatTab()
         CORE.Object.tab_widget.addTab(CORE.Object.chat_tab_widget, "Labeling Chat")
