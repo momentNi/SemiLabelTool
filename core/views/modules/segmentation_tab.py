@@ -142,6 +142,8 @@ class SegmentationTab(QtWidgets.QWidget):
             show_critical_message("Error", "Total weight must be 1.0", trace=False)
             return
 
+        CORE.Object.status_bar.showMessage("Saving Segmentation Model settings...")
+
         for name, box in self.model_weight_value_spinbox:
             CORE.Object.model_manager.active_models("seg", [name])
             # TODO set weight of each model
@@ -157,6 +159,7 @@ class SegmentationTab(QtWidgets.QWidget):
             ]
         })
         self.changed_value(False)
+        CORE.Object.status_bar.showMessage("Segmentation Model settings saved.")
 
     def change_output_mode(self, button_index: int):
         if button_index == 1:

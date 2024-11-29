@@ -32,10 +32,10 @@ class ModelManager(QObject):
             with resources.open_text(configs, "default.yaml") as f:
                 default_model_list = yaml.safe_load(f)
         except IOError:
-            logger.error("Error in loading default model configs.")
+            show_critical_message("Error", "Error in loading default model configs.")
         for model_config in default_model_list:
             if not Model.is_valid_config(model_config):
-                logger.error(f"Error in loading model configs: {model_config}")
+                show_critical_message("Error", f"Error in loading model configs: {model_config}")
                 continue
             model_dto = Model(**model_config)
             self.model_dict[model_config["name"]] = model_dto
@@ -45,13 +45,13 @@ class ModelManager(QObject):
         config_file_path = os.path.normpath(os.path.abspath(config_file_path))
 
         if not config_file_path or not os.path.isfile(config_file_path):
-            logger.error("Error in loading custom model: Invalid path.")
+            show_critical_message("Error", f"Error in loading custom model: Invalid path: {config_file_path}.")
             return
 
         with open(config_file_path, "r", encoding="utf-8") as f:
             model_config = yaml.safe_load(f)
         if not Model.is_valid_config(model_config):
-            logger.error(f"Error in loading model configs: {model_config}")
+            show_critical_message("Error", f"Error in loading model configs: {model_config}")
             return
         model_dto = Model(**model_config)
         if model_dto.name in self.model_dict:
@@ -65,7 +65,7 @@ class ModelManager(QObject):
         elif model_dto.platform == "seg":
             self.seg_models.add(model_dto.name)
         else:
-            logger.error(f"Unknown platform: {model_dto.platform}. Model config: {model_dto}")
+            show_critical_message("Error", f"Unknown platform: {model_dto.platform} Model config: {model_dto}", trace=False)
 
     def load_model_weight(self, name):
         if name not in self.model_dict:
@@ -88,7 +88,8 @@ class ModelManager(QObject):
                 show_critical_message("Error", f"Error loading model: {e}")
                 return False
         else:
-            raise Exception(f"Unknown model type: {model_dto.model_type}")
+            show_critical_message("Error", f"Unknown model type: {model_dto.model_type}")
+            return False
         return True
 
     def unload_model_weight(self, name):
@@ -107,7 +108,7 @@ class ModelManager(QObject):
                 self.active_seg_models.add(name)
                 self.load_model_weight(name)
         else:
-            logger.error(f"Unknown platform: {platform} when activating models.")
+            show_critical_message("Error", f"Unknown platform: {platform} when activating models.", trace=False)
 
     def label_image(self, platform, image, filename=None):
         if platform == "od":
@@ -118,5 +119,5 @@ class ModelManager(QObject):
                         self.load_model_weight(name)
                     result = model_dto.model.predict_shapes(image, filename)
                     return result
-            except Exception as e:
-                logger.error(f"Error in predicting shapes: {e}")
+            except Exception:
+                show_critical_message("Error", f"Error in predicting shapes.")

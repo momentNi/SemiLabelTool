@@ -148,6 +148,8 @@ class ObjectDetectionTab(QtWidgets.QWidget):
             show_critical_message("Error", "Total weight must be 1.0", trace=False)
             return
 
+        CORE.Object.status_bar.showMessage("Saving Object Detection Model settings...")
+
         for name, box in self.model_weight_value_spinbox:
             CORE.Object.model_manager.active_models("od", [name])
             CORE.Object.model_manager.model_dict[name].model.set_conf_threshold(self.conf_threshold.value())
@@ -170,12 +172,14 @@ class ObjectDetectionTab(QtWidgets.QWidget):
         })
 
         self.changed_value(False)
+        CORE.Object.status_bar.showMessage("Object Detection Model settings saved.")
 
     @staticmethod
     def apply_current():
         result = CORE.Object.model_manager.label_image("od", CORE.Variable.image, CORE.Variable.current_file_full_path)
         logger.info(result.shapes)
         CORE.Object.canvas.new_shapes_from_auto_labeling(result)
+        CORE.Object.status_bar.showMessage(f"Generate {len(result.shapes)} shape{'s' if len(result.shapes) > 1 else ''} in current image!")
 
     def apply_all(self):
         # TODO
