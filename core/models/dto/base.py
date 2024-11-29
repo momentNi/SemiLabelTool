@@ -2,6 +2,7 @@ import os
 import pathlib
 from abc import abstractmethod
 from importlib import resources
+from typing import Optional
 from urllib import request
 from urllib.parse import urlparse
 
@@ -46,7 +47,7 @@ class Model:
         self.model = None
         self.output_mode = None
 
-        self.download_progress_dialog = None
+        self.download_progress_dialog: Optional[QProgressDialog] = None
 
         try:
             if self.config_path.startswith(":/"):
@@ -101,7 +102,15 @@ class Model:
 
         logger.info(f"Downloading {filename} to {model_abs_path}")
         try:
-            request.urlretrieve(url=url, filename=model_abs_path, reporthook=self.__progress_hook)
+            local_filename, headers = request.urlretrieve(url=url, filename=model_abs_path, reporthook=self.__progress_hook)
+            if os.path.exists(model_abs_path) and headers.get("Content-Length") == os.path.getsize(model_abs_path):
+                self.download_progress_dialog.close()
+                self.download_progress_dialog = None
+            else:
+                logger.error(f"Downloaded file size does not match the expected size.")
+                self.download_progress_dialog.close()
+                self.download_progress_dialog = None
+                return None
         except Exception as e:
             logger.error(f"Could not download {url}: {e}")
             return None

@@ -23,6 +23,7 @@ class YOLO(Model):
         model_abs_path = self.fetch_model("model_path")
         if not model_abs_path or not os.path.isfile(model_abs_path):
             show_critical_message("Error", f"Could not download or initialize {self.model_type} model.")
+            return
 
         self.engine = self.configs.get("engine", "ort")
         if self.engine.lower() == "dnn":
