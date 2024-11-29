@@ -95,6 +95,7 @@ class ToolBar(QToolBar):
         )
         od_btn.setDefaultAction(od_action)
         od_btn.setToolButtonStyle(self.toolButtonStyle())
+        od_btn.setEnabled(False)
         CORE.Object.object_detection_button = od_btn
         self.addWidget(od_btn)
 
@@ -108,6 +109,7 @@ class ToolBar(QToolBar):
         )
         segment_btn.setDefaultAction(segment_action)
         segment_btn.setToolButtonStyle(self.toolButtonStyle())
+        segment_btn.setEnabled(False)
         CORE.Object.segmentation_button = segment_btn
         self.addWidget(segment_btn)
 
@@ -121,5 +123,6 @@ class ToolBar(QToolBar):
         )
         nlp_btn.setDefaultAction(nlp_action)
         nlp_btn.setToolButtonStyle(self.toolButtonStyle())
+        nlp_btn.setEnabled(False)
         CORE.Object.nlp_button = nlp_btn
         self.addWidget(nlp_btn)

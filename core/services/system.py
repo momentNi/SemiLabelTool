@@ -210,12 +210,7 @@ def set_item_description(enable: bool):
     CORE.Object.item_description.textChanged.connect(on_item_description_change)
 
 
-def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, disable_auto_labeling: bool = True):
-    # TODO Disable auto labeling if needed
-    # if disable_auto_labeling and self.auto_labeling_widget.auto_labeling_mode != AutoLabelingMode.NONE:
-    #     self.clear_auto_labeling_marks()
-    #     self.auto_labeling_widget.set_auto_labeling_mode(None)
-
+def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE):
     set_item_description(enable=False)
 
     CORE.Object.canvas.set_editing(edit)
@@ -294,10 +289,6 @@ def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, d
 
 
 def set_edit_mode():
-    # TODO Disable auto labeling
-    # self.clear_auto_labeling_marks()
-    # self.auto_labeling_widget.set_auto_labeling_mode(None)
-
     toggle_draw_mode(True)
     set_item_description(True)
     CORE.Object.instruction_part.setText(get_instruction_label())
@@ -389,7 +380,6 @@ def save_attributes(_shapes):
 
     def format_shape(s):
         data = s.other_data.copy()
-        # TODO implement Shape.__dict__ to achieve this
         info = {
             "label": s.label,
             "points": [(p.x(), p.y()) for p in s.points],
@@ -474,6 +464,9 @@ def toggle_load_related_action(value: bool):
     CORE.Action.create_line_strip_mode.setEnabled(value)
     CORE.Action.edit_object.setEnabled(value)
     CORE.Action.set_brightness_contrast.setEnabled(value)
+    CORE.Object.object_detection_button.setEnabled(value)
+    CORE.Object.segmentation_button.setEnabled(value)
+    CORE.Object.nlp_button.setEnabled(value)
 
 
 def launch_async_job(target, args, callback):
