@@ -6,7 +6,7 @@ from PyQt5.QtCore import Qt
 
 from core.configs.constants import Constants
 from core.configs.core import CORE
-from core.dto.enums import ZoomMode, CanvasMode, ShapeType, AutoLabelEditMode
+from core.dto.enums import ZoomMode, CanvasMode, ShapeType, AutoLabelEditMode, AutoLabelShapeType
 from core.dto.exceptions import LabelFileError
 from core.dto.label_file import LabelFile
 from core.services.actions import files
@@ -210,7 +210,11 @@ def set_item_description(enable: bool):
     CORE.Object.item_description.textChanged.connect(on_item_description_change)
 
 
-def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE):
+def toggle_draw_mode(edit: bool, create_mode: ShapeType = ShapeType.RECTANGLE, disable_auto_labeling: bool = True):
+    if disable_auto_labeling and CORE.Object.canvas.auto_labeling_mode != (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF):
+        CORE.Object.canvas.clear_auto_labeling_marks()
+        CORE.Object.canvas.set_auto_labeling_mode(AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
+
     set_item_description(enable=False)
 
     CORE.Object.canvas.set_editing(edit)

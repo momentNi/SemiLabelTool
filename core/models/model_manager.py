@@ -71,9 +71,6 @@ class ModelManager(QObject):
         if name not in self.model_dict:
             logger.error(f"Model {name} not found.")
             return False
-        if name in self.active_od_models or name in self.active_seg_models:
-            logger.error(f"Model {name} is using. Please unload it before modifying its weight.")
-            return False
         model_dto = self.model_dict[name]
         if model_dto.model_type == "yolov10":
             try:
@@ -116,6 +113,17 @@ class ModelManager(QObject):
                 for name in self.active_od_models:
                     model_dto = self.model_dict[name]
                     if model_dto.model is None:
+                        self.load_model_weight(name)
+                    result = model_dto.model.predict_shapes(image, filename)
+                    return result
+            except Exception:
+                show_critical_message("Error", f"Error in predicting shapes.")
+        if platform == "seg":
+            try:
+                for name in self.active_seg_models:
+                    model_dto = self.model_dict[name]
+                    if model_dto.model is None:
+                        logger.warning("model_dto.model is None")
                         self.load_model_weight(name)
                     result = model_dto.model.predict_shapes(image, filename)
                     return result

@@ -3,7 +3,7 @@ from PyQt5 import QtWidgets, QtCore
 from core.configs.core import CORE
 from core.dto.enums import ShapeType, AutoLabelEditMode, AutoLabelShapeType
 from core.models.model_manager import ModelManager
-from core.services.system import show_critical_message
+from core.services.system import show_critical_message, get_instruction_label
 from core.views.dialogs.model_selection_dialog import ModelSelectionDialog
 from utils.logger import logger
 
@@ -14,9 +14,9 @@ class SegmentationTab(QtWidgets.QWidget):
         self.model_dialog = None
 
         self.output_shape_type = QtWidgets.QComboBox()
-        self.output_shape_type.addItem(ShapeType.POLYGON.name, ShapeType.POLYGON.value)
-        self.output_shape_type.addItem(ShapeType.RECTANGLE.name, ShapeType.RECTANGLE.value)
-        self.output_shape_type.addItem(ShapeType.ROTATION.name, ShapeType.ROTATION.value)
+        self.output_shape_type.addItem(ShapeType.POLYGON.name, ShapeType.POLYGON)
+        self.output_shape_type.addItem(ShapeType.RECTANGLE.name, ShapeType.RECTANGLE)
+        self.output_shape_type.addItem(ShapeType.ROTATION.name, ShapeType.ROTATION)
         self.output_shape_type.currentIndexChanged.connect(lambda: self.changed_value(True))
 
         self.container = QtWidgets.QScrollArea()
@@ -144,10 +144,14 @@ class SegmentationTab(QtWidgets.QWidget):
 
         CORE.Object.status_bar.showMessage("Saving Segmentation Model settings...")
 
+        CORE.Object.canvas.set_auto_labeling_value(True)
+        CORE.Object.instruction_part.setText(get_instruction_label())
+
         for name, box in self.model_weight_value_spinbox:
             CORE.Object.model_manager.active_models("seg", [name])
             # TODO set weight of each model
             logger.info(CORE.Object.model_manager.model_dict[name])
+            CORE.Object.model_manager.model_dict[name].model.output_mode = self.output_shape_type.currentData()
 
         logger.info({
             "output_shape_type": self.output_shape_type.currentData(),
@@ -168,39 +172,47 @@ class SegmentationTab(QtWidgets.QWidget):
                 self.remove_point_button.setChecked(False)
                 self.add_rect_button.setChecked(False)
                 self.remove_rect_button.setChecked(False)
-                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.ADD, AutoLabelShapeType.POINT)
+                CORE.Object.canvas.set_auto_labeling_mode(AutoLabelEditMode.ADD, AutoLabelShapeType.POINT)
             else:
-                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
+                CORE.Object.canvas.set_auto_labeling_mode(AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
         elif button_index == 2:
             # - Point
             if self.remove_point_button.isChecked():
                 self.add_point_button.setChecked(False)
                 self.add_rect_button.setChecked(False)
                 self.remove_rect_button.setChecked(False)
-                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.REMOVE, AutoLabelShapeType.POINT)
+                CORE.Object.canvas.set_auto_labeling_mode(AutoLabelEditMode.REMOVE, AutoLabelShapeType.POINT)
             else:
-                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
+                CORE.Object.canvas.set_auto_labeling_mode(AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
         elif button_index == 3:
             # + Rect
             if self.add_rect_button.isChecked():
                 self.add_point_button.setChecked(False)
                 self.remove_point_button.setChecked(False)
                 self.remove_rect_button.setChecked(False)
-                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.ADD, AutoLabelShapeType.RECTANGLE)
+                CORE.Object.canvas.set_auto_labeling_mode(AutoLabelEditMode.ADD, AutoLabelShapeType.RECTANGLE)
             else:
-                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
+                CORE.Object.canvas.set_auto_labeling_mode(AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
         elif button_index == 4:
             # - Rect
             if self.remove_rect_button.isChecked():
                 self.add_point_button.setChecked(False)
                 self.remove_point_button.setChecked(False)
                 self.add_rect_button.setChecked(False)
-                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.REMOVE, AutoLabelShapeType.RECTANGLE)
+                CORE.Object.canvas.set_auto_labeling_mode(AutoLabelEditMode.REMOVE, AutoLabelShapeType.RECTANGLE)
             else:
-                CORE.Object.canvas.auto_labeling_mode = (AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
+                CORE.Object.canvas.set_auto_labeling_mode(AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)
         elif button_index == 5:
             # Clear
             CORE.Object.canvas.clear_auto_labeling_marks()
         elif button_index == 6:
             # finish
             CORE.Object.canvas.finish_auto_labeling_object()
+            self.clear_output_mode()
+
+    def clear_output_mode(self):
+        self.add_point_button.setChecked(False)
+        self.remove_point_button.setChecked(False)
+        self.add_rect_button.setChecked(False)
+        self.remove_rect_button.setChecked(False)
+        CORE.Object.canvas.set_auto_labeling_mode(AutoLabelEditMode.OFF, AutoLabelShapeType.OFF)

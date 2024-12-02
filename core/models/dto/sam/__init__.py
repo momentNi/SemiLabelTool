@@ -196,13 +196,13 @@ class SegmentAnything(Model):
             shape.add_point(QPointF(x_min, y_max))
             shape.shape_type = self.output_mode
             shape.closed = True
+            shape.label = AutoLabelEditMode.OBJECT.value
+            shape.selected = False
             shape.update_shape_color()
             if self.clip_net is not None and self.classes:
                 img = image[y_min:y_max, x_min:x_max]
                 out = self.clip_net(img, self.classes)
                 shape.cache_label = self.classes[int(np.argmax(out))]
-            shape.label = AutoLabelEditMode.OBJECT.value
-            shape.selected = False
             shapes.append(shape)
 
         return shapes

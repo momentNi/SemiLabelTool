@@ -1,4 +1,5 @@
 import copy
+import html
 import re
 from typing import List, Tuple, Dict, Set, Optional
 
@@ -15,7 +16,7 @@ from core.services.actions.edit import copy_shape, move_shape
 from core.services.signals.canvas import *
 from core.services.system import set_dirty, toggle_drawing_sensitive, scale_fit_window, scale_fit_width, update_combo_box, set_edit_mode
 from utils.calculator import get_adjacent_points, rotate_point, intersection_point_with_box, distance
-from utils.function import hex_to_rgb
+from utils.function import hex_to_rgb, get_rgb_by_label
 from utils.logger import logger
 from utils.qt_utils import create_new_action
 
@@ -177,7 +178,7 @@ class Canvas(QWidget):
         self.shape_rotated_signal.connect(set_dirty)
         self.drawing_polygon_signal.connect(toggle_drawing_sensitive)
         self.vertex_selected_signal.connect(CORE.Action.remove_selected_point.setEnabled)
-        # self.auto_labeling_marks_updated_signal.connect()
+        self.auto_labeling_marks_updated_signal.connect(self.on_new_marks)
 
     def init_menus(self):
         self.menus = (QMenu(), QMenu())
@@ -369,7 +370,7 @@ class Canvas(QWidget):
         else:
             self.is_auto_labeling = True
             self.auto_labeling_mode = (edit_mode, shape_type)
-            self.create_mode = ShapeType(shape_type)
+            self.create_mode = ShapeType(shape_type.value)
             system.toggle_draw_mode(edit=False, create_mode=self.create_mode, disable_auto_labeling=False)
 
     def set_auto_labeling_value(self, value=True) -> None:
@@ -1050,6 +1051,15 @@ class Canvas(QWidget):
     # ==================================================
     # =============== Auto Label Methods ===============
     # ==================================================
+    @staticmethod
+    def on_new_marks(marks):
+        for name in CORE.Object.model_manager.active_seg_models:
+            CORE.Object.model_manager.model_dict[name].model.marks = marks
+        result = CORE.Object.model_manager.label_image("seg", CORE.Variable.image, CORE.Variable.current_file_full_path)
+        logger.info(result.shapes)
+        CORE.Object.canvas.new_shapes_from_auto_labeling(result)
+        CORE.Object.status_bar.showMessage(f"Generate {len(result.shapes)} shape{'s' if len(result.shapes) > 1 else ''} in current image!")
+
     def update_auto_labeling_marks(self):
         """
         Update the auto labeling marks
@@ -1059,7 +1069,7 @@ class Canvas(QWidget):
             if shape.label == AutoLabelEditMode.ADD.value:
                 if shape.shape_type.value == AutoLabelShapeType.POINT.value:
                     marks.append({
-                        "type": shape.shape_type.name,
+                        "type": shape.shape_type,
                         "data": [
                             int(shape.points[0].x()),
                             int(shape.points[0].y()),
@@ -1068,7 +1078,7 @@ class Canvas(QWidget):
                     })
                 elif shape.shape_type.value == AutoLabelShapeType.RECTANGLE.value:
                     marks.append({
-                        "type": shape.shape_type.name,
+                        "type": shape.shape_type,
                         "data": [
                             int(shape.points[0].x()),
                             int(shape.points[0].y()),
@@ -1080,7 +1090,7 @@ class Canvas(QWidget):
             elif shape.label == AutoLabelEditMode.REMOVE.name:
                 if shape.shape_type.value == AutoLabelShapeType.POINT.value:
                     marks.append({
-                        "type": shape.shape_type.name,
+                        "type": shape.shape_type,
                         "data": [
                             int(shape.points[0].x()),
                             int(shape.points[0].y()),
@@ -1089,7 +1099,7 @@ class Canvas(QWidget):
                     })
                 elif shape.shape_type.value == AutoLabelShapeType.RECTANGLE.value:
                     marks.append({
-                        "type": shape.shape_type.name,
+                        "type": shape.shape_type,
                         "data": [
                             int(shape.points[0].x()),
                             int(shape.points[0].y()),
@@ -1100,8 +1110,7 @@ class Canvas(QWidget):
                     })
         self.auto_labeling_marks_updated_signal.emit(marks)
 
-    @staticmethod
-    def new_shapes_from_auto_labeling(auto_labeling_result):
+    def new_shapes_from_auto_labeling(self, auto_labeling_result):
         if not CORE.Variable.image or not CORE.Variable.image_path:
             return
         if auto_labeling_result.replace:
@@ -1109,12 +1118,125 @@ class Canvas(QWidget):
             CORE.Object.label_list_widget.clear()
             system.load_shapes(auto_labeling_result.shapes, replace=True)
         else:
-            for shape in CORE.Object.canvas.shapes:
+            for shape in self.shapes:
                 if shape.label == AutoLabelEditMode.OBJECT.value:
                     item = CORE.Object.label_list_widget.find_item_by_shape(shape)
                     CORE.Object.label_list_widget.remove_item(item)
             system.load_shapes(auto_labeling_result.shapes, replace=False)
         system.set_dirty()
+
+    def clear_auto_labeling_marks(self):
+        # Clean up label list
+        for shape in self.shapes:
+            if shape.label in (AutoLabelEditMode.OBJECT.value, AutoLabelEditMode.ADD.value, AutoLabelEditMode.REMOVE.value):
+                try:
+                    item = CORE.Object.label_list_widget.find_item_by_shape(shape)
+                    CORE.Object.label_list_widget.remove_item(item)
+                except ValueError:
+                    pass
+
+        # Clean up unique label list
+        for shape_label in (AutoLabelEditMode.OBJECT.value, AutoLabelEditMode.ADD.value, AutoLabelEditMode.REMOVE.value):
+            for item in CORE.Object.unique_label_list_widget.find_items_by_label(shape_label):
+                CORE.Object.unique_label_list_widget.takeItem(CORE.Object.unique_label_list_widget.row(item))
+
+        # Remove shapes from the canvas
+        self.shapes = [
+            shape for shape in self.shapes
+            if shape.label not in (AutoLabelEditMode.OBJECT.value, AutoLabelEditMode.ADD.value, AutoLabelEditMode.REMOVE.value)
+        ]
+        self.update()
+
+    def finish_auto_labeling_object(self):
+        has_object, cache_label = False, None
+        for shape in self.shapes:
+            if shape.label == AutoLabelEditMode.OBJECT.value:
+                cache_label = shape.cache_label
+                has_object = True
+                break
+
+        # If there is no object, do nothing
+        if not has_object:
+            return
+
+        # Ask a label for the object
+        flags = {}
+        group_id = None
+        description = ""
+        is_difficult = False
+        kie_linking = []
+
+        last_label = system.find_last_label()
+        if CORE.Variable.settings.get("auto_use_last_label", False) and last_label:
+            label = last_label
+        elif cache_label is not None:
+            label = cache_label
+        else:
+            previous_text = CORE.Object.label_dialog.line_edit.text()
+            label, flags, group_id, description, is_difficult, kie_linking = CORE.Object.label_dialog.pop_up(
+                text=last_label,
+                move=False,
+                flags={},
+                group_id=None,
+                description=None,
+                is_difficult=False,
+                kie_linking=[],
+            )
+            if not label:
+                CORE.Object.label_dialog.line_edit.setText(previous_text)
+                return
+
+        if CORE.Variable.attributes and label:
+            label = system.reset_attribute(label)
+
+        # Add to label history
+        CORE.Object.label_dialog.add_label_history(label)
+
+        # Update label for the object
+        updated_shapes = False
+        for shape in self.shapes:
+            if shape.label == AutoLabelEditMode.OBJECT.value:
+                updated_shapes = True
+                shape.label = label
+                shape.flags = flags
+                shape.group_id = group_id
+                shape.description = description
+                shape.is_difficult = is_difficult
+                shape.kie_linking = kie_linking
+                # Update unique label list
+                if not CORE.Object.unique_label_list_widget.find_items_by_label(shape.label):
+                    unique_label_item = (CORE.Object.unique_label_list_widget.create_item_from_label(shape.label))
+                    CORE.Object.unique_label_list_widget.addItem(unique_label_item)
+                    rgb = get_rgb_by_label(label)
+                    CORE.Object.unique_label_list_widget.set_item_label(unique_label_item, shape.label, rgb, 128)
+
+                # Update label list
+                shape.update_shape_color()
+                item = CORE.Object.label_list_widget.find_item_by_shape(shape)
+                if shape.group_id is None:
+                    color = shape.fill_color.getRgb()[:3]
+                    item.setText(
+                        '{} <font color="#{:02x}{:02x}{:02x}">●</font>'.format(
+                            html.escape(shape.label), *color
+                        )
+                    )
+                else:
+                    item.setText(f"{shape.label} ({shape.group_id})")
+
+        # Clean up auto labeling objects
+        self.clear_auto_labeling_marks()
+
+        # Update shape colors
+        for shape in self.shapes:
+            shape.update_shape_color()
+            color = shape.fill_color.getRgb()[:3]
+            item = CORE.Object.label_list_widget.find_item_by_shape(shape)
+            item.setText("{}".format(html.escape(shape.label)))
+            item.setBackground(QtGui.QColor(*color, 128))
+            CORE.Object.unique_label_list_widget.update_item_color(shape.label, color, 128)
+
+        if updated_shapes:
+            system.set_dirty()
 
     # ==================================================
     # ================ Override Methods ================

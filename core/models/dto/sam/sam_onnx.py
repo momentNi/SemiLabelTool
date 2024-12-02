@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import onnxruntime
 
+from core.dto.enums import ShapeType
+
 
 class SegmentAnythingONNX:
     def __init__(self, encoder_model_path, decoder_model_path) -> None:
@@ -25,10 +27,10 @@ class SegmentAnythingONNX:
         points = []
         labels = []
         for mark in prompt:
-            if mark["type"] == "point":
+            if mark["type"] == ShapeType.POINT:
                 points.append(mark["data"])
                 labels.append(mark["label"])
-            elif mark["type"] == "rectangle":
+            elif mark["type"] == ShapeType.RECTANGLE:
                 points.append([mark["data"][0], mark["data"][1]])
                 points.append([mark["data"][2], mark["data"][3]])
                 labels.append(2)

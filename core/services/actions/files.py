@@ -135,8 +135,12 @@ def load_file(filename: str = None):
     CORE.Variable.settings.save()
 
     # For auto labeling
-    # TODO self.clear_auto_labeling_marks()
-    # TODO self.inform_next_files(filename)
+    CORE.Object.canvas.clear_auto_labeling_marks()
+    if CORE.Object.canvas.is_auto_labeling and len(CORE.Object.model_manager.active_seg_models) > 0:
+        result = CORE.Object.model_manager.label_image("seg", CORE.Variable.image, CORE.Variable.current_file_full_path)
+        logger.info(result.shapes)
+        CORE.Object.canvas.new_shapes_from_auto_labeling(result)
+        CORE.Object.status_bar.showMessage(f"Generate {len(result.shapes)} shape{'s' if len(result.shapes) > 1 else ''} in current image!")
 
     # Changing file_list_widget loads file
     if filename in CORE.Variable.image_list and CORE.Object.info_file_list_widget.currentRow() != CORE.Variable.image_list.index(filename):
