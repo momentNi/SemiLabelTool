@@ -1,6 +1,7 @@
 import hashlib
 import os
 import re
+import socket
 import struct
 from difflib import SequenceMatcher
 from typing import Tuple
@@ -81,3 +82,13 @@ def is_possible_rectangle(points):
 def square_distance(p, q):
     # Calculate the square distance between two points
     return (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2
+
+
+def is_address_reachable(ip, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((ip, int(port)))
+        s.shutdown(2)
+        return True
+    except Exception:
+        return False
