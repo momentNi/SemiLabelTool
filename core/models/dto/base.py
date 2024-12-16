@@ -44,7 +44,7 @@ class Model:
         self.config_path = config_path
         self.configs = {}
         # Core model weight file for prediction.
-        self.model = None
+        self.weight = None
         self.output_mode = None
 
         self.download_progress_dialog: Optional[QProgressDialog] = None
