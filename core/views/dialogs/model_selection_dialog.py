@@ -3,6 +3,9 @@ from typing import List
 
 from PyQt5 import QtWidgets, QtCore
 
+from core.configs.core import CORE
+from core.views.dialogs.upload_custom_dialog import UploadCustomModelDialog
+
 
 class ModelSelectionDialog(QtWidgets.QDialog):
     def __init__(self):
@@ -125,10 +128,15 @@ class ModelSelectionDialog(QtWidgets.QDialog):
         self.update_label()
 
     def upload_custom_model(self):
-        self.left_search_input.clear()
-        self.whole_left_list.append("new model")
-        self.update_left_list()
-        self.update_label()
+        upload_dialog = UploadCustomModelDialog()
+        config_path = upload_dialog.get_upload_config_path()
+        if config_path:
+            model_name = CORE.Object.model_manager.add_custom_model(upload_dialog.get_upload_config_path())
+            if model_name:
+                self.left_search_input.clear()
+                self.whole_left_list.append(model_name)
+                self.update_left_list()
+                self.update_label()
 
     def clear_selections(self):
         for item in self.whole_right_list:
