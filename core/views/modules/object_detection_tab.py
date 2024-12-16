@@ -152,9 +152,9 @@ class ObjectDetectionTab(QtWidgets.QWidget):
 
         for name, box in self.model_weight_value_spinbox:
             CORE.Object.model_manager.active_models("od", [name])
-            CORE.Object.model_manager.model_dict[name].model.set_conf_threshold(self.conf_threshold.value())
-            CORE.Object.model_manager.model_dict[name].model.set_iou_threshold(self.iou_threshold.value())
-            CORE.Object.model_manager.model_dict[name].model.set_is_preserve(self.is_preserve)
+            CORE.Object.model_manager.model_dict[name].weight.set_conf_threshold(self.conf_threshold.value())
+            CORE.Object.model_manager.model_dict[name].weight.set_iou_threshold(self.iou_threshold.value())
+            CORE.Object.model_manager.model_dict[name].weight.set_is_preserve(self.is_preserve)
             # TODO set weight of each model
             logger.info(CORE.Object.model_manager.model_dict[name])
 

@@ -151,7 +151,7 @@ class SegmentationTab(QtWidgets.QWidget):
             CORE.Object.model_manager.active_models("seg", [name])
             # TODO set weight of each model
             logger.info(CORE.Object.model_manager.model_dict[name])
-            CORE.Object.model_manager.model_dict[name].model.output_mode = self.output_shape_type.currentData()
+            CORE.Object.model_manager.model_dict[name].weight.output_mode = self.output_shape_type.currentData()
 
         logger.info({
             "output_shape_type": self.output_shape_type.currentData(),

@@ -128,7 +128,7 @@ def toggle_object_detection():
         CORE.Object.object_detection_button.setDown(False)
         CORE.Variable.use_object_detection = False
         for name in CORE.Object.model_manager.active_od_models:
-            CORE.Object.model_manager.model_dict[name].model.unload()
+            CORE.Object.model_manager.model_dict[name].weight.unload()
     else:
         if CORE.Object.object_detection_tab_widget is None:
             CORE.Object.object_detection_tab_widget = ObjectDetectionTab()
@@ -145,7 +145,7 @@ def toggle_segmentation():
         CORE.Object.segmentation_button.setDown(False)
         CORE.Variable.use_segmentation = False
         for name in CORE.Object.model_manager.active_seg_models:
-            CORE.Object.model_manager.model_dict[name].model.unload()
+            CORE.Object.model_manager.model_dict[name].weight.unload()
     else:
         if CORE.Object.segmentation_tab_widget is None:
             CORE.Object.segmentation_tab_widget = SegmentationTab()

@@ -1054,7 +1054,7 @@ class Canvas(QWidget):
     @staticmethod
     def on_new_marks(marks):
         for name in CORE.Object.model_manager.active_seg_models:
-            CORE.Object.model_manager.model_dict[name].model.marks = marks
+            CORE.Object.model_manager.model_dict[name].weight.marks = marks
         result = CORE.Object.model_manager.label_image("seg", CORE.Variable.image, CORE.Variable.current_file_full_path)
         logger.info(result.shapes)
         CORE.Object.canvas.new_shapes_from_auto_labeling(result)
