@@ -31,7 +31,7 @@ class AutoLabelingResult:
 
 
 class Model:
-    def __init__(self, name, label, platform, model_type, config_path):
+    def __init__(self, name, label, platform, model_type, config_path, **kwargs):
         # model name, unique identifier
         self.name = name
         # display name
@@ -46,6 +46,7 @@ class Model:
         # Core model weight file for prediction.
         self.weight = None
         self.output_mode = None
+        self.kwargs = kwargs
 
         self.download_progress_dialog: Optional[QProgressDialog] = None
 
@@ -65,8 +66,12 @@ class Model:
             logger.error(f"Config file not found: {self.config_path}")
 
     @staticmethod
-    def is_valid_config(config_dict):
-        return "name" in config_dict and "label" in config_dict and "platform" in config_dict and "model_type" in config_dict and "config_path" in config_dict
+    def validate_config(config_dict):
+        required_keys = ['name', 'label', 'platform', 'model_type', 'config_path']
+        for key in required_keys:
+            if key not in config_dict:
+                return key
+        return None
 
     def fetch_model(self, field_name):
         model_path: str = self.configs[field_name]
@@ -102,12 +107,12 @@ class Model:
 
         logger.info(f"Downloading {filename} to {model_abs_path}")
         try:
-            local_filename, headers = request.urlretrieve(url=url, filename=model_abs_path, reporthook=self.__progress_hook)
-            if os.path.exists(model_abs_path) and headers.get("Content-Length") == os.path.getsize(model_abs_path):
+            _, headers = request.urlretrieve(url=url, filename=model_abs_path, reporthook=self.__progress_hook)
+            if os.path.exists(model_abs_path) and str(headers.get("Content-Length")) == str(os.path.getsize(model_abs_path)):
                 self.download_progress_dialog.close()
                 self.download_progress_dialog = None
             else:
-                logger.error(f"Downloaded file size does not match the expected size.")
+                logger.error("Downloaded file size does not match the expected size.")
                 self.download_progress_dialog.close()
                 self.download_progress_dialog = None
                 return None
