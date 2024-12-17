@@ -366,7 +366,7 @@ class Shape:
             if self.shape_type in (ShapeType.RECTANGLE, ShapeType.ROTATION):
                 if len(self.points) not in (1, 2, 4):
                     logger.error(f"Invalid points length (points = {self.points}) for {self.shape_type}")
-                    raise WrongShapeError(f"Invalid points length (points = {self.points}) for {self.shape_type}")
+                    return
                 if len(self.points) == 2:
                     rectangle = get_rect_from_line(*self.points)
                     line_path.addRect(rectangle)

@@ -225,7 +225,7 @@ class AnnotationBoxDialog(QtWidgets.QDialog):
                     json.dump(data, f, indent=2, ensure_ascii=False)
             return True
         except Exception:
-            logger.error(traceback.print_exc())
+            logger.error(traceback.format_exc())
             return False
 
 

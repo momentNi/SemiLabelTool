@@ -43,7 +43,7 @@ class AsyncJobPool:
                 job.terminate()
         except Exception as e:
             logger.error(f"Error removing job: {e}")
-            logger.error(traceback.print_exc())
+            logger.error(traceback.format_exc())
             return False
         return True
 

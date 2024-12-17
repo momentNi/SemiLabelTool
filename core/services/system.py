@@ -481,8 +481,8 @@ def show_critical_message(title, content, trace=True):
     QtWidgets.QMessageBox.critical(
         CORE.Object.main_window,
         title,
-        f"{content}\nPlease see logs for detail.",
+        f"{content}\n{'Please see logs for detail.' if trace else ''}",
         QtWidgets.QMessageBox.Ok
     )
     if trace:
-        logger.error(traceback.print_exc())
+        logger.error(traceback.format_exc())
