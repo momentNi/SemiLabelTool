@@ -1,5 +1,5 @@
+import importlib
 import os
-import sys
 from importlib import resources
 from typing import Dict, Set
 
@@ -87,7 +87,14 @@ class ModelManager(QObject):
 
         # noinspection PyBroadException
         try:
-            model_dto.weight = getattr(sys.modules[__name__], model_dto.model_type)(
+            if model_dto.platform == "od":
+                module = importlib.import_module('core.models.dto.yolo', model_dto.model_type)
+            elif model_dto.platform == "seg":
+                module = importlib.import_module('core.models.dto.sam', model_dto.model_type)
+            else:
+                show_critical_message("Error", f"Unknown platform: {model_dto.platform}. Model config: {model_dto}", trace=False)
+                return
+            model_dto.weight = getattr(module, model_dto.model_type)(
                 name=name,
                 label=model_dto.label,
                 platform=model_dto.platform,
@@ -150,5 +157,7 @@ class ModelManager(QObject):
                     self.load_model_weight(name)
                 result_list.append(model_dto.weight.predict_shapes(image, filename))
             return result_list
-        except (ModelNotFoundError, IndexError) as e:
+        except ModelNotFoundError as e:
             show_critical_message("Error", f"Model {e} not found.", trace=False)
+        except Exception as e:
+            show_critical_message("Error", f"Predicting error: {e}.", trace=True)

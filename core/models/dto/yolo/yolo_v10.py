@@ -2,7 +2,7 @@ from typing import Tuple
 
 import numpy as np
 
-from core.models.dto.yolo import YOLO
+from core.models.dto.yolo.base import YOLO
 from core.models.utils.base import scale_boxes
 
 

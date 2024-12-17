@@ -2,7 +2,7 @@ from typing import Tuple
 
 import numpy as np
 
-from core.models.dto.yolo import YOLO
+from core.models.dto.yolo.base import YOLO
 from core.models.utils.base import scale_boxes, numpy_nms, xywh2xyxy
 
 
@@ -14,6 +14,7 @@ class YOLOv9(YOLO):
         if isinstance(predicts[0], (list, tuple)):
             # select only inference output
             predicts[0] = predicts[0][0]
+
         # batch size
         bs = predicts[0].shape[0]
         # number of classes

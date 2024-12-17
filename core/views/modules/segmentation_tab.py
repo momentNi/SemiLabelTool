@@ -149,7 +149,7 @@ class SegmentationTab(QtWidgets.QWidget):
 
         for name, box in self.model_weight_value_spinbox:
             if not CORE.Object.model_manager.active_models("seg", name):
-                show_critical_message("Error", f"Loadin Model {name} failed.")
+                show_critical_message("Error", f"Loading Model {name} failed.")
                 continue
             # TODO set weight of each model
             logger.info(CORE.Object.model_manager.model_dict[name])
