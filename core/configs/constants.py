@@ -30,3 +30,13 @@ class Constants:
         logging.ERROR: "\x1b[31;11m",  # RED
         logging.CRITICAL: "\x1b[41;1m"  # BOLD RED
     }
+
+    VALID_CUSTOM_MODEL_TYPE = [
+        "SegmentAnything",
+        "YOLOv5",
+        "YOLOv6",
+        "YOLOv7",
+        "YOLOv8",
+        "YOLOv9",
+        "YOLOv10",
+    ]

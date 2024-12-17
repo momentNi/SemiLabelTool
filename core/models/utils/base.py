@@ -92,3 +92,55 @@ def scale_boxes(img1_shape, boxes, img0_shape, ratio_pad=None, padding=True, xyw
     boxes[..., :4] /= gain
     clip_boxes(boxes, img0_shape)
     return boxes
+
+
+def box_area(boxes):
+    return (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
+
+
+def box_iou(box1, box2):
+    area1 = box_area(box1)  # N
+    area2 = box_area(box2)  # M
+    # broadcasting
+    lt = np.maximum(box1[:, np.newaxis, :2], box2[:, :2])
+    rb = np.minimum(box1[:, np.newaxis, 2:], box2[:, 2:])
+    wh = rb - lt
+    wh = np.maximum(0, wh)  # [N, M, 2]
+    inter = wh[:, :, 0] * wh[:, :, 1]
+    iou = inter / (area1[:, np.newaxis] + area2 - inter)
+    return iou  # NxM
+
+
+def numpy_nms(boxes, scores, iou_threshold):
+    indexes = scores.argsort()
+    keep = []
+    while indexes.size > 0:
+        max_score_index = indexes[-1]
+        max_score_box = boxes[max_score_index][None, :]
+        keep.append(max_score_index)
+        if indexes.size == 1:
+            break
+        indexes = indexes[:-1]
+        other_boxes = boxes[indexes]
+        iou = box_iou(max_score_box, other_boxes)
+        indexes = indexes[iou[0] <= iou_threshold]
+    keep = np.array(keep)
+    return keep
+
+
+def xywh2xyxy(x):
+    """
+    Convert bounding box coordinates from (x, y, width, height) format to (x1, y1, x2, y2) format where (x1, y1) is the
+    top-left corner and (x2, y2) is the bottom-right corner.
+
+    Args:
+        x (np.ndarray): The input bounding box coordinates in (x, y, width, height) format.
+    Returns:
+        y (np.ndarray): The bounding box coordinates in (x1, y1, x2, y2) format.
+    """
+    y = np.copy(x)
+    y[..., 0] = x[..., 0] - x[..., 2] / 2  # top left x
+    y[..., 1] = x[..., 1] - x[..., 3] / 2  # top left y
+    y[..., 2] = x[..., 0] + x[..., 2] / 2  # bottom right x
+    y[..., 3] = x[..., 1] + x[..., 3] / 2  # bottom right y
+    return y

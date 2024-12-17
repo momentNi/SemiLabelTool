@@ -7,9 +7,8 @@ from core.models.utils.base import scale_boxes
 
 
 class YOLOv10(YOLO):
-    def __init__(self, name, label, platform, model_type, config_path, task):
+    def __init__(self, name, label, platform, model_type, config_path):
         super().__init__(name, label, platform, model_type, config_path)
-        self.task = task
 
     def post_process(self, predicts) -> Tuple[np.ndarray, str, float]:
         filter_predicts = predicts[0][0][predicts[0][0][:, 4] >= self.conf_threshold]
@@ -25,3 +24,6 @@ class YOLOv10(YOLO):
         conf = pred[:, 4:5]
         clas = pred[:, 5:6]
         return bbox, clas, conf
+
+    def unload(self):
+        del self.net

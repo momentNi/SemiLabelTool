@@ -11,7 +11,6 @@ from core.dto.enums import ShapeType
 from core.dto.shape import Shape
 from core.models.dto.base import Model, AutoLabelingResult
 from core.models.utils.base import letterbox
-from core.services.system import show_critical_message
 from utils.image import qt_img_to_rgb_cv_img
 from utils.logger import logger
 
@@ -22,8 +21,7 @@ class YOLO(Model):
 
         model_abs_path = self.fetch_model("model_path")
         if not model_abs_path or not os.path.isfile(model_abs_path):
-            show_critical_message("Error", f"Could not download or initialize {self.model_type} model.")
-            return
+            raise FileNotFoundError(model_abs_path)
 
         self.engine = self.configs.get("engine", "ort")
         if self.engine.lower() == "dnn":
@@ -40,7 +38,6 @@ class YOLO(Model):
             if not isinstance(self.input_height, int):
                 self.input_height = self.configs.get("input_height", -1)
 
-        self.task = None
         self.replace = True
         self.classes = self.configs.get("classes", [])
         self.stride = self.configs.get("stride", 32)
@@ -81,11 +78,9 @@ class YOLO(Model):
         self.replace = not value
 
     def inference(self, blob):
-        if self.task is None:
-            raise
-        if self.engine == "dnn" and self.task in ["det", "seg", "track"]:
+        if self.engine == "dnn":
             outputs = self.net.get_dnn_inference(blob=blob, extract=False)
-            if self.task == "det" and not isinstance(outputs, (tuple, list)):
+            if not isinstance(outputs, (tuple, list)):
                 outputs = [outputs]
         else:
             outputs = self.net.get_ort_inference(blob=blob, extract=False)
@@ -154,6 +149,3 @@ class YOLO(Model):
         result = AutoLabelingResult(shapes, replace=self.replace)
 
         return result
-
-    def unload(self):
-        del self.net

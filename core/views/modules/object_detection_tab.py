@@ -151,12 +151,13 @@ class ObjectDetectionTab(QtWidgets.QWidget):
         CORE.Object.status_bar.showMessage("Saving Object Detection Model settings...")
 
         for name, box in self.model_weight_value_spinbox:
-            CORE.Object.model_manager.active_models("od", [name])
+            if not CORE.Object.model_manager.active_models("od", name):
+                show_critical_message("Error", f"Loadin Model {name} failed.")
+                continue
             CORE.Object.model_manager.model_dict[name].weight.set_conf_threshold(self.conf_threshold.value())
             CORE.Object.model_manager.model_dict[name].weight.set_iou_threshold(self.iou_threshold.value())
             CORE.Object.model_manager.model_dict[name].weight.set_is_preserve(self.is_preserve)
             # TODO set weight of each model
-            logger.info(CORE.Object.model_manager.model_dict[name])
 
         logger.info({
             "output_shape_type": self.output_shape_type.currentData(),
@@ -176,10 +177,13 @@ class ObjectDetectionTab(QtWidgets.QWidget):
 
     @staticmethod
     def apply_current():
-        result = CORE.Object.model_manager.label_image("od", CORE.Variable.image, CORE.Variable.current_file_full_path)
-        logger.info(result.shapes)
-        CORE.Object.canvas.new_shapes_from_auto_labeling(result)
-        CORE.Object.status_bar.showMessage(f"Generate {len(result.shapes)} shape{'s' if len(result.shapes) > 1 else ''} in current image!")
+        result_list = CORE.Object.model_manager.label_image("od", CORE.Variable.image, CORE.Variable.current_file_full_path)
+        logger.info(result_list)
+        for result in result_list:
+            for shape in result.shapes:
+                logger.info(shape.__str__())
+            CORE.Object.canvas.new_shapes_from_auto_labeling(result)
+            CORE.Object.status_bar.showMessage(f"Generate {len(result.shapes)} shape{'s' if len(result.shapes) > 1 else ''} in current image!")
 
     def apply_all(self):
         # TODO

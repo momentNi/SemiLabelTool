@@ -1,14 +1,15 @@
 import os
+import sys
 from importlib import resources
-from typing import Dict, List, Set
+from typing import Dict, Set
 
 import yaml
 from PyQt5.QtCore import QObject, pyqtSignal
 
+from core.configs.constants import Constants
+from core.dto.exceptions import ModelNotFoundError
 from core.models import configs
 from core.models.dto.base import Model
-from core.models.dto.sam import SegmentAnything
-from core.models.dto.yolo.yolo_v10 import YOLOv10
 from core.services.system import show_critical_message
 from utils.logger import logger
 
@@ -27,105 +28,127 @@ class ModelManager(QObject):
         self.add_default_model()
 
     def add_default_model(self):
-        default_model_list = []
         try:
             with resources.open_text(configs, "default.yaml") as f:
                 default_model_list = yaml.safe_load(f)
-        except IOError:
+            for model_config in default_model_list:
+                try:
+                    model_dto = Model(**model_config)
+                    self.model_dict[model_config["name"]] = model_dto
+                    self.identify_model_platform(model_dto)
+                except (FileNotFoundError, KeyError, ValueError):
+                    show_critical_message("Error", f"Model {model_config['name']} not found.", trace=True)
+                    continue
+        except FileNotFoundError:
             show_critical_message("Error", "Error in loading default model configs.")
-        for model_config in default_model_list:
-            if not Model.is_valid_config(model_config):
-                show_critical_message("Error", f"Error in loading model configs: {model_config}")
-                continue
-            model_dto = Model(**model_config)
-            self.model_dict[model_config["name"]] = model_dto
-            self.identify_model_platform(model_dto)
+            return
 
     def add_custom_model(self, config_file_path):
         config_file_path = os.path.normpath(os.path.abspath(config_file_path))
 
         if not config_file_path or not os.path.isfile(config_file_path):
             show_critical_message("Error", f"Error in loading custom model: Invalid path: {config_file_path}.")
-            return
+            return None
 
         with open(config_file_path, "r", encoding="utf-8") as f:
             model_config = yaml.safe_load(f)
-        if not Model.is_valid_config(model_config):
-            show_critical_message("Error", f"Error in loading model configs: {model_config}")
-            return
-        model_dto = Model(**model_config)
-        if model_dto.name in self.model_dict:
-            logger.warning(f"Model {model_config["name"]} already exists, replacing it")
-        self.model_dict[model_dto.name] = model_dto
-        self.identify_model_platform(model_dto)
+        model_config["config_path"] = config_file_path
+        missing_attr = Model.validate_config(model_config)
+        if missing_attr is not None:
+            show_critical_message("Error", f"model config miss core argument: {missing_attr}", trace=False)
+            return None
+        try:
+            model_dto = Model(**model_config)
+            if self.identify_model_platform(model_dto):
+                self.model_dict[model_dto.name] = model_dto
+                return model_dto.name
+            else:
+                return None
+        except (FileNotFoundError, KeyError, ValueError):
+            show_critical_message("Error", f"Model {model_config['name']} not found.", trace=True)
+            return None
 
     def identify_model_platform(self, model_dto: Model):
         if model_dto.platform == "od":
             self.od_models.add(model_dto.name)
+            return True
         elif model_dto.platform == "seg":
             self.seg_models.add(model_dto.name)
+            return True
         else:
             show_critical_message("Error", f"Unknown platform: {model_dto.platform} Model config: {model_dto}", trace=False)
+            return False
 
     def load_model_weight(self, name):
         if name not in self.model_dict:
-            logger.error(f"Model {name} not found.")
+            raise ModelNotFoundError(name)
+
+        model_dto: Model = self.model_dict[name]
+
+        # noinspection PyBroadException
+        try:
+            model_dto.weight = getattr(sys.modules[__name__], model_dto.model_type)(
+                name=name,
+                label=model_dto.label,
+                platform=model_dto.platform,
+                model_type=model_dto.model_type,
+                config_path=model_dto.config_path
+            )
+        except AttributeError as e:
+            show_critical_message("Error", f"Unknown model type: {e}. Valid types are: {Constants.VALID_CUSTOM_MODEL_TYPE}", trace=False)
             return False
-        model_dto = self.model_dict[name]
-        if model_dto.model_type == "yolov10":
-            try:
-                model_dto.model = YOLOv10(name=name, label=model_dto.label, platform=model_dto.platform, model_type=model_dto.model_type, config_path=model_dto.config_path, task="det")
-            except Exception as e:
-                show_critical_message("Error", f"Error loading model: {e}")
-                return False
-        elif model_dto.model_type == "sam":
-            try:
-                model_dto.model = SegmentAnything(name=name, label=model_dto.label, platform=model_dto.platform, model_type=model_dto.model_type, config_path=model_dto.config_path)
-            except Exception as e:
-                show_critical_message("Error", f"Error loading model: {e}")
-                return False
-        else:
-            show_critical_message("Error", f"Unknown model type: {model_dto.model_type}")
+        except FileNotFoundError as e:
+            show_critical_message("Error", f"Critical file missing: {e}.", trace=False)
             return False
-        return True
+        except Exception:
+            show_critical_message("Error", "Something went wrong.", trace=True)
+            return False
+
+        return model_dto.weight is not None
 
     def unload_model_weight(self, name):
-        if name in self.model_dict:
-            self.model_dict[name].unload()
+        try:
+            if name in self.model_dict:
+                self.model_dict[name].unload()
+        except NotImplementedError:
+            logger.warning(f"Model {name} has not implemented `unload` method. Please implement it.")
 
-    def active_models(self, platform: str, models: List[str]):
-        if platform == "od":
-            self.active_od_models.clear()
-            for name in models:
-                self.load_model_weight(name)
-                self.active_od_models.add(name)
-        elif platform == "seg":
-            self.active_seg_models.clear()
-            for name in models:
-                self.active_seg_models.add(name)
-                self.load_model_weight(name)
-        else:
-            show_critical_message("Error", f"Unknown platform: {platform} when activating models.", trace=False)
+    def active_models(self, platform: str, model_name: str):
+        load_result = False
+        try:
+            if platform == "od":
+                if model_name in self.active_od_models:
+                    self.active_od_models.remove(model_name)
+                    self.unload_model_weight(model_name)
+                load_result = self.load_model_weight(model_name)
+                if load_result:
+                    self.active_od_models.add(model_name)
+            elif platform == "seg":
+                if model_name in self.active_seg_models:
+                    self.active_seg_models.remove(model_name)
+                    self.unload_model_weight(model_name)
+                load_result = self.load_model_weight(model_name)
+                if load_result:
+                    self.active_seg_models.add(model_name)
+            else:
+                show_critical_message("Error", f"Unknown platform: {platform} when activating models.", trace=False)
+        except ModelNotFoundError as e:
+            show_critical_message("Error", f"Model {e} not found.", trace=False)
+        return load_result
 
     def label_image(self, platform, image, filename=None):
+        model_set = set()
         if platform == "od":
-            try:
-                for name in self.active_od_models:
-                    model_dto = self.model_dict[name]
-                    if model_dto.model is None:
-                        self.load_model_weight(name)
-                    result = model_dto.model.predict_shapes(image, filename)
-                    return result
-            except Exception:
-                show_critical_message("Error", f"Error in predicting shapes.")
-        if platform == "seg":
-            try:
-                for name in self.active_seg_models:
-                    model_dto = self.model_dict[name]
-                    if model_dto.model is None:
-                        logger.warning("model_dto.model is None")
-                        self.load_model_weight(name)
-                    result = model_dto.model.predict_shapes(image, filename)
-                    return result
-            except Exception:
-                show_critical_message("Error", f"Error in predicting shapes.")
+            model_set = self.active_od_models
+        elif platform == "seg":
+            model_set = self.active_seg_models
+        try:
+            result_list = []
+            for name in model_set:
+                model_dto = self.model_dict[name]
+                if model_dto.weight is None:
+                    self.load_model_weight(name)
+                result_list.append(model_dto.weight.predict_shapes(image, filename))
+            return result_list
+        except (ModelNotFoundError, IndexError) as e:
+            show_critical_message("Error", f"Model {e} not found.", trace=False)

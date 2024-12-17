@@ -8,3 +8,11 @@ class LabelFileError(Exception):
 
 class WrongShapeError(Exception):
     pass
+
+
+class ModelNotFoundError(Exception):
+    pass
+
+
+class ModelTypeNotFoundError(Exception):
+    pass

@@ -50,20 +50,23 @@ class Model:
 
         self.download_progress_dialog: Optional[QProgressDialog] = None
 
-        try:
-            if self.config_path.startswith(":/"):
-                # Config file is in resources
-                config_file_name = self.config_path[2:]
+        if self.config_path.startswith(":/"):
+            # Config file is in resources
+            config_file_name = self.config_path[2:]
+            try:
                 with resources.open_text(configs, config_file_name) as f:
                     self.configs = yaml.safe_load(f)
-                self.config_path = os.path.join(os.path.abspath(__file__), '../../configs', config_file_name)
-            else:
-                # Config file is in local file system
+            except FileNotFoundError:
+                raise FileNotFoundError(self.config_path)
+            self.config_path = os.path.join(os.path.abspath(__file__), '../../configs', config_file_name)
+        else:
+            # Config file is in local file system
+            try:
                 with open(self.config_path, "r", encoding="utf-8") as f:
                     self.configs = yaml.safe_load(f)
-                self.config_path = os.path.normpath(os.path.abspath(config_path))
-        except FileNotFoundError:
-            logger.error(f"Config file not found: {self.config_path}")
+            except FileNotFoundError:
+                raise FileNotFoundError(self.config_path)
+            self.config_path = os.path.normpath(os.path.abspath(config_path))
 
     @staticmethod
     def validate_config(config_dict):
@@ -85,9 +88,10 @@ class Model:
 
     def download_model_by_url(self, url):
         filename = os.path.basename(urlparse(url).path)
-        home_dir = os.path.expanduser("~")
-        download_dir_path = os.path.abspath(os.path.join(home_dir, "semi_label_data"))
-        model_abs_path = os.path.abspath(os.path.join(download_dir_path, "models", self.name, filename))
+        # home_dir = os.path.expanduser("~")
+        # download_dir_path = os.path.abspath(os.path.join(home_dir, "semi_label_data"))
+        # TODO temporary model_abs_path = os.path.abspath(os.path.join(download_dir_path, "models", self.name, filename))
+        model_abs_path = os.path.abspath(os.path.join("D:/bishe/model", self.name, filename))
 
         if os.path.exists(model_abs_path):
             if filename.lower().endswith(".onnx"):
