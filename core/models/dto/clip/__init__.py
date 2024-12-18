@@ -156,7 +156,7 @@ class ChineseClipONNX:
         features = []
         for i in range(len(text)):
             blob = np.expand_dims(text[i], axis=0)
-            feature = self.txt_net.get_ort_inference(blob)
+            feature = self.txt_net.get_inference(blob)
             features.append(feature)
         features = np.squeeze(np.stack(features), axis=1)
         features = self.post_process(features)
@@ -164,7 +164,7 @@ class ChineseClipONNX:
 
     def img_pipeline(self, image: np.ndarray):
         blob = self.image_preprocess(image, image_size=self.image_size)
-        outputs = self.img_net.get_ort_inference(blob)
+        outputs = self.img_net.get_inference(blob)
         features = self.post_process(outputs)
         return features
 

@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         CORE.Variable.settings.set("window/position", (self.pos().x(), self.pos().y()))
         CORE.Variable.settings.set("recent_files", CORE.Variable.recent_files)
         CORE.Variable.settings.set("filename", CORE.Variable.current_file_full_path if CORE.Variable.current_file_full_path else "")
-        if CORE.Object.model_manager.model_dict is not None:
+        if CORE.Object.model_manager and CORE.Object.model_manager.model_dict:
             models = {}
             for name, model_dto in CORE.Object.model_manager.model_dict.items():
                 models[name] = {

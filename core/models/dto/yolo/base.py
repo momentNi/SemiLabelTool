@@ -1,5 +1,5 @@
 import os
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 from typing import Tuple
 
 import cv2
@@ -9,15 +9,15 @@ from PyQt5 import QtCore
 from core.configs.constants import Constants
 from core.dto.enums import ShapeType
 from core.dto.shape import Shape
-from core.models.dto.base import Model, AutoLabelingResult
+from core.models.dto.base import Model, AutoLabelingResult, ModelInfo
 from core.models.utils.base import letterbox
 from utils.image import qt_img_to_rgb_cv_img
 from utils.logger import logger
 
 
-class YOLO(Model):
-    def __init__(self, name, label, platform, model_type, config_path):
-        super().__init__(name, label, platform, model_type, config_path)
+class YOLO(Model, metaclass=ABCMeta):
+    def __init__(self, model_info: ModelInfo):
+        super().__init__(model_info)
 
         model_abs_path = self.fetch_model("model_path")
         if not model_abs_path or not os.path.isfile(model_abs_path):
@@ -26,12 +26,12 @@ class YOLO(Model):
         self.engine = self.configs.get("engine", "ort")
         if self.engine.lower() == "dnn":
             from core.models.engines import DnnBaseModel
-            self.net = DnnBaseModel(model_abs_path, Constants.DEVICE)
+            self.net: 'DnnBaseModel' = DnnBaseModel(model_abs_path, Constants.DEVICE)
             self.input_width = self.configs.get("input_width", 640)
             self.input_height = self.configs.get("input_height", 640)
         else:
             from core.models.engines import OnnxBaseModel
-            self.net = OnnxBaseModel(model_abs_path, Constants.DEVICE)
+            self.net: 'OnnxBaseModel' = OnnxBaseModel(model_abs_path, Constants.DEVICE)
             _, _, self.input_height, self.input_width = self.net.get_input_shape()
             if not isinstance(self.input_width, int):
                 self.input_width = self.configs.get("input_width", -1)
@@ -79,11 +79,11 @@ class YOLO(Model):
 
     def inference(self, blob):
         if self.engine == "dnn":
-            outputs = self.net.get_dnn_inference(blob=blob, extract=False)
+            outputs = self.net.get_inference(blob=blob, extract=False)
             if not isinstance(outputs, (tuple, list)):
                 outputs = [outputs]
         else:
-            outputs = self.net.get_ort_inference(blob=blob, extract=False)
+            outputs = self.net.get_inference(blob=blob, extract=False)
         return outputs
 
     def pre_process(self, image, up_sample_mode="letterbox"):
@@ -118,13 +118,13 @@ class YOLO(Model):
 
     def predict_shapes(self, image, image_path=None, **kwargs) -> AutoLabelingResult:
         if image is None:
-            return AutoLabelingResult([])
+            return AutoLabelingResult(self.model_info.name, [])
         try:
             image = qt_img_to_rgb_cv_img(image, image_path)
         except Exception as e:
             logger.warning("Could not inference model")
             logger.warning(e)
-            return AutoLabelingResult([])
+            return AutoLabelingResult(self.model_info.name, [])
         blob = self.pre_process(image, "letterbox")
         outputs = self.inference(blob)
         boxes, class_ids, scores = self.post_process(outputs)
@@ -146,6 +146,9 @@ class YOLO(Model):
             shape.score = float(score)
             shape.selected = False
             shapes.append(shape)
-        result = AutoLabelingResult(shapes, replace=self.replace)
+        result = AutoLabelingResult(self.model_info.name, shapes, replace=self.replace)
 
         return result
+
+    def unload(self):
+        del self.net

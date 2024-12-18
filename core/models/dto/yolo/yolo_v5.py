@@ -2,12 +2,13 @@ from typing import Tuple
 
 import numpy as np
 
+from core.models.dto.base import ModelInfo
 from core.models.dto.yolo.yolo_v7 import YOLOv7
 
 
 class YOLOv5(YOLOv7):
-    def __init__(self, name, label, platform, model_type, config_path):
-        super().__init__(name, label, platform, model_type, config_path)
+    def __init__(self, model_info: ModelInfo):
+        super().__init__(model_info)
 
     def post_process(self, predicts) -> Tuple[np.ndarray, str, float]:
         if self.anchors:
@@ -25,6 +26,3 @@ class YOLOv5(YOLOv7):
                 row_ind += length
             predicts = outs[np.newaxis, :]
         return super().post_process(predicts)
-
-    def unload(self):
-        del self.net

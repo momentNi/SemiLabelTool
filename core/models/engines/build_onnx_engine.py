@@ -23,7 +23,7 @@ class OnnxBaseModel:
         )
         self.model_path = model_path
 
-    def get_ort_inference(self, blob, inputs=None, extract=True, squeeze=False):
+    def get_inference(self, blob, inputs=None, extract=True, squeeze=False):
         if inputs is None:
             inputs = self.get_input_name()
             outs = self.ort_session.run(None, {inputs: blob})

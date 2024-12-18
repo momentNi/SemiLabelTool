@@ -11,7 +11,7 @@ from core.configs.core import CORE
 from core.dto.enums import Platform
 from core.dto.exceptions import ModelNotFoundError
 from core.models import configs
-from core.models.dto.base import Model
+from core.models.dto.base import ModelInfo
 from core.services.system import show_critical_message
 from utils.logger import logger
 
@@ -21,7 +21,7 @@ class ModelManager(QObject):
 
     def __init__(self):
         super().__init__()
-        self.model_dict: Dict[str, Model] = {}
+        self.model_dict: Dict[str, ModelInfo] = {}
         self.od_models: Set[str] = set()
         self.seg_models: Set[str] = set()
         self.active_od_models: Set[str] = set()
@@ -34,7 +34,7 @@ class ModelManager(QObject):
         if len(default_models) > 0:
             for name, model_config in default_models.items():
                 try:
-                    model_dto = Model(**model_config)
+                    model_dto = ModelInfo(**model_config)
                     self.model_dict[name] = model_dto
                     self.identify_model_platform(model_dto)
                 except (FileNotFoundError, KeyError, ValueError):
@@ -46,7 +46,7 @@ class ModelManager(QObject):
                     default_model_list = yaml.safe_load(f)
                 for model_config in default_model_list:
                     try:
-                        model_dto = Model(**model_config)
+                        model_dto = ModelInfo(**model_config)
                         self.model_dict[model_config["name"]] = model_dto
                         self.identify_model_platform(model_dto)
                     except (FileNotFoundError, KeyError, ValueError):
@@ -66,12 +66,12 @@ class ModelManager(QObject):
         with open(config_file_path, "r", encoding="utf-8") as f:
             model_config = yaml.safe_load(f)
         model_config["config_path"] = config_file_path
-        missing_attr = Model.validate_config(model_config)
+        missing_attr = ModelInfo.validate_config(model_config)
         if missing_attr is not None:
             show_critical_message("Error", f"model config miss core argument or invalid value: {missing_attr}", trace=False)
             return None
         try:
-            model_dto = Model(**model_config)
+            model_dto = ModelInfo(name=model_config['name'], label=model_config['label'], platform=model_config['platform'], model_type=model_config['model_type'], config_path=config_file_path)
             if self.identify_model_platform(model_dto):
                 self.model_dict[model_dto.name] = model_dto
                 return model_dto.name
@@ -80,8 +80,11 @@ class ModelManager(QObject):
         except (FileNotFoundError, KeyError, ValueError):
             show_critical_message("Error", f"Model {model_config['name']} not found.", trace=True)
             return None
+        except Exception as e:
+            show_critical_message("Error", f"Error in loading custom model: {e}", trace=True)
+            return None
 
-    def identify_model_platform(self, model_dto: Model):
+    def identify_model_platform(self, model_dto: ModelInfo):
         if model_dto.platform == Platform.OBJECT_DETECTION.value:
             self.od_models.add(model_dto.name)
             return True
@@ -96,7 +99,7 @@ class ModelManager(QObject):
         if name not in self.model_dict:
             raise ModelNotFoundError(name)
 
-        model_dto: Model = self.model_dict[name]
+        model_dto: ModelInfo = self.model_dict[name]
 
         # noinspection PyBroadException
         try:
@@ -107,13 +110,7 @@ class ModelManager(QObject):
             else:
                 show_critical_message("Error", f"Unknown platform: {model_dto.platform}. Model config: {model_dto}", trace=False)
                 return
-            model_dto.weight = getattr(module, model_dto.model_type)(
-                name=name,
-                label=model_dto.label,
-                platform=model_dto.platform,
-                model_type=model_dto.model_type,
-                config_path=model_dto.config_path
-            )
+            model_dto.weight = getattr(module, model_dto.model_type)(model_dto)
         except AttributeError as e:
             show_critical_message("Error", f"Unknown model type: {e}. Valid types are: {Constants.VALID_CUSTOM_MODEL_TYPE}", trace=False)
             return False
@@ -129,7 +126,7 @@ class ModelManager(QObject):
     def unload_model_weight(self, name):
         try:
             if name in self.model_dict:
-                self.model_dict[name].unload()
+                self.model_dict[name].weight.unload()
         except NotImplementedError:
             logger.warning(f"Model {name} has not implemented `unload` method. Please implement it.")
 
@@ -147,13 +144,11 @@ class ModelManager(QObject):
 
     def deactivate_models(self, platform: str):
         if platform == Platform.OBJECT_DETECTION.value:
-            for name in self.active_od_models:
-                self.active_od_models.remove(name)
-                self.unload_model_weight(name)
+            while len(self.active_od_models) > 0:
+                self.unload_model_weight(self.active_od_models.pop())
         elif platform == Platform.SEGMENTATION.value:
-            for name in self.active_seg_models:
-                self.active_seg_models.remove(name)
-                self.unload_model_weight(name)
+            while len(self.active_seg_models) > 0:
+                self.unload_model_weight(self.active_seg_models.pop())
 
     def label_image(self, platform: str, image, filename: str = None):
         model_set = set()

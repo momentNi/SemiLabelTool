@@ -10,7 +10,7 @@ class DnnBaseModel:
             self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
             self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
-    def get_dnn_inference(self, blob, extract=True, squeeze=False):
+    def get_inference(self, blob, extract=True, squeeze=False):
         self.net.setInput(blob)
         outs = self.net.forward(self.net.getUnconnectedOutLayersNames())
         if extract:

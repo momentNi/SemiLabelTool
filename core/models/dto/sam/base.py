@@ -7,7 +7,7 @@ from PyQt5.QtCore import QPointF
 from core.configs.constants import Constants
 from core.dto.enums import ShapeType, AutoLabelEditMode
 from core.dto.shape import Shape
-from core.models.dto.base import Model, AutoLabelingResult
+from core.models.dto.base import Model, AutoLabelingResult, ModelInfo
 from core.models.dto.clip import ChineseClipONNX
 from core.models.dto.sam.sam_onnx import SegmentAnythingONNX
 from core.services.system import show_critical_message
@@ -17,8 +17,8 @@ from utils.lru_cache import LRUCache
 
 class SegmentAnything(Model):
 
-    def __init__(self, name, label, platform, model_type, config_path):
-        super().__init__(name, label, platform, model_type, config_path)
+    def __init__(self, model_info: ModelInfo):
+        super().__init__(model_info)
 
         self.input_size = self.configs["input_size"]
         self.max_width = self.configs["max_width"]
@@ -27,11 +27,11 @@ class SegmentAnything(Model):
         # Get encoder and decoder model paths
         encoder_model_abs_path = self.fetch_model("encoder_model_path")
         if not encoder_model_abs_path or not os.path.isfile(encoder_model_abs_path):
-            show_critical_message("Error", f"Could not download or initialize {self.model_type} model. No encoder model.")
+            show_critical_message("Error", f"Could not download or initialize {self.model_info.model_type} model. No encoder model.")
 
         decoder_model_abs_path = self.fetch_model("decoder_model_path")
         if not decoder_model_abs_path or not os.path.isfile(decoder_model_abs_path):
-            show_critical_message("Error", f"Could not download or initialize {self.model_type} model. No decoder model.")
+            show_critical_message("Error", f"Could not download or initialize {self.model_info.model_type} model. No decoder model.")
 
         # Load models
         self.model = SegmentAnythingONNX(encoder_model_abs_path, decoder_model_abs_path)
@@ -71,9 +71,10 @@ class SegmentAnything(Model):
 
     def predict_shapes(self, image, image_path=None, **kwargs) -> AutoLabelingResult:
         if image is None or not self.marks:
-            return AutoLabelingResult([], replace=False)
+            return AutoLabelingResult(self.model_info.name, [], replace=False)
 
         cv_image = qt_img_to_rgb_cv_img(image, image_path)
+        # noinspection PyBroadException
         try:
             # Use cached image embedding if possible
             cached_data = self.image_embedding_cache.get(image_path)
@@ -81,25 +82,25 @@ class SegmentAnything(Model):
                 image_embedding = cached_data
             else:
                 if self.stop_inference:
-                    return AutoLabelingResult([], replace=False)
+                    return AutoLabelingResult(self.model_info.name, [], replace=False)
                 image_embedding = self.model.encode(cv_image)
                 self.image_embedding_cache.put(
                     image_path,
                     image_embedding,
                 )
             if self.stop_inference:
-                return AutoLabelingResult([], replace=False)
+                return AutoLabelingResult(self.model_info.name, [], replace=False)
             masks = self.model.predict_masks(image_embedding, self.marks)
             if len(masks.shape) == 4:
                 masks = masks[0][0]
             else:
                 masks = masks[0]
             shapes = self.post_process(masks, cv_image)
-        except Exception:
-            show_critical_message("Error", "Could not inference model")
-            return AutoLabelingResult([], replace=False)
+        except Exception as e:
+            show_critical_message("Error", f"Could not inference model: {e}", trace=True)
+            return AutoLabelingResult(self.model_info.name, [], replace=False)
 
-        result = AutoLabelingResult(shapes, replace=False)
+        result = AutoLabelingResult(self.model_info.name, shapes, replace=False)
         return result
 
     def post_process(self, masks, image=None):
@@ -129,6 +130,7 @@ class SegmentAnything(Model):
                 for contour, area in zip(approx_contours, areas)
                 if area < image_size * 0.9
             ]
+            approx_contours = filtered_approx_contours
 
         # Remove small contours (area < 20% of average area)
         if len(approx_contours) > 1:
@@ -148,8 +150,8 @@ class SegmentAnything(Model):
             for approx in approx_contours:
                 # Scale points
                 points = approx.reshape(-1, 2)
-                points[:, 0] = points[:, 0]
-                points[:, 1] = points[:, 1]
+                # points[:, 0] = points[:, 0]
+                # points[:, 1] = points[:, 1]
                 points = points.tolist()
                 if len(points) < 3:
                     continue
@@ -175,8 +177,8 @@ class SegmentAnything(Model):
             for approx in approx_contours:
                 # Scale points
                 points = approx.reshape(-1, 2)
-                points[:, 0] = points[:, 0]
-                points[:, 1] = points[:, 1]
+                # points[:, 0] = points[:, 0]
+                # points[:, 1] = points[:, 1]
                 points = points.tolist()
                 if len(points) < 3:
                     continue

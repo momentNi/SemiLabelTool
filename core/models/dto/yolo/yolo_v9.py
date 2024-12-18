@@ -2,13 +2,14 @@ from typing import Tuple
 
 import numpy as np
 
+from core.models.dto.base import ModelInfo
 from core.models.dto.yolo.base import YOLO
 from core.models.utils.base import scale_boxes, numpy_nms, xywh2xyxy
 
 
 class YOLOv9(YOLO):
-    def __init__(self, name, label, platform, model_type, config_path):
-        super().__init__(name, label, platform, model_type, config_path)
+    def __init__(self, model_info: ModelInfo):
+        super().__init__(model_info)
 
     def post_process(self, predicts) -> Tuple[np.ndarray, str, float]:
         if isinstance(predicts[0], (list, tuple)):
@@ -74,6 +75,3 @@ class YOLOv9(YOLO):
         clas = pred[:, 5:6]
 
         return bbox, clas, conf
-
-    def unload(self):
-        del self.net
