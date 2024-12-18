@@ -12,10 +12,9 @@ from core.views.area.operation import OperationArea
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, app, config):
+    def __init__(self, app):
         super().__init__()
         self.app = app
-        self.config = config
 
         self.setContentsMargins(0, 0, 0, 0)
         self.setWindowTitle("SemiLabelTool")
@@ -66,10 +65,21 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         if not utils.qt_utils.may_continue():
             event.ignore()
-        CORE.Variable.settings.set("filename", CORE.Variable.current_file_full_path if CORE.Variable.current_file_full_path else "")
-        CORE.Variable.settings.set("window/size", self.size())
-        CORE.Variable.settings.set("window/position", self.pos())
-        # CORE.Variable.settings.set("window/state", self.parent.parent.saveState())
+        CORE.Variable.settings.set("window/size", (self.size().width(), self.size().height()))
+        CORE.Variable.settings.set("window/position", (self.pos().x(), self.pos().y()))
         CORE.Variable.settings.set("recent_files", CORE.Variable.recent_files)
+        CORE.Variable.settings.set("filename", CORE.Variable.current_file_full_path if CORE.Variable.current_file_full_path else "")
+        if CORE.Object.model_manager.model_dict is not None:
+            models = {}
+            for name, model_dto in CORE.Object.model_manager.model_dict.items():
+                models[name] = {
+                    "name": name,
+                    "label": model_dto.label,
+                    "platform": model_dto.platform,
+                    "model_type": model_dto.model_type,
+                    "config_path": model_dto.config_path
+                }
+            CORE.Variable.settings.set("models", models)
 
-        # CORE.Variable.settings.save()
+        print(CORE.Variable.settings.data)
+        CORE.Variable.settings.save()

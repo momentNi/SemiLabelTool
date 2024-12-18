@@ -1,3 +1,4 @@
+from core.configs.core import CORE
 from core.services.actions.status import show_label_overview, show_box_settings, show_shape_overview, show_auto_label_overview
 from core.views.area.menu.sub import BaseMenu
 
@@ -42,4 +43,14 @@ class StatusMenu(BaseMenu):
                 "Show current status of auto labeling usage",
                 enabled=True
             ),
+            "d1": None,
+            "reset_settings": self.menu_action(
+                text=self.tr("Reset settings"),
+                slot=lambda x: CORE.Variable.settings.set("reset", x),
+                icon=None,
+                tip=self.tr("Reset all settings value to initial value. (Needs to restart system to take effect)"),
+                checkable=True,
+                enabled=True,
+                checked=CORE.Variable.settings.get("reset", False),
+            )
         }

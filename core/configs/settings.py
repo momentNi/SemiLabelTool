@@ -2,14 +2,15 @@ import os
 
 import yaml
 
-from utils.logger import logger
-
 
 class Settings(object):
     def __init__(self, path=None):
         self.data: dict = {}
         self.path: str = os.path.join(os.path.expanduser("~") if path is None else path, '.semi.cfg')
         self.load()
+        if not self.data or self.data.get("reset", False):
+            self.reset()
+            self.load()
 
     def __setitem__(self, key: str, value) -> None:
         self.set(key, value)
@@ -32,29 +33,26 @@ class Settings(object):
                 return True
         return False
 
-    def load(self) -> bool:
+    def load(self) -> None:
         """
         加载既有 settings 配置
         Returns:
             bool: 是否加载成功
         """
-        try:
-            # TODO `not` is only for TEST
-            if not os.path.exists(self.path):
+        if os.path.exists(self.path):
+            # noinspection PyBroadException
+            try:
                 with open(self.path, 'rb') as f:
                     self.data = yaml.safe_load(f)
-                    return True
-            else:
-                logger.info("User config not exist, reading default config.")
+            except Exception:
+                os.remove(self.path)
                 with open(os.path.join(os.path.dirname(os.path.relpath(__file__)), "config.yaml"), "rb") as f:
                     self.data = yaml.safe_load(f)
-        except IOError as e:
-            logger.error(f'Loading setting failed: {e}')
-        return False
+        else:
+            with open(os.path.join(os.path.dirname(os.path.relpath(__file__)), "config.yaml"), "rb") as f:
+                self.data = yaml.safe_load(f)
 
     def reset(self):
         if os.path.exists(self.path):
             os.remove(self.path)
-            logger.info('Remove settings file ${0}'.format(self.path))
         self.data = {}
-        self.path = None
