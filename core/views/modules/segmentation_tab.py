@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 
 from core.configs.core import CORE
-from core.dto.enums import ShapeType, AutoLabelEditMode, AutoLabelShapeType
+from core.dto.enums import ShapeType, AutoLabelEditMode, AutoLabelShapeType, Platform
 from core.models.model_manager import ModelManager
 from core.services.system import show_critical_message, get_instruction_label
 from core.views.dialogs.model_selection_dialog import ModelSelectionDialog
@@ -147,8 +147,9 @@ class SegmentationTab(QtWidgets.QWidget):
         CORE.Object.canvas.set_auto_labeling_value(True)
         CORE.Object.instruction_part.setText(get_instruction_label())
 
+        CORE.Object.model_manager.deactivate_models(Platform.SEGMENTATION.value)
         for name, box in self.model_weight_value_spinbox:
-            if not CORE.Object.model_manager.active_models("seg", name):
+            if not CORE.Object.model_manager.active_model(Platform.SEGMENTATION.value, name):
                 show_critical_message("Error", f"Loading Model {name} failed.")
                 continue
             # TODO set weight of each model

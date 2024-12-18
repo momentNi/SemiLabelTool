@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt
 import utils
 from core.configs.constants import Constants
 from core.configs.core import CORE
-from core.dto.enums import ShapeType, AutoLabelEditMode
+from core.dto.enums import ShapeType, AutoLabelEditMode, Platform
 from core.dto.exceptions import LabelFileError
 from core.dto.label_file import LabelFile
 from core.services import system
@@ -137,7 +137,7 @@ def load_file(filename: str = None):
     # For auto labeling
     CORE.Object.canvas.clear_auto_labeling_marks()
     if CORE.Object.canvas.is_auto_labeling and len(CORE.Object.model_manager.active_seg_models) > 0:
-        result = CORE.Object.model_manager.label_image("seg", CORE.Variable.image, CORE.Variable.current_file_full_path)
+        result = CORE.Object.model_manager.label_image(Platform.SEGMENTATION.value, CORE.Variable.image, CORE.Variable.current_file_full_path)
         logger.info(result.shapes)
         CORE.Object.canvas.new_shapes_from_auto_labeling(result)
         CORE.Object.status_bar.showMessage(f"Generate {len(result.shapes)} shape{'s' if len(result.shapes) > 1 else ''} in current image!")

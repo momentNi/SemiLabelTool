@@ -121,3 +121,12 @@ class MessageType(Enum):
     USER = 2
     # Message from robot
     ROBOT = 3
+
+
+@unique
+class Platform(Enum):
+    """
+    Platform enum
+    """
+    OBJECT_DETECTION = "od"
+    SEGMENTATION = "seg"

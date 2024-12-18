@@ -11,6 +11,7 @@ import yaml
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QProgressDialog
 
+from core.configs.constants import Constants
 from core.configs.core import CORE
 from core.models import configs
 from utils.logger import logger
@@ -74,6 +75,8 @@ class Model:
         for key in required_keys:
             if key not in config_dict:
                 return key
+        if config_dict['model_type'] not in Constants.VALID_CUSTOM_MODEL_TYPE:
+            return config_dict['model_type']
         return None
 
     def fetch_model(self, field_name):

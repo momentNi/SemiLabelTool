@@ -7,6 +7,8 @@ import yaml
 from PyQt5.QtCore import QObject, pyqtSignal
 
 from core.configs.constants import Constants
+from core.configs.core import CORE
+from core.dto.enums import Platform
 from core.dto.exceptions import ModelNotFoundError
 from core.models import configs
 from core.models.dto.base import Model
@@ -28,20 +30,31 @@ class ModelManager(QObject):
         self.add_default_model()
 
     def add_default_model(self):
-        try:
-            with resources.open_text(configs, "default.yaml") as f:
-                default_model_list = yaml.safe_load(f)
-            for model_config in default_model_list:
+        default_models: Dict[str, dict] = CORE.Variable.settings.get("models", {})
+        if len(default_models) > 0:
+            for name, model_config in default_models.items():
                 try:
                     model_dto = Model(**model_config)
-                    self.model_dict[model_config["name"]] = model_dto
+                    self.model_dict[name] = model_dto
                     self.identify_model_platform(model_dto)
                 except (FileNotFoundError, KeyError, ValueError):
                     show_critical_message("Error", f"Model {model_config['name']} not found.", trace=True)
                     continue
-        except FileNotFoundError:
-            show_critical_message("Error", "Error in loading default model configs.")
-            return
+        else:
+            try:
+                with resources.open_text(configs, "default.yaml") as f:
+                    default_model_list = yaml.safe_load(f)
+                for model_config in default_model_list:
+                    try:
+                        model_dto = Model(**model_config)
+                        self.model_dict[model_config["name"]] = model_dto
+                        self.identify_model_platform(model_dto)
+                    except (FileNotFoundError, KeyError, ValueError):
+                        show_critical_message("Error", f"Model {model_config['name']} not found.", trace=True)
+                        continue
+            except FileNotFoundError:
+                show_critical_message("Error", "Error in loading default model configs.")
+                return
 
     def add_custom_model(self, config_file_path):
         config_file_path = os.path.normpath(os.path.abspath(config_file_path))
@@ -55,7 +68,7 @@ class ModelManager(QObject):
         model_config["config_path"] = config_file_path
         missing_attr = Model.validate_config(model_config)
         if missing_attr is not None:
-            show_critical_message("Error", f"model config miss core argument: {missing_attr}", trace=False)
+            show_critical_message("Error", f"model config miss core argument or invalid value: {missing_attr}", trace=False)
             return None
         try:
             model_dto = Model(**model_config)
@@ -69,10 +82,10 @@ class ModelManager(QObject):
             return None
 
     def identify_model_platform(self, model_dto: Model):
-        if model_dto.platform == "od":
+        if model_dto.platform == Platform.OBJECT_DETECTION.value:
             self.od_models.add(model_dto.name)
             return True
-        elif model_dto.platform == "seg":
+        elif model_dto.platform == Platform.SEGMENTATION.value:
             self.seg_models.add(model_dto.name)
             return True
         else:
@@ -87,9 +100,9 @@ class ModelManager(QObject):
 
         # noinspection PyBroadException
         try:
-            if model_dto.platform == "od":
+            if model_dto.platform == Platform.OBJECT_DETECTION.value:
                 module = importlib.import_module('core.models.dto.yolo', model_dto.model_type)
-            elif model_dto.platform == "seg":
+            elif model_dto.platform == Platform.SEGMENTATION.value:
                 module = importlib.import_module('core.models.dto.sam', model_dto.model_type)
             else:
                 show_critical_message("Error", f"Unknown platform: {model_dto.platform}. Model config: {model_dto}", trace=False)
@@ -120,34 +133,33 @@ class ModelManager(QObject):
         except NotImplementedError:
             logger.warning(f"Model {name} has not implemented `unload` method. Please implement it.")
 
-    def active_models(self, platform: str, model_name: str):
-        load_result = False
-        try:
-            if platform == "od":
-                if model_name in self.active_od_models:
-                    self.active_od_models.remove(model_name)
-                    self.unload_model_weight(model_name)
-                load_result = self.load_model_weight(model_name)
-                if load_result:
-                    self.active_od_models.add(model_name)
-            elif platform == "seg":
-                if model_name in self.active_seg_models:
-                    self.active_seg_models.remove(model_name)
-                    self.unload_model_weight(model_name)
-                load_result = self.load_model_weight(model_name)
-                if load_result:
-                    self.active_seg_models.add(model_name)
+    def active_model(self, platform: str, model_name: str):
+        load_result = self.load_model_weight(model_name)
+        if load_result:
+            if platform == Platform.OBJECT_DETECTION.value:
+                self.active_od_models.add(model_name)
+            elif platform == Platform.SEGMENTATION.value:
+                self.active_seg_models.add(model_name)
             else:
                 show_critical_message("Error", f"Unknown platform: {platform} when activating models.", trace=False)
-        except ModelNotFoundError as e:
-            show_critical_message("Error", f"Model {e} not found.", trace=False)
+                return False
         return load_result
 
-    def label_image(self, platform, image, filename=None):
+    def deactivate_models(self, platform: str):
+        if platform == Platform.OBJECT_DETECTION.value:
+            for name in self.active_od_models:
+                self.active_od_models.remove(name)
+                self.unload_model_weight(name)
+        elif platform == Platform.SEGMENTATION.value:
+            for name in self.active_seg_models:
+                self.active_seg_models.remove(name)
+                self.unload_model_weight(name)
+
+    def label_image(self, platform: str, image, filename: str = None):
         model_set = set()
-        if platform == "od":
+        if platform == Platform.OBJECT_DETECTION.value:
             model_set = self.active_od_models
-        elif platform == "seg":
+        elif platform == Platform.SEGMENTATION.value:
             model_set = self.active_seg_models
         try:
             result_list = []

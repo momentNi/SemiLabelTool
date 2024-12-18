@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 
 from core.configs.core import CORE
-from core.dto.enums import ShapeType
+from core.dto.enums import ShapeType, Platform
 from core.models.model_manager import ModelManager
 from core.services.system import show_critical_message
 from core.views.dialogs.model_selection_dialog import ModelSelectionDialog
@@ -150,8 +150,9 @@ class ObjectDetectionTab(QtWidgets.QWidget):
 
         CORE.Object.status_bar.showMessage("Saving Object Detection Model settings...")
 
+        CORE.Object.model_manager.deactivate_models(Platform.OBJECT_DETECTION.value)
         for name, box in self.model_weight_value_spinbox:
-            if not CORE.Object.model_manager.active_models("od", name):
+            if not CORE.Object.model_manager.active_model(Platform.OBJECT_DETECTION.value, name):
                 show_critical_message("Error", f"Loading Model {name} failed.")
                 return
             CORE.Object.model_manager.model_dict[name].weight.set_conf_threshold(self.conf_threshold.value())
@@ -177,7 +178,7 @@ class ObjectDetectionTab(QtWidgets.QWidget):
 
     @staticmethod
     def apply_current():
-        result_list = CORE.Object.model_manager.label_image("od", CORE.Variable.image, CORE.Variable.current_file_full_path)
+        result_list = CORE.Object.model_manager.label_image(Platform.OBJECT_DETECTION.value, CORE.Variable.image, CORE.Variable.current_file_full_path)
         for result in result_list:
             CORE.Object.canvas.new_shapes_from_auto_labeling(result)
             CORE.Object.status_bar.showMessage(f"Generate {len(result.shapes)} shape{'s' if len(result.shapes) > 1 else ''} in current image!")
